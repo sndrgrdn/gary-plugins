@@ -4,7 +4,7 @@ const exact = new Map<string, string>();
 const prefixes: [string, string][] = [];
 let fallback = "";
 
-for (const line of host.readFile("~/.config/gary/plugins/sndrgrdn.front-app/app_icons.tsv").split("\n")) {
+for (const line of host.readFile("app_icons.tsv").split("\n")) {
   const [icon, app] = line.split("\t");
   if (!icon) continue;
   if (!app) fallback = icon;

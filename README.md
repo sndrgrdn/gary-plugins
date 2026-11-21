@@ -1,6 +1,6 @@
 # Gary plugins
 
-These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins.
+These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need Gary 0.3.1 or later, which finds the files a plugin ships relative to its folder.
 
 - `sndrgrdn.battery` shows the battery level in the bar.
 - `sndrgrdn.clock` shows the time in the bar.

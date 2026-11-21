@@ -8,7 +8,6 @@ type Applied = { theme: Theme; background: string | null; notes: string[] };
 type Target = { name: string; installed(): boolean | Promise<boolean>; apply(applied: Applied): Promise<void> };
 type Workspaces = { displays: { uuid: string; workspaces: { number: number; focused: boolean }[] }[] };
 
-const plugin = "~/.config/gary/plugins/sndrgrdn.theme";
 let home = "";
 let paths = makePaths("");
 let searchPath: string[] = [];
@@ -592,7 +591,7 @@ const targets: Target[] = [
       const sudoers = list("/etc/sudoers.d")?.some((entry) => entry.name === "theme-switcher-helium") ?? false;
       const installed = read(heliumHelper);
       if (!sudoers || installed === null) throw new Failure("Run theme-switcher helium setup to let Theme Switcher colour Helium");
-      if (installed !== host.readFile(`${plugin}/helium-helper.sh`)) throw new Failure("Run theme-switcher helium setup again to update the Helium helper");
+      if (installed !== host.readFile("helium-helper.sh")) throw new Failure("Run theme-switcher helium setup again to update the Helium helper");
       await run("sudo", ["-n", heliumHelper, heliumColor(theme)]);
       const running = await jxa(`ObjC.import("AppKit");
         ObjC.bindFunction("_CFPreferencesManagementStatusChangedForDomains", ["void", ["id"]]);
@@ -939,8 +938,8 @@ exec(["/usr/bin/printenv", "HOME"]).then((result) => {
     "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", `${home}/.local/bin`, `${home}/.hunk/bin`,
     `${home}/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS`,
   ];
-  templates = (list(`${plugin}/templates`) ?? []).filter((entry) => entry.name.endsWith(".tpl"))
-    .map((entry) => ({ name: entry.name.slice(0, -4), text: host.readFile(`${plugin}/templates/${entry.name}`) }));
+  templates = (list("templates") ?? []).filter((entry) => entry.name.endsWith(".tpl"))
+    .map((entry) => ({ name: entry.name.slice(0, -4), text: host.readFile(`templates/${entry.name}`) }));
   const started = Date.now();
   reload();
   host.log(`loaded ${themes.length} themes in ${Date.now() - started} ms`);

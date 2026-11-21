@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.theme",
   "name": "Theme",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "kinds": ["service", "menu"],
   "entryPoints": { "service": "service.ts", "menu": "menu.ts" },
   "subscribes": ["sndrgrdn.dinky", "sndrgrdn.theme"],

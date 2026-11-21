@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.front-app",
   "name": "Front App",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kinds": ["bar-widget"],
   "entryPoints": { "bar-widget": "widget.ts" },
   "subscribes": ["sndrgrdn.dinky"],
