@@ -1,0 +1,11 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.dinky",
+  "name": "Dinky",
+  "version": "0.1.0",
+  "kinds": ["service", "bar-widget"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.ts" },
+  "subscribes": ["sndrgrdn.dinky"],
+  "uses": ["exec"]
+}

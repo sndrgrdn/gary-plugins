@@ -1,0 +1,154 @@
+{
+  "$defs" : {
+    "id" : {
+      "maxLength" : 128,
+      "pattern" : "^[a-z0-9][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+$",
+      "type" : "string"
+    }
+  },
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "properties" : {
+    "$schema" : {
+      "type" : "string"
+    },
+    "entryPoints" : {
+      "additionalProperties" : {
+        "pattern" : "^(?![/~])(?!.*(^|/)\\.{0,2}(/|$))[^\\u0000]*\\.(js|ts)$",
+        "type" : "string"
+      },
+      "propertyNames" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "type" : "object"
+    },
+    "hotkeys" : {
+      "items" : {
+        "properties" : {
+          "id" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "keys" : {
+            "pattern" : "^(([A-Za-z]+\\+)+[^+]+|[Ff]([1-9]|1[0-2]))$",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "id",
+          "keys"
+        ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "id" : {
+      "allOf" : [
+        {
+          "$ref" : "#/$defs/id"
+        },
+        {
+          "not" : {
+            "pattern" : "^gary\\.",
+            "type" : "string"
+          }
+        }
+      ]
+    },
+    "keepLoaded" : {
+      "type" : "boolean"
+    },
+    "kinds" : {
+      "items" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "minItems" : 1,
+      "type" : "array",
+      "uniqueItems" : true
+    },
+    "name" : {
+      "type" : "string"
+    },
+    "schemaVersion" : {
+      "const" : 1
+    },
+    "subscribes" : {
+      "items" : {
+        "anyOf" : [
+          {
+            "enum" : [
+              "apps",
+              "audio",
+              "battery",
+              "bluetooth",
+              "brightness",
+              "clipboard",
+              "clock",
+              "focus",
+              "notifications",
+              "nowplaying",
+              "permissions",
+              "session",
+              "wifi"
+            ]
+          },
+          {
+            "$ref" : "#/$defs/id"
+          }
+        ]
+      },
+      "type" : "array"
+    },
+    "uses" : {
+      "items" : {
+        "enum" : [
+          "apps",
+          "audio",
+          "bluetooth",
+          "brightness",
+          "clipboard",
+          "dock",
+          "exec",
+          "files",
+          "mediakeys",
+          "menubar",
+          "network",
+          "notifications",
+          "nowplaying",
+          "paste",
+          "permissions",
+          "tray",
+          "wallpaper",
+          "wifi"
+        ]
+      },
+      "type" : "array"
+    },
+    "version" : {
+      "type" : "string"
+    }
+  },
+  "required" : [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "kinds",
+    "entryPoints"
+  ],
+  "title" : "Gary plugin manifest",
+  "type" : "object"
+}

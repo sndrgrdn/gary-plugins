@@ -1,0 +1,15 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.theme",
+  "name": "Theme",
+  "version": "0.2.0",
+  "kinds": ["service", "menu"],
+  "entryPoints": { "service": "service.ts", "menu": "menu.ts" },
+  "subscribes": ["sndrgrdn.dinky", "sndrgrdn.theme"],
+  "uses": ["files", "exec", "wallpaper"],
+  "hotkeys": [
+    { "id": "picker", "keys": "ctrl+alt+cmd+space" },
+    { "id": "background", "keys": "ctrl+alt+shift+cmd+space" }
+  ]
+}
