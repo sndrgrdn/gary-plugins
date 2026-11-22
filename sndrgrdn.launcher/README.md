@@ -12,9 +12,7 @@ Opens apps from a picker, like [Walker](https://github.com/abenz1267/walker) in 
   - Return opens the selected app, and so does a click.
   - Escape, or a click outside the picker, closes it.
 
-The picker lists the apps in `/Applications`, `/System/Applications`, `~/Applications`, and the folders directly inside them, such as `Utilities`. It reads them when Gary loads it and again each time it opens, so typing never waits for the disk.
-
-An app whose `Info.plist` is binary, such as Xcode, is left out, because the plugin can only read text files and Gary launches apps by bundle id. The log names the apps it left out.
+The picker lists the apps that Gary finds in `/Applications`, `/System/Applications`, `~/Applications`, and the folders directly inside them, such as `Utilities`. It reads them when Gary loads it and again each time it opens, so typing never waits for the disk.
 
 ## Commands
 

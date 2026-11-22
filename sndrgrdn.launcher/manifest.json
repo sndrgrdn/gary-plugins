@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "kinds": ["menu"],
   "entryPoints": { "menu": "menu.tsx" },
-  "uses": ["apps", "files"],
+  "uses": ["apps"],
   "keepLoaded": true,
   "hotkeys": [{ "id": "open", "keys": "alt+space" }]
 }

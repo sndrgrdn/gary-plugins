@@ -1,5 +1,6 @@
 import { Effect, host as lifted } from "gary:effect";
-import { type App, index } from "./apps";
+
+type App = { name: string; key: string; path: string };
 
 const cardWidth = 600;
 const rowHeight = 40;
@@ -10,7 +11,6 @@ const cardHeight = 2 * padding + headerHeight + 1 + visibleRows * rowHeight + 2 
 const maxRows = 150;
 
 let apps: readonly App[] = [];
-let skipped = "";
 let query = "";
 let results: readonly App[] = [];
 let selected = 0;
@@ -50,17 +50,14 @@ function rank() {
 }
 
 const refresh = Effect.fn("Launcher.refresh")(function* () {
-  const found = yield* index();
-  apps = found.apps;
+  const installed = yield* lifted.apps.installed();
+  apps = installed.map(({ name, path }) => ({ name, key: name.toLowerCase(), path }));
   rank();
-  const names = found.skipped.join(", ");
-  if (names && names !== skipped) yield* lifted.log(`no readable bundle id, so not listed: ${names}`);
-  skipped = names;
-});
+}, Effect.catchTag("HostError", (error) => lifted.log(`listing apps failed: ${error.message}`)));
 
 const launch = Effect.fn("Launcher.launch")(function* (app: App) {
-  yield* lifted.apps.launch(app.bundle);
-}, (effect, app) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`launch ${app.bundle} failed: ${error.message}`)));
+  yield* lifted.apps.launch(app.path);
+}, (effect, app) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`launch ${app.path} failed: ${error.message}`)));
 
 function open() {
   query = "";
@@ -83,14 +80,14 @@ function move(step: number) {
 function Row({ app, chosen }: { app: App; chosen: boolean }) {
   return (
     <row
-      key={app.bundle}
+      key={app.path}
       gap={12}
       height={rowHeight}
       padding={[0, 10]}
       radius={8}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
-      action={`open:${app.bundle}`}
+      action={`open:${app.path}`}
     >
       <image path={app.path} width={26} height={26} />
       <text style={chosen ? "active" : undefined}>{app.name}</text>
@@ -106,7 +103,7 @@ function list(): Gary.Node {
     return <text key="empty" style="dim" padding={[12, 10]}>{message}</text>;
   }
   return (
-    <scroll key="results" height={visibleRows * rowHeight} reveal={results[selected]?.bundle}>
+    <scroll key="results" height={visibleRows * rowHeight} reveal={results[selected]?.path}>
       {results.map((app, at) => <Row app={app} chosen={at === selected} />)}
     </scroll>
   );
@@ -170,12 +167,12 @@ export default {
     } else if (action === "close") {
       host.hide();
     } else if (action.startsWith("open:")) {
-      pick(results.find((app) => app.bundle === action.slice(5)));
+      pick(results.find((app) => app.path === action.slice(5)));
     }
   },
 
   methods: {
     open,
-    state: () => ({ apps: apps.length, skipped, query, selected: results[selected]?.name ?? null, results: results.slice(0, 10).map((app) => app.name) }),
+    state: () => ({ apps: apps.length, query, selected: results[selected]?.name ?? null, results: results.slice(0, 10).map((app) => app.name) }),
   },
 } satisfies Gary.Menu;
