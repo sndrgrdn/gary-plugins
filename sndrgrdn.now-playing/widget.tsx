@@ -1,0 +1,61 @@
+import { Effect, Fiber, host, type HostError } from "gary:effect";
+
+const longest = 40;
+let volume: number | null = null;
+let hideVolume: Fiber.Fiber<void> | null = null;
+
+function run(effect: Effect.Effect<unknown, HostError>) {
+  Effect.runSync(effect.pipe(Effect.tapError((error) => host.log(error.message)), Effect.ignore));
+}
+
+function label(track: Gary.Track) {
+  const text = track.artist ? `${track.artist} · ${track.title}` : track.title;
+  return text.length > longest ? `${text.slice(0, longest - 1)}…` : text;
+}
+
+function showVolume(next: number) {
+  volume = next;
+  if (hideVolume) Effect.runFork(Fiber.interrupt(hideVolume));
+  hideVolume = Effect.runFork(
+    Effect.delay(
+      Effect.sync(() => {
+        volume = null;
+      }),
+      "1500 millis",
+    ),
+  );
+}
+
+export default {
+  render(state) {
+    const track = state.nowplaying?.track;
+    if (volume !== null) {
+      return (
+        <row gap={6} action="open" scrollAction="volume">
+          <icon key="icon" symbol={volume === 0 ? "speaker.slash.fill" : "speaker.wave.2.fill"} />
+          <text key="text">{`${Math.round(volume * 100)}%`}</text>
+        </row>
+      );
+    }
+    if (!track) return <text>{""}</text>;
+    return (
+      <row gap={6} action="open" scrollAction="volume" color={track.playing ? "foreground" : "dim"}>
+        <icon key="icon" symbol="music.note" />
+        <text key="text">{label(track)}</text>
+      </row>
+    );
+  },
+
+  onAction(action) {
+    if (action === "open") run(host.toggle());
+  },
+
+  onScroll(event, state) {
+    if (event.action !== "volume" || event.phase === "momentum" || event.y === 0) return;
+    const current = volume ?? state.audio?.output?.volume;
+    if (current == null) return;
+    const next = Math.min(1, Math.max(0, current + event.y * (event.precise ? 0.002 : 0.05)));
+    run(host.audio.setVolume(next));
+    showVolume(next);
+  },
+} satisfies Gary.BarWidget;
