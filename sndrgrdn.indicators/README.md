@@ -9,7 +9,7 @@ Shows small icons in the bar while something is on, like the indicators next to 
 - **Focus**, Omarchy's Do Not Disturb bell, while a macOS Focus is on. Its name shows in the tooltip.
 - **Stay awake**, a steaming cup, while `sndrgrdn.menu` keeps the Mac awake.
 
-The icons are Omarchy's Nerd Font glyphs, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. They show in that order. Each has a tooltip, but clicking does nothing, because a Gary plugin cannot open another plugin's panel or call its methods.
+The icons are Omarchy's Nerd Font glyphs, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. They show in that order, and each has a tooltip. Clicking the focus timer opens the `sndrgrdn.focus-timer` menu. Clicking screen recording or stay awake opens the `sndrgrdn.menu` menu, where **Capture** and **Toggle** turn them off. Clicking Focus does nothing, because macOS has no public API to turn a Focus off.
 
 It reads the `sndrgrdn.focus-timer` and `sndrgrdn.menu` topics, so those plugins must be enabled for their indicators to show. The Focus indicator reads Gary's `focus` topic, which needs Full Disk Access. `gary permissions request full-disk-access` opens its pane.
 

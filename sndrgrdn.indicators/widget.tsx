@@ -1,6 +1,6 @@
-import { Stream, topic } from "gary:effect";
+import { Stream, host, topic } from "gary:effect";
 
-type Indicator = { key: string; glyph: string; tooltip: string; text?: string };
+type Indicator = { key: string; glyph: string; tooltip: string; text?: string; owner?: string };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -16,15 +16,16 @@ function active(state: Gary.State): Indicator[] {
   const session = state["sndrgrdn.focus-timer"]?.session;
   const focus = state.focus;
   return [
-    menu?.recording && { key: "recording", glyph: "\u{F0EC2}", tooltip: "Screen recording" },
+    menu?.recording && { key: "recording", glyph: "\u{F0EC2}", tooltip: "Screen recording", owner: "sndrgrdn.menu" },
     session && {
       key: "timer",
       glyph: session.mode === "focus" ? "\u{F13AB}" : "\u{F0176}",
       tooltip: session.mode === "focus" ? "Focus session" : "Break",
       text: remaining(session.endsAt),
+      owner: "sndrgrdn.focus-timer",
     },
     focus?.active && { key: "focus", glyph: "\u{F009B}", tooltip: focus.name ?? "Do Not Disturb" },
-    menu?.awake && { key: "awake", glyph: "\u{EF59}", tooltip: "Staying awake" },
+    menu?.awake && { key: "awake", glyph: "\u{EF59}", tooltip: "Staying awake", owner: "sndrgrdn.menu" },
   ].filter((indicator) => !!indicator);
 }
 
@@ -39,13 +40,18 @@ export default {
     if (!indicators.length) return null;
     return (
       <row gap={0} padding={[0, 4]}>
-        {indicators.map(({ key, glyph, tooltip, text }) => (
-          <row key={key} gap={4} tooltip={tooltip}>
+        {indicators.map(({ key, glyph, tooltip, text, owner }) => (
+          <row key={key} gap={4} tooltip={tooltip} action={owner && key}>
             <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
             {text !== undefined && <text key="text" color="foreground">{text}</text>}
           </row>
         ))}
       </row>
     );
+  },
+
+  onAction(action, _payload, state) {
+    const owner = active(state).find(({ key }) => key === action)?.owner;
+    if (owner) return host.toggle(owner);
   },
 } satisfies Gary.BarWidget;
