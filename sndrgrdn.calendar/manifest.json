@@ -1,0 +1,11 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.calendar",
+  "name": "Calendar",
+  "version": "0.1.0",
+  "kinds": ["service", "bar-widget", "panel"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "subscribes": ["clock", "sndrgrdn.calendar"],
+  "uses": ["exec"]
+}
