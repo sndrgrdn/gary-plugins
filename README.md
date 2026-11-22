@@ -12,7 +12,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.focus-timer`](sndrgrdn.focus-timer) counts down focus and break sessions in the bar, with a panel to start them and a sound at the end.
 - [`sndrgrdn.front-app`](sndrgrdn.front-app) shows the name and icon of the app that dinky reports as focused. It needs `sndrgrdn.dinky` and an `app-icon` font in `~/.config/gary/theme.json`, such as `sketchybar-app-font`.
 - [`sndrgrdn.indicators`](sndrgrdn.indicators) shows small icons before the clock while a focus session runs, the screen is recording, the Mac stays awake, or a Focus such as Do Not Disturb is on.
-- [`sndrgrdn.launcher`](sndrgrdn.launcher) opens apps from a picker that fuzzy-matches their names, like Walker in Omarchy.
+- [`sndrgrdn.launcher`](sndrgrdn.launcher) opens apps from a picker that fuzzy-matches their names and learns which apps you open, and works out calculations and conversions, like Walker in Omarchy.
 - [`sndrgrdn.menu`](sndrgrdn.menu) opens a keyboard-driven main menu from a snail in the bar or ⌥⇧Space, like the Omarchy menu, to take screenshots and recordings, read text and QR codes, pick a colour, change the theme, keep the Mac awake, and lock or restart it.
 - [`sndrgrdn.monitor`](sndrgrdn.monitor) shows a display icon in the bar, and opens a panel with the brightness of each display, like Omarchy's monitor panel.
 - [`sndrgrdn.network`](sndrgrdn.network) shows the Wi‑Fi signal in the bar, and opens a panel with the network's details and the networks nearby to join, like Omarchy's.
@@ -49,3 +49,5 @@ gary plugin install git:github.com/sndrgrdn/gary-plugins
 ## License
 
 The plugins are released under the [MIT License](LICENSE).
+
+`sndrgrdn.launcher/oma-cast` holds files from [omacast](https://github.com/typecraft-dev/oma-cast), under omacast's own [MIT License](sndrgrdn.launcher/oma-cast/LICENSE).
