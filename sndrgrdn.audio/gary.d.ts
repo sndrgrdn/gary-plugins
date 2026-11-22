@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
-  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
-  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
+  type StyleName = (string & {});
+  type FontName = (string & {});
+  type ColorName = (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -255,7 +255,9 @@ declare namespace Gary {
     output: AudioDeviceState | null;
     input: AudioDeviceState | null;
     microphone: { pid: number; app: string | null; bundleId: string | null }[];
+    apps: AudioApp[];
   }
+  type AudioApp = { pid: number; name: string; bundleId: string | null; path: string | null; volume: number }
   type AudioDeviceSummary = { id: string; name: string; transport: string; output: boolean; input: boolean }
   type AudioDeviceState = { id: string; name: string; transport: string; volume: number | null; muted: boolean | null }
   interface Host { audio: AudioApi }
@@ -263,6 +265,7 @@ declare namespace Gary {
     setVolume(volume: number, scope?: AudioScope): null;
     setMuted(muted: boolean, scope?: AudioScope): null;
     setDefaultDevice(id: string, scope?: AudioScope): null;
+    setAppVolume(pid: number, volume: number): Promise<null>;
   }
 }
 

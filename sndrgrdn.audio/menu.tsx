@@ -7,6 +7,8 @@ type Scope = Gary.AudioScope;
 const width = 320;
 const rowHeight = 32;
 const headerHeight = 24;
+const iconWidth = 18;
+const nameWidth = 96;
 const headphones = /headphone|headset|earbud|earphone|airpod/i;
 
 let problem: string | null = null;
@@ -101,6 +103,31 @@ function Channel({ scope, state }: { scope: Scope; state: Gary.State }) {
   );
 }
 
+function AppVolume({ app, theme }: { app: Gary.AudioApp; theme: Theme }) {
+  const { spacing } = theme;
+  return (
+    <row key={`app-${app.pid}`} height={rowHeight} padding={[0, spacing.item]} width={width - 2 * spacing.item} gap={spacing.item}>
+      {app.path ? <image key="icon" path={app.path} width={iconWidth} height={iconWidth} /> : <icon key="icon" symbol="waveform" width={iconWidth} color="dim" />}
+      <text key="name" width={nameWidth} lines={1} truncate="tail">{app.name}</text>
+      <slider key="volume" value={app.volume} action={`app:${app.pid}`} width={width - 6 * spacing.item - iconWidth - nameWidth} color="foreground" />
+    </row>
+  );
+}
+
+function Apps({ state }: { state: Gary.State }) {
+  const { spacing } = state.theme;
+  const apps = state.audio?.apps ?? [];
+  if (!apps.length) return null;
+  return (
+    <column key="apps" gap={0}>
+      <row key="header" height={headerHeight} padding={[0, spacing.item]} width={width - 2 * spacing.item}>
+        <text key="title" fontSize={11} font="strong" color="dim">APPS</text>
+      </row>
+      {apps.map((app) => <AppVolume app={app} theme={state.theme} />)}
+    </column>
+  );
+}
+
 export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
 
@@ -123,6 +150,8 @@ export default {
         </row>
         <Divider name="divider-output" theme={theme} />
         <Channel scope="output" state={state} />
+        {state.audio?.apps.length ? <Divider name="divider-apps" theme={theme} /> : null}
+        <Apps state={state} />
         {input || state.audio?.devices.some((device) => device.input) ? <Divider name="divider-input" theme={theme} /> : null}
         <Channel scope="input" state={state} />
         {problem ? <text key="problem" style="bad" fontSize={11} padding={[0, spacing.item]}>{problem}</text> : null}
@@ -139,6 +168,9 @@ export default {
         audio.output ? lifted.audio.setMuted(mute) : Effect.void,
         audio.input ? lifted.audio.setMuted(mute, "input") : Effect.void,
       ]));
+    }
+    if (action.startsWith("app:") && typeof payload === "number") {
+      return run(lifted.audio.setAppVolume(Number(action.slice("app:".length)), payload));
     }
     const [scope, verb] = action.split(":") as [Scope, string];
     const now = audio[scope];
