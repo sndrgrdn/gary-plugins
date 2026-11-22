@@ -6,7 +6,6 @@ type TargetResult = { message?: string; status: "applied" | "skipped" | "failed"
 type ApplyReport = { background?: string; results: TargetResult[]; theme: string };
 type Applied = { theme: Theme; background: string | null; notes: string[] };
 type Target = { name: string; installed(): boolean | Promise<boolean>; apply(applied: Applied): Promise<void> };
-type Workspaces = { displays: { uuid: string; workspaces: { number: number; focused: boolean }[] }[] };
 
 let home = "";
 let paths = makePaths("");
@@ -70,30 +69,27 @@ function read(path: string): string | null {
   }
 }
 
-function exec(argv: string[]): Promise<Gary.ExecResult> {
-  return new Promise((resolve) => host.exec(argv, resolve));
-}
 
 async function which(command: string): Promise<string | null> {
-  if (command.startsWith("/")) return (await exec(["/bin/test", "-x", command])).status === 0 ? command : null;
-  const found = await exec(["/bin/sh", "-c", 'for d in "$@"; do [ -f "$d/$0" ] && [ -x "$d/$0" ] && { echo "$d/$0"; exit 0; }; done; exit 1', command, ...searchPath]);
+  if (command.startsWith("/")) return (await host.exec(["/bin/test", "-x", command])).status === 0 ? command : null;
+  const found = await host.exec(["/bin/sh", "-c", 'for d in "$@"; do [ -f "$d/$0" ] && [ -x "$d/$0" ] && { echo "$d/$0"; exit 0; }; done; exit 1', command, ...searchPath]);
   return found.status === 0 ? found.stdout.trim() : null;
 }
 
 async function run(command: string, args: string[]): Promise<string> {
   const executable = await which(command);
   if (!executable) throw new Failure(`${command} not found`);
-  const result = await exec(["/usr/bin/env", `PATH=${searchPath.join(":")}`, executable, ...args]);
+  const result = await host.exec(["/usr/bin/env", `PATH=${searchPath.join(":")}`, executable, ...args]);
   const text = (result.stdout + result.stderr).trim();
   if (result.status !== 0) throw new Failure(`${command} ${args[0] ?? ""} exited ${result.status}: ${text}`);
   return text;
 }
 
 async function signal(name: string, process: string, onlyWithTerminal = false) {
-  const ps = await exec(["/bin/ps", "-axo", "pid=,tty=,ucomm="]);
+  const ps = await host.exec(["/bin/ps", "-axo", "pid=,tty=,ucomm="]);
   const pids = ps.stdout.split("\n").map((line) => line.trim().split(/\s+/)).filter(([pid, tty, comm]) =>
     pid && comm === process && (!onlyWithTerminal || tty !== "??")).map(([pid]) => pid);
-  if (pids.length) await exec(["/bin/kill", `-${name}`, ...pids]);
+  if (pids.length) await host.exec(["/bin/kill", `-${name}`, ...pids]);
 }
 
 function timestamp() {
@@ -101,7 +97,7 @@ function timestamp() {
 }
 
 function appendLog(lines: string[]) {
-  return exec(["/bin/sh", "-c", 'printf "%s" "$1" >> "$2"', "sh", lines.map((line) => line + "\n").join(""), paths.log]);
+  return host.exec(["/bin/sh", "-c", 'printf "%s" "$1" >> "$2"', "sh", lines.map((line) => line + "\n").join(""), paths.log]);
 }
 
 const Palettes = {
@@ -362,7 +358,7 @@ const Files = {
   },
 
   async resolve(path: string) {
-    const result = await exec(["/usr/bin/realpath", path]);
+    const result = await host.exec(["/usr/bin/realpath", path]);
     return result.status === 0 ? result.stdout.trim() : path;
   },
 
@@ -370,7 +366,7 @@ const Files = {
     const backup = `${paths.backups}/${path.replace(/\//g, "%")}`;
     if (!exists(path) || exists(backup)) return;
     host.mkdir(paths.backups);
-    const copied = await exec(["/bin/cp", path, backup]);
+    const copied = await host.exec(["/bin/cp", path, backup]);
     if (copied.status !== 0) throw new Failure(copied.stderr.trim());
   },
 
@@ -421,7 +417,7 @@ const heliumBundle = "net.imput.helium";
 const heliumHelper = "/Library/PrivilegedHelperTools/garden.sander.theme-switcher.helium";
 
 function jxa(script: string) {
-  return exec(["/usr/bin/osascript", "-l", "JavaScript", "-e", script]);
+  return host.exec(["/usr/bin/osascript", "-l", "JavaScript", "-e", script]);
 }
 
 const targets: Target[] = [
@@ -430,7 +426,7 @@ const targets: Target[] = [
     installed: () => true,
     async apply({ theme }) {
       const source = `tell application "System Events" to tell appearance preferences to set dark mode to ${theme.mode === "dark"}`;
-      const result = await exec(["/usr/bin/osascript", "-e", source]);
+      const result = await host.exec(["/usr/bin/osascript", "-e", source]);
       if (result.status === 0) return;
       if (/\(-1743\)/.test(result.stderr)) {
         throw new Failure("Allow Gary to control System Events in System Settings › Privacy & Security › Automation");
@@ -739,7 +735,7 @@ function stage(theme: Theme) {
 }
 
 async function swapStaged() {
-  const result = await exec(["/bin/sh", "-c", 'rm -rf "$1" && mv "$2" "$1"', "sh", paths.current, paths.next]);
+  const result = await host.exec(["/bin/sh", "-c", 'rm -rf "$1" && mv "$2" "$1"', "sh", paths.current, paths.next]);
   if (result.status !== 0) throw new Failure(result.stderr.trim() || "could not move the staged theme into place");
 }
 
@@ -867,7 +863,7 @@ function warmPreviews() {
   const make = async (each: { id: string; source: string; file: string }) => {
     if (!cached.has(each.file)) {
       for (const stale of cached) if (stale.startsWith(`${each.id}-`) && /^[0-9a-f]+\.jpg$/.test(stale.slice(each.id.length + 1))) host.remove(`${paths.previews}/${stale}`);
-      const result = await exec(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "85", "-Z", String(previewSize), each.source, "--out", `${paths.previews}/${each.file}`]);
+      const result = await host.exec(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "85", "-Z", String(previewSize), each.source, "--out", `${paths.previews}/${each.file}`]);
       if (result.status !== 0) return host.log(`preview for ${each.id} failed: ${result.stderr.trim()}`);
     }
     previews[each.id] = `${paths.previews}/${each.file}`;
@@ -931,7 +927,7 @@ function background(step: number): Gary.Json {
   }
 }
 
-exec(["/usr/bin/printenv", "HOME"]).then((result) => {
+host.exec(["/usr/bin/printenv", "HOME"]).then((result) => {
   home = result.stdout.trim();
   paths = makePaths(home);
   searchPath = [
@@ -962,9 +958,9 @@ function whenStarted<T>(body: () => Promise<T>): Promise<T> {
 }
 
 export default {
-  onTopic(topic, value) {
+  onTopic({ topic, value }) {
     if (topic !== "sndrgrdn.dinky" || !home) return;
-    const focused = ((value as Workspaces | null)?.displays ?? [])
+    const focused = value.displays
       .map((display) => display.workspaces.find((each) => each.focused)?.number ?? "").join(",");
     if (focused === focusedWorkspaces) return;
     const first = focusedWorkspaces === "";

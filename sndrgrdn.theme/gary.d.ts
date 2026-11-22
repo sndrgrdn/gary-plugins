@@ -165,14 +165,17 @@ declare namespace Gary {
     colors: { [name: string]: string };
     palette: { [name: string]: string };
   }
-  interface State {
+  interface Topics {
+    "sndrgrdn.dinky": import("../sndrgrdn.dinky/topic").Topic;
+    "sndrgrdn.theme": import("./topic").Topic;
+  }
+  interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
     theme: Theme;
     display?: Display;
     surface?: string;
-    "sndrgrdn.dinky"?: Json;
-    "sndrgrdn.theme"?: Json;
   }
+  type TopicEvent = { [K in keyof Topics]: { topic: K; value: Topics[K] } }[keyof Topics];
 
   type Edges<T> = { top?: T; bottom?: T; left?: T; right?: T };
   interface Surface {
@@ -197,7 +200,7 @@ declare namespace Gary {
   interface Host {
     log(message: string): void;
     storage: Storage;
-    publish(value: Json): void;
+    publish(value: import("./topic").Topic): void;
     show(surface?: string): void;
     hide(surface?: string): void;
     toggle(surface?: string): void;
@@ -210,7 +213,7 @@ declare namespace Gary {
     onKey?(key: Key, state: State): boolean | void;
     onScroll?(event: ScrollEvent, state: State): void;
     onHotkey?(id: string, state: State): void;
-    onTopic?(topic: string, value: Json, state: State): void;
+    onTopic?(event: TopicEvent, state: State): void;
     methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
     surface?: SurfaceExport;
     surfaces?: { [name: string]: SurfaceExport };
@@ -233,7 +236,7 @@ declare function setInterval(callback: (...args: any[]) => void, ms?: number, ..
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
-  interface Host { exec(argv: string[], callback: (result: ExecResult) => void): void }
+  interface Host { exec(argv: string[]): Promise<ExecResult> }
   interface ExecResult { status: number; stdout: string; stderr: string }
 }
 declare namespace Gary {

@@ -1,5 +1,4 @@
-type Workspace = { number: number; focused: boolean; empty: boolean; layout: string };
-type Dinky = { displays: { uuid: string; workspaces: Workspace[] }[]; app: string | null };
+import type { Workspace } from "./topic";
 
 function label(workspace: Workspace): Gary.Node {
   const glyph = workspace.layout === "scrolling" ? "󰝥" : "󱓻";
@@ -18,12 +17,11 @@ function label(workspace: Workspace): Gary.Node {
 
 export default {
   render(state) {
-    const dinky = state["sndrgrdn.dinky"] as Dinky | undefined;
-    const workspaces = dinky?.displays.find((display) => display.uuid === state.display?.id)?.workspaces ?? [];
+    const workspaces = state["sndrgrdn.dinky"]?.displays.find((display) => display.uuid === state.display?.id)?.workspaces ?? [];
     return <row gap={1}>{workspaces.map(label)}</row>;
   },
 
   onAction(action) {
-    host.exec(["dinky", "workspace", action], () => {});
+    host.exec(["dinky", "workspace", action]);
   },
 } satisfies Gary.BarWidget;

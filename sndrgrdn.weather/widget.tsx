@@ -43,10 +43,10 @@ function refresh(state?: Gary.State) {
 }
 
 export default {
-  onTopic(topic, _value, state) {
+  onTopic({ topic, value }, state) {
     if (topic === "session") {
-      if (locked && !state.session?.locked) setTimeout(() => refresh(state), 10_000);
-      locked = state.session?.locked ?? false;
+      if (locked && !value.locked) setTimeout(() => refresh(state), 10_000);
+      locked = value.locked;
     } else if (Date.now() - attempted >= interval) {
       refresh(state);
     }

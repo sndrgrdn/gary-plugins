@@ -165,13 +165,16 @@ declare namespace Gary {
     colors: { [name: string]: string };
     palette: { [name: string]: string };
   }
-  interface State {
+  interface Topics {
+    "sndrgrdn.dinky": import("../sndrgrdn.dinky/topic").Topic;
+  }
+  interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
     theme: Theme;
     display?: Display;
     surface?: string;
-    "sndrgrdn.dinky"?: Json;
   }
+  type TopicEvent = { [K in keyof Topics]: { topic: K; value: Topics[K] } }[keyof Topics];
 
   type Edges<T> = { top?: T; bottom?: T; left?: T; right?: T };
   interface Surface {
@@ -209,7 +212,7 @@ declare namespace Gary {
     onKey?(key: Key, state: State): boolean | void;
     onScroll?(event: ScrollEvent, state: State): void;
     onHotkey?(id: string, state: State): void;
-    onTopic?(topic: string, value: Json, state: State): void;
+    onTopic?(event: TopicEvent, state: State): void;
     methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
     surface?: SurfaceExport;
     surfaces?: { [name: string]: SurfaceExport };

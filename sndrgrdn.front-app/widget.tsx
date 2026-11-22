@@ -1,5 +1,3 @@
-type Dinky = { app: string | null };
-
 const exact = new Map<string, string>();
 const prefixes: [string, string][] = [];
 let fallback = "";
@@ -18,7 +16,7 @@ function icon(app: string) {
 
 export default {
   render(state) {
-    const app = (state["sndrgrdn.dinky"] as Dinky | undefined)?.app;
+    const app = state["sndrgrdn.dinky"]?.app;
     if (!app) return <row />;
     return (
       <row gap={8} padding={[0, 0, 0, 5]}>

@@ -1,5 +1,5 @@
-type Item = { id: string; name: string; mode: "light" | "dark"; current: boolean; preview: string | null; colors: Record<string, string> };
-type Library = { themes: Item[]; current: string | null };
+import type { Item, Topic } from "./topic";
+
 type Frame = { x: number; y: number; width: number; height: number };
 
 const expanded = { width: 768, height: 475 };
@@ -11,7 +11,7 @@ const chromeHeight = 104;
 const dots = ["red", "yellow", "green", "cyan", "blue", "magenta"];
 const stripes = ["background", "red", "yellow", "green", "cyan", "blue", "magenta", "foreground"];
 
-let library: Library = { themes: [], current: null };
+let library: Topic = { themes: [], current: null };
 let query = "";
 let selectedID: string | null = null;
 let scrolled = 0;
@@ -160,9 +160,9 @@ function caption(): Gary.Node {
 export default {
   surface: { anchors: { top: true, bottom: true, left: true, right: true }, exclusionMode: "ignore", background: "backdrop" },
 
-  onTopic(topic, value) {
-    if (topic !== "sndrgrdn.theme" || !value) return;
-    library = value as unknown as Library;
+  onTopic({ topic, value }) {
+    if (topic !== "sndrgrdn.theme") return;
+    library = value;
     if (selectedID === null || !library.themes.some((theme) => theme.id === selectedID)) {
       selectedID = library.current ?? library.themes[0]?.id ?? null;
     }

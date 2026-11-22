@@ -1,6 +1,5 @@
-type Workspace = { number: number; focused: boolean; empty: boolean; layout: string };
-type Display = { uuid: string; workspaces: Workspace[] };
-type Dinky = { displays: Display[]; app: string | null };
+import type { Display, Workspace } from "./topic";
+
 type Switch = { monitor: number; workspace: number };
 
 const dinky = "dinky";
@@ -10,8 +9,8 @@ let app: string | null = null;
 let pending: Switch | null = null;
 let started = 0;
 
-function run(argv: string[]): Promise<Gary.ExecResult> {
-  return new Promise((resolve) => host.exec([dinky, ...argv], resolve));
+function run(argv: string[]) {
+  return host.exec([dinky, ...argv]);
 }
 
 function publish() {
@@ -21,7 +20,7 @@ function publish() {
     const target = pending.workspace;
     return { uuid, workspaces: workspaces.map((each) => ({ ...each, focused: each.number === target })) };
   });
-  host.publish({ displays, app } satisfies Dinky);
+  host.publish({ displays, app });
 }
 
 function readDisplays() {
