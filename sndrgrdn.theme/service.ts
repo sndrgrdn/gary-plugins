@@ -938,7 +938,7 @@ const start = Effect.gen(function* () {
     Stream.drop(1),
     Stream.runForEach(() => followWorkspace()),
   );
-}).pipe(Effect.catch((error) => log(`start failed: ${error.message}`)), Effect.orDie);
+}).pipe(Effect.catch((error) => log(`start failed: ${error.message}`)));
 
 function whenReady(body: () => Gary.Json): Gary.Json {
   if (!home) return { error: "Theme is starting" };

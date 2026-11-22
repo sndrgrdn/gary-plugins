@@ -260,7 +260,7 @@ declare namespace Gary {
 
 declare namespace Gary {
   interface Module {
-    effect?: import("effect").Effect.Effect<void, never, import("effect").Scope.Scope>;
+    effect?: import("effect").Effect.Effect<void, unknown, import("effect").Scope.Scope>;
   }
 }
 
