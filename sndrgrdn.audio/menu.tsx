@@ -8,7 +8,7 @@ const width = 320;
 const rowHeight = 32;
 const headerHeight = 24;
 const iconWidth = 18;
-const nameWidth = 96;
+const nameWidth = 94;
 const headphones = /headphone|headset|earbud|earphone|airpod/i;
 
 let problem: string | null = null;
