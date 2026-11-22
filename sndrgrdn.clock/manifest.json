@@ -3,8 +3,9 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.clock",
   "name": "Clock",
-  "version": "0.1.0",
-  "kinds": ["bar-widget"],
-  "entryPoints": { "bar-widget": "widget.tsx" },
-  "subscribes": ["clock"]
+  "version": "0.2.0",
+  "kinds": ["bar-widget", "panel"],
+  "entryPoints": { "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "subscribes": { "bar-widget": ["clock"], "panel": ["clock", "calendar"] },
+  "uses": ["calendar"]
 }

@@ -6,10 +6,14 @@ export default {
   render(state) {
     const now = new Date(state.clock?.epoch ?? Date.now());
     return (
-      <row gap={0}>
+      <row gap={0} action="toggle">
         <text key="date" color="foreground">{days[now.getDay()]} {pad(now.getDate())} {months[now.getMonth()]}</text>
         <text key="time" color="bright_foreground" width={51} padding={[0, 0, 0, 16]}>{pad(now.getHours())}:{pad(now.getMinutes())}</text>
       </row>
     );
+  },
+
+  onAction(action) {
+    if (action === "toggle") host.toggle();
   },
 } satisfies Gary.BarWidget;

@@ -1,4 +1,4 @@
-import type { Topic } from "./topic";
+import { Effect, Stream, host, topic } from "gary:effect";
 
 const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -6,6 +6,30 @@ const width = 7 * 28 + 6 * 2;
 
 let offset = 0;
 let travel = 0;
+let events: readonly Gary.CalendarEvent[] | null = null;
+let reason: string | null = null;
+
+const fetchToday = Effect.fn("Clock.fetchToday")(
+  function* ([calendar, day]: [Gary.CalendarChange, Date]) {
+    if (!calendar.available) {
+      reason = calendar.reason ?? "Calendar is unavailable";
+      return;
+    }
+    const end = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    events = yield* host.calendar.events(day.getTime(), end.getTime());
+    reason = null;
+  },
+  Effect.catchTag("HostError", (error) => Effect.sync(() => void (reason = error.message))),
+);
+
+function startOfDay(clock: Gary.Clock) {
+  const now = new Date(clock.epoch);
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function time(event: Gary.CalendarEvent) {
+  return event.allDay ? "all day" : new Date(event.start).toTimeString().slice(0, 5);
+}
 
 function day(date: Date, month: number, today: Date): Gary.Node {
   const current = date.toDateString() === today.toDateString();
@@ -25,15 +49,15 @@ function day(date: Date, month: number, today: Date): Gary.Node {
   );
 }
 
-function events(calendar: Topic | undefined): Gary.Node | null {
-  if (!calendar) return null;
-  if (!calendar.available) return <text key="reason" style="dim">{calendar.reason}</text>;
-  if (calendar.events.length === 0) return <text key="none" style="dim">No events today</text>;
+function agenda(): Gary.Node | null {
+  if (reason) return <text key="reason" style="dim">{reason}</text>;
+  if (!events) return null;
+  if (events.length === 0) return <text key="none" style="dim">No events today</text>;
   return (
     <column key="events" gap={4} width={width}>
-      {calendar.events.map((event, index) => (
-        <row key={String(index)} gap={10}>
-          <text font="mono" color="dim" width={52}>{event.time ?? "all day"}</text>
+      {events.map((event) => (
+        <row key={`${event.id}@${event.start}`} gap={10}>
+          <text font="mono" color="dim" width={52}>{time(event)}</text>
           <text>{event.title}</text>
         </row>
       ))}
@@ -43,6 +67,11 @@ function events(calendar: Topic | undefined): Gary.Node | null {
 
 export default {
   surface: { attach: true, margins: { top: 6, right: 8 }, anchors: { top: true, right: true } },
+
+  effect: Stream.zipLatestAll(
+    topic("calendar"),
+    topic("clock").pipe(Stream.map(startOfDay), Stream.changesWith((a, b) => a.getTime() === b.getTime())),
+  ).pipe(Stream.runForEach(fetchToday)),
 
   render(state) {
     const today = new Date(state.clock?.epoch ?? Date.now());
@@ -61,7 +90,7 @@ export default {
           {weekdays.map((name, index) => <text key={`w${index}`} style="dim" width={28} align="center">{name}</text>)}
           {dates.map((date) => day(date, first.getMonth(), today))}
         </grid>
-        {events(state["sndrgrdn.calendar"])}
+        {agenda()}
       </column>
     );
   },

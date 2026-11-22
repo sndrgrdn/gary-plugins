@@ -5,9 +5,8 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 ![The bar with Dinky and Front App on the left, and Weather, Battery and Clock on the right](bar.png)
 
 - [`sndrgrdn.battery`](sndrgrdn.battery) shows the battery level in the bar.
-- [`sndrgrdn.calendar`](sndrgrdn.calendar) shows the date and time in the bar, like Clock, and opens a month calendar with today's events from icalBuddy when you click it.
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text you copy, and pastes an earlier entry from a menu on ⌘⇧V.
-- [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar.
+- [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar, and opens a month calendar with today's events from the Calendar app when you click it.
 - [`sndrgrdn.control-center`](sndrgrdn.control-center) opens Wi‑Fi, Bluetooth, Focus, volume and brightness controls from the bar, and shows a pill when you press the volume or brightness keys.
 - [`sndrgrdn.dinky`](sndrgrdn.dinky) shows the workspaces of the [dinky](https://github.com/mikker/Dinky) window manager in the bar.
 - [`sndrgrdn.focus-timer`](sndrgrdn.focus-timer) counts down focus and break sessions in the bar, with a panel to start them and a sound at the end.
