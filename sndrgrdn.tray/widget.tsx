@@ -1,6 +1,6 @@
 import { Effect, Queue, Schema, Stream, host, settings } from "gary:effect";
 
-const height = 30;
+const slot = 28;
 const hidden = Schema.decodeUnknownSync(Schema.Array(Schema.String))(settings.hide ?? ["com.apple."]);
 const collapseAfter = Schema.decodeUnknownSync(Schema.Number)(settings.collapseAfter ?? 5);
 const touches = Effect.runSync(Queue.unbounded<void>());
@@ -11,7 +11,7 @@ function TrayItem({ item }: { item: Gary.TrayItem }) {
   const tooltip = item.description ?? item.title ?? item.name;
   const actions = { action: item.id, rightAction: `right:${item.id}`, tooltip };
   if (!item.icon) return <text key={item.id} {...actions} color="foreground">{item.title ?? item.name}</text>;
-  return <image key={item.id} {...actions} path={item.icon} width={Math.round((item.width * height) / item.height)} height={height} color="foreground" />;
+  return <image key={item.id} {...actions} path={item.icon} width={slot * Math.max(1, Math.round(item.width / item.height))} height={slot} fit="fit" color="foreground" />;
 }
 
 export default {
@@ -29,8 +29,8 @@ export default {
     const items = tray?.items ?? [];
     if (items.length === 0) return <row />;
     return (
-      <row animation="smooth" duration={0.3}>
-        <icon key="drawer" symbol={open ? "chevron.right" : "chevron.left"} action="toggle" tooltip={open ? "Hide tray" : "Show tray"} fontSize={10} width={14} height={height} style="dim" hovered={{ color: "foreground" }} />
+      <row animation="smooth" duration={0.3} gap={0}>
+        <icon key="drawer" symbol={open ? "chevron.right" : "chevron.left"} action="toggle" tooltip={open ? "Hide tray" : "Show tray"} fontSize={10} width={slot} height={slot} style="dim" hovered={{ color: "foreground" }} />
         {open && items.map((item) => <TrayItem item={item} />)}
       </row>
     );

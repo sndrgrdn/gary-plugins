@@ -7,6 +7,7 @@ Shows the menu bar icons of other apps, such as 1Password and Tailscale, in a dr
 - Closed, the drawer shows one chevron. Clicking it shows the icons beside it, and clicking it again hides them.
 - The drawer closes by itself 5 seconds after the last click on the chevron or an icon.
 - Each icon is drawn in the theme's foreground color, whatever colors the app uses.
+- The chevron and each icon sit in a 28pt slot, the width of the bar's other icons, so the open drawer keeps their pitch. An icon about twice as wide as it is tall, such as Amp's, takes two slots.
 - Clicking an icon opens that app's own menu, and right-clicking it opens the menu the app shows on a right click. Gary briefly reveals the macOS menu bar to open it.
 - Resting the pointer on an icon shows the app's description of it, or the app's name.
 - It follows Gary's `tray` topic, which refreshes every 2 seconds.
