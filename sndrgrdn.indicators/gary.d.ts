@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
-  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
-  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
+  type StyleName = (string & {});
+  type FontName = (string & {});
+  type ColorName = (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -173,6 +173,7 @@ declare namespace Gary {
     colors: { [name: string]: string };
     palette: { [name: string]: string };
     spacing: { item: number; section: number; edge: number };
+    radius: { control: number; surface: number };
   }
   interface Topics {
     "sndrgrdn.focus-timer": import("../sndrgrdn.focus-timer/topic").Topic;
@@ -214,7 +215,7 @@ declare namespace Gary {
     show(surface?: string): void;
     hide(surface?: string): void;
     toggle(surface?: string): void;
-    call(...call: [method: string, ...args: string[]] | [target: { kind: Kind }, method: string, ...args: string[]]): Promise<Json | undefined>;
+    call(...call: [method: string, ...args: string[]] | [target: { plugin?: string; kind?: Kind }, method: string, ...args: string[]]): Promise<Json | undefined>;
   }
 
   interface HandlerResults { none: void }

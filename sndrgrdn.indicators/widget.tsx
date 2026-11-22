@@ -1,6 +1,7 @@
 import { Stream, host, topic } from "gary:effect";
+import type { Effect, HostError } from "gary:effect";
 
-type Indicator = { key: string; glyph: string; tooltip: string; text?: string; owner?: string };
+type Indicator = { key: string; glyph: string; tooltip: string; text?: string; click?: Effect.Effect<unknown, HostError> };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -11,21 +12,23 @@ function remaining(endsAt: number) {
   return hours ? `${hours}:${clock}` : clock;
 }
 
+const menuCommand = (command: string) => host.call({ plugin: "sndrgrdn.menu" }, "run", command);
+
 function active(state: Gary.State): Indicator[] {
   const menu = state["sndrgrdn.menu"];
   const session = state["sndrgrdn.focus-timer"]?.session;
   const focus = state.focus;
   return [
-    menu?.recording && { key: "recording", glyph: "\u{F0EC2}", tooltip: "Screen recording", owner: "sndrgrdn.menu" },
+    menu?.recording && { key: "recording", glyph: "\u{F0EC2}", tooltip: "Stop recording", click: menuCommand("record-stop") },
     session && {
       key: "timer",
       glyph: session.mode === "focus" ? "\u{F13AB}" : "\u{F0176}",
       tooltip: session.mode === "focus" ? "Focus session" : "Break",
       text: remaining(session.endsAt),
-      owner: "sndrgrdn.focus-timer",
+      click: host.toggle("sndrgrdn.focus-timer"),
     },
     focus?.active && { key: "focus", glyph: "\u{F009B}", tooltip: focus.name ?? "Do Not Disturb" },
-    menu?.awake && { key: "awake", glyph: "\u{EF59}", tooltip: "Staying awake", owner: "sndrgrdn.menu" },
+    menu?.awake && { key: "awake", glyph: "\u{EF59}", tooltip: "Staying awake; click to allow sleep", click: menuCommand("awake") },
   ].filter((indicator) => !!indicator);
 }
 
@@ -40,8 +43,8 @@ export default {
     if (!indicators.length) return null;
     return (
       <row gap={0} padding={[0, 4]}>
-        {indicators.map(({ key, glyph, tooltip, text, owner }) => (
-          <row key={key} gap={4} tooltip={tooltip} action={owner && key}>
+        {indicators.map(({ key, glyph, tooltip, text, click }) => (
+          <row key={key} gap={4} tooltip={tooltip} action={click && key}>
             <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
             {text !== undefined && <text key="text" color="foreground">{text}</text>}
           </row>
@@ -51,7 +54,6 @@ export default {
   },
 
   onAction(action, _payload, state) {
-    const owner = active(state).find(({ key }) => key === action)?.owner;
-    if (owner) return host.toggle(owner);
+    return active(state).find(({ key }) => key === action)?.click;
   },
 } satisfies Gary.BarWidget;
