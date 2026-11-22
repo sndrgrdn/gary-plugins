@@ -3,16 +3,32 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-usage: scripts/screenshot.sh <out.png> [<plugin>/<kind> <action>]
+usage: scripts/screenshot.sh [--window] [--keys "<key>..."] [--crop <x>,<width>] <out.png> [<plugin>/<kind> <action>]
 
 Captures a README screenshot in the theme named in scripts/screenshot-theme,
 on an empty dinky workspace, then restores the theme and the workspace.
 With an action, it clicks that action with `gary action` and captures the
-surface that opens; without one, it captures the bar.
+surface that opens; without one, it captures the bar. Name a plugin alone,
+with no action, to summon it instead of clicking.
+--window opens a Finder window on the empty workspace, so Front App has an app to show.
+--keys presses keys in the opened surface with `gary key` before the capture.
+--crop captures only the bar between x and x+width, in points, which is the
+frame `gary action` prints for a node; the bar's action, if any, is still clicked.
 EOF
 }
 
-[[ $# -eq 1 || $# -eq 3 ]] || { usage >&2; exit 2; }
+keys=
+crop=
+window=
+while [[ ${1:-} == --* ]]; do
+    case $1 in
+        --keys) keys=${2:?}; shift 2 ;;
+        --window) window=1; shift ;;
+        --crop) crop=${2:?}; shift 2 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+done
+[[ $# -eq 1 || $# -eq 2 || $# -eq 3 ]] || { usage >&2; exit 2; }
 out=$1
 target=${2:-}
 action=${3:-}
@@ -41,7 +57,10 @@ empty_workspace=$(dinky list-workspaces --monitor focused --empty | head -1)
 
 opened=
 restore() {
-    [[ -n $opened ]] && gary action "$target" "$action" >/dev/null 2>&1 || true
+    [[ -n $window ]] && osascript -e 'tell application "Finder" to close front window' >/dev/null 2>&1 || true
+    if [[ -n $opened ]]; then
+        if [[ -n $action ]]; then gary action "$target" "$action" >/dev/null 2>&1 || true; else gary hide "$target" >/dev/null 2>&1 || true; fi
+    fi
     [[ $theme != "$current_theme" ]] && gary call sndrgrdn.theme set "$current_theme" >/dev/null
     dinky workspace "$current_workspace" >/dev/null
 }
@@ -49,15 +68,23 @@ trap restore EXIT
 
 dinky workspace "$empty_workspace" >/dev/null
 [[ $theme != "$current_theme" ]] && { gary call sndrgrdn.theme set "$theme" >/dev/null; sleep 3; }
+[[ -n $window ]] && { osascript -e 'tell application "Finder" to make new Finder window' >/dev/null; sleep 1; }
 sleep 1
 
-if [[ -z $target ]]; then
-    screencapture -x -R0,0,"$(osascript -l JavaScript -e 'ObjC.import("AppKit"); $.NSScreen.mainScreen.frame.size.width')",32 "$out"
-else
-    before=$(windows)
-    gary action "$target" "$action" >/dev/null
+width=$(osascript -l JavaScript -e 'ObjC.import("AppKit"); $.NSScreen.mainScreen.frame.size.width')
+before=$(windows)
+if [[ -n $target ]]; then
+    if [[ -n $action ]]; then gary action "$target" "$action" >/dev/null; else gary summon "$target" >/dev/null; fi
     opened=1
-    sleep 1.5
+    sleep 3
+    [[ -n $keys ]] && { gary key "${target%%/*}" $keys >/dev/null; sleep 1; }
+fi
+
+if [[ -n $crop ]]; then
+    screencapture -x -R"${crop%,*}",0,"${crop#*,}",32 "$out"
+elif [[ -z $target ]]; then
+    screencapture -x -R0,0,"$width",32 "$out"
+else
     id=$(comm -13 <(sort <<<"$before") <(windows | sort) | head -1)
     [[ -n $id ]] || { echo "no new Gary window after $target $action" >&2; exit 1; }
     screencapture -x -o -l"$id" "$out"
