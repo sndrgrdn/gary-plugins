@@ -30,4 +30,4 @@ export default {
       </column>
     );
   },
-} satisfies Gary.Panel;
+} satisfies Gary.Menu;

@@ -107,4 +107,4 @@ export default {
     if (action === "toggle") run(host.nowplaying.toggle());
     if (action === "next") run(host.nowplaying.next());
   },
-} satisfies Gary.Panel;
+} satisfies Gary.Menu;

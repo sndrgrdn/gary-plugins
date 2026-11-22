@@ -4,8 +4,8 @@
   "id": "sndrgrdn.weather",
   "name": "Weather",
   "version": "0.2.0",
-  "kinds": ["bar-widget", "panel"],
-  "entryPoints": { "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "kinds": ["bar-widget", "menu"],
+  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx" },
   "subscribes": ["session", "sndrgrdn.weather"],
   "uses": ["network"]
 }

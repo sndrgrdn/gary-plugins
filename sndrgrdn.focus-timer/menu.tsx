@@ -57,4 +57,4 @@ export default {
     if (action !== "focus" && action !== "break") return;
     return state["sndrgrdn.focus-timer"]?.session?.mode === action ? call("stop") : call("start", action);
   },
-} satisfies Gary.Panel;
+} satisfies Gary.Menu;

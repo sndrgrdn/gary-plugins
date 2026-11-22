@@ -112,4 +112,4 @@ export default {
     offset -= Math.sign(travel);
     travel = 0;
   },
-} satisfies Gary.Panel;
+} satisfies Gary.Menu;
