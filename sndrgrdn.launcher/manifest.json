@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.launcher",
+  "name": "Launcher",
+  "version": "0.1.0",
+  "kinds": ["menu"],
+  "entryPoints": { "menu": "menu.tsx" },
+  "uses": ["apps", "files"],
+  "keepLoaded": true,
+  "hotkeys": [{ "id": "open", "keys": "alt+space" }]
+}
