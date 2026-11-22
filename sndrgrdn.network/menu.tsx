@@ -2,9 +2,11 @@ import { Effect, Stream, host as lifted, topic } from "gary:effect";
 import type { HostError } from "gary:effect";
 
 type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 
 const width = 320;
 const rowHeight = 32;
+const headerHeight = 24;
 const visibleRows = 8;
 const checkWidth = 18;
 
@@ -61,6 +63,18 @@ function status(wifi: Gary.WiFi | undefined) {
   return null;
 }
 
+function rowRadius({ radius, spacing }: Theme) {
+  return Math.max(0, radius.surface - spacing.item);
+}
+
+function Divider({ name, theme }: { name: string; theme: Theme }) {
+  return (
+    <row key={name} height={0}>
+      <row key="line" height={1} width={width - 2 * theme.spacing.item} background="border" />
+    </row>
+  );
+}
+
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
   return (
     <row key="switch" width={36} height={20} radius={10} padding={2} background={on ? "foreground" : "control"} action={action} tooltip={tooltip} animation="smooth">
@@ -70,15 +84,17 @@ function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip:
 }
 
 function Header({ title, spacing }: { title: string; spacing: Spacing }) {
-  return <text key={title} fontSize={11} font="strong" color="dim" height={24} padding={[0, spacing.item]}>{title.toUpperCase()}</text>;
+  return <text key={title} fontSize={11} font="strong" color="dim" height={headerHeight} padding={[0, spacing.item]}>{title.toUpperCase()}</text>;
 }
 
 function Detail({ label, value, width }: { label: string; value: string; width: number }) {
   return (
-    <column key={label} gap={0} width={width}>
-      <text key="label" fontSize={11} color="dim">{label}</text>
-      <text key="value" color="bright">{value}</text>
-    </column>
+    <row key={label} width={width} height={rowHeight}>
+      <column key="text" gap={0}>
+        <text key="label" fontSize={11} color="dim">{label}</text>
+        <text key="value" color="bright">{value}</text>
+      </column>
+    </row>
   );
 }
 
@@ -99,12 +115,13 @@ function details(wifi: Gary.WiFi, spacing: Spacing) {
   );
 }
 
-function Network({ network, state, spacing }: { network: Gary.WiFiNetwork; state: Gary.State; spacing: Spacing }) {
+function Network({ network, state }: { network: Gary.WiFiNetwork; state: Gary.State }) {
+  const { spacing } = state.theme;
   const ssid = network.ssid ?? "";
   const current = ssid === state.wifi?.ssid;
   const pending = busy === ssid;
   return (
-    <row key={ssid} height={rowHeight} padding={[0, spacing.item]} radius={6} action={`join:${ssid}`} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
+    <row key={ssid} height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action={`join:${ssid}`} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
       <icon
         key="icon"
         symbol={pending ? "arrow.triangle.2.circlepath" : "wifi"}
@@ -120,21 +137,22 @@ function Network({ network, state, spacing }: { network: Gary.WiFiNetwork; state
   );
 }
 
-function list(state: Gary.State, spacing: Spacing) {
+function list(state: Gary.State) {
+  const { spacing } = state.theme;
   if (state.wifi?.location !== "authorized") {
     return (
-      <row key="location" height={rowHeight} padding={[0, spacing.item]} radius={6} action="location" hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
+      <row key="location" height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action="location" hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
         <icon key="icon" symbol="location" width={checkWidth} color="dim" />
         <text key="text">Allow Location to see network names</text>
       </row>
     );
   }
-  if (networks === null) return <text key="scanning" fontSize={11} font="strong" color="dim" height={rowHeight} padding={[0, spacing.item]}>SCANNING WI‑FI…</text>;
+  if (networks === null) return <text key="scanning" color="dim" height={rowHeight} padding={[0, spacing.item]}>Scanning Wi‑Fi…</text>;
   const found = strongest(state);
   const known = found.filter((network) => network.known);
   const other = found.filter((network) => !network.known);
   const rows = (each: Gary.WiFiNetwork) => {
-    const row = <Network network={each} state={state} spacing={spacing} />;
+    const row = <Network network={each} state={state} />;
     if (secret !== each.ssid) return [row];
     return [row, <input key="password" placeholder={`Password for ${secret}`} submit="password" height={rowHeight} padding={[0, 2 * spacing.item + checkWidth]} />];
   };
@@ -149,7 +167,7 @@ function list(state: Gary.State, spacing: Spacing) {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
 
   effect: Effect.all([
     scan,
@@ -161,15 +179,16 @@ export default {
   ], { concurrency: "unbounded" }),
 
   render(state) {
-    const { spacing } = state.theme;
+    const { theme } = state;
+    const { spacing } = theme;
     const wifi = state.wifi;
     const on = wifi?.power === true;
     const label = status(wifi);
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
-        <row key="hero" padding={spacing.item}>
+        <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
           <icon key="icon" symbol={on ? "wifi" : "wifi.slash"} fontSize={20} width={28} color={wifi?.connected ? "bright" : "dim"} />
-          <column key="labels" gap={2}>
+          <column key="labels" gap={0}>
             <text key="title" style="title">{wifi?.connected && wifi.ssid ? wifi.ssid : "Wi‑Fi"}</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
           </column>
@@ -177,8 +196,8 @@ export default {
           {wifi?.available ? <Switch on={on} action="power" tooltip={on ? "Turn Wi‑Fi off" : "Turn Wi‑Fi on"} /> : null}
         </row>
         {wifi?.connected ? details(wifi, spacing) : null}
-        <row key="divider" height={1} width={width - 2 * spacing.item} background="border" />
-        {on ? list(state, spacing) : <text key="off" color="dim" height={rowHeight} padding={[0, spacing.item]}>Turn Wi‑Fi on to see networks</text>}
+        <Divider name="divider" theme={theme} />
+        {on ? list(state) : <text key="off" color="dim" height={rowHeight} padding={[0, spacing.item]}>Turn Wi‑Fi on to see networks</text>}
         {problem ? <text key="problem" style="bad" fontSize={11} padding={[0, spacing.item]}>{problem}</text> : null}
       </column>
     );
