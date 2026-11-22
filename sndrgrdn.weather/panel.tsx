@@ -1,12 +1,10 @@
 const width = 272;
-const label = 28;
 
 export default {
   surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
 
   render(state) {
     const weather = state["sndrgrdn.weather"];
-    const marks = weather?.hours.filter((_, index) => index % 3 === 0) ?? [];
     return (
       <column padding={14} gap={10} width={width + 28}>
         <row key="now" gap={12}>
@@ -19,22 +17,12 @@ export default {
         {weather && (
           <chart
             key="chart"
-            width={width - label}
-            height={64}
-            x={label / 2}
+            width={width}
+            height={96}
+            fontSize={11}
             series={[{ values: weather.hours.map((hour) => hour.temperature), color: "foreground", smooth: true }]}
+            labels={weather.hours.map((hour, index) => (index % 3 === 0 ? `${Math.round(hour.temperature)}°\n${hour.hour}` : ""))}
           />
-        )}
-        {weather && (
-          <row key="hours">
-            {marks.map((mark, index) => [
-              index > 0 && <spacer key={`gap-${mark.hour}`} />,
-              <column key={mark.hour} width={label} gap={2}>
-                <text key="temperature" width={label} align="center" fontSize={11}>{`${Math.round(mark.temperature)}°`}</text>
-                <text key="hour" width={label} align="center" fontSize={11} style="dim">{mark.hour}</text>
-              </column>,
-            ])}
-          </row>
         )}
       </column>
     );

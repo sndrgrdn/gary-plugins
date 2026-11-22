@@ -74,6 +74,6 @@ export default {
   },
 
   onAction() {
-    Effect.runSync(host.toggle());
+    return host.toggle();
   },
 } satisfies Gary.BarWidget;

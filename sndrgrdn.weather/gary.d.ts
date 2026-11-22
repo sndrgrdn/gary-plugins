@@ -2,14 +2,14 @@ declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
   type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
-  interface ScrollEvent {
+  type ScrollEvent = {
     x: number;
     y: number;
     precise: boolean;
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "tooltip" | (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
   type FontName = "body" | "mono" | "strong" | "title" | (string & {});
   type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
@@ -37,6 +37,8 @@ declare namespace Gary {
     colorScheme?: "dark" | "light";
     transition?: "opacity" | "scale" | "none";
     fit?: "fit" | "fill";
+    lines?: number;
+    truncate?: "tail" | "middle" | "head";
     clip?: boolean;
     shadow?: { color: Color; radius?: number; y?: number };
     border?: { color: Color; width?: number };
@@ -94,10 +96,15 @@ declare namespace Gary {
   interface Slider extends Style {
     type: "slider";
     value: number;
+    rate?: number;
+    at?: number;
+    release?: string;
   }
   interface Progress extends Style {
     type: "progress";
     value: number;
+    rate?: number;
+    at?: number;
   }
   interface Input extends Style {
     type: "input";
@@ -120,6 +127,7 @@ declare namespace Gary {
     min?: number;
     max?: number;
     axes?: boolean;
+    labels?: string[];
   }
   interface Grid extends Style {
     type: "grid";
@@ -150,7 +158,7 @@ declare namespace Gary {
     interface IntrinsicElements extends Elements {}
   }
 
-  interface Display {
+  type Display = {
     id: string;
     index: number;
     main: boolean;
@@ -159,7 +167,8 @@ declare namespace Gary {
     notched: boolean;
     notch: { left: number; right: number } | null;
   }
-  interface Theme {
+  type ScreenArea = { display?: string | null } | { window: number } | { x: number; y: number; width: number; height: number };
+  type Theme = {
     mode: "light" | "dark";
     colors: { [name: string]: string };
     palette: { [name: string]: string };
@@ -203,17 +212,21 @@ declare namespace Gary {
     show(surface?: string): void;
     hide(surface?: string): void;
     toggle(surface?: string): void;
-    call(method: string, ...args: string[]): Promise<Json | undefined>;
+    call(...call: [method: string, ...args: string[]] | [target: { kind: Kind }, method: string, ...args: string[]]): Promise<Json | undefined>;
   }
 
+  interface HandlerResults { none: void }
+  type HandlerResult = HandlerResults[keyof HandlerResults];
+  interface MethodResults { json: Json | void | Promise<Json | void> }
+  type MethodResult = MethodResults[keyof MethodResults];
   interface Module {
     render?(state: State): Node;
-    onAction?(action: string, payload: ActionPayload, state: State): void;
-    onKey?(key: Key, state: State): boolean | void;
-    onScroll?(event: ScrollEvent, state: State): void;
-    onHotkey?(id: string, state: State): void;
-    onTopic?(event: TopicEvent, state: State): void;
-    methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
+    onAction?(action: string, payload: ActionPayload, state: State): HandlerResult;
+    onKey?(key: Key, state: State): boolean | HandlerResult;
+    onScroll?(event: ScrollEvent, state: State): HandlerResult;
+    onHotkey?(id: string, state: State): HandlerResult;
+    onTopic?(event: TopicEvent, state: State): HandlerResult;
+    methods?: { [name: string]: (...args: string[]) => MethodResult };
     surface?: SurfaceExport;
     surfaces?: { [name: string]: SurfaceExport };
   }
@@ -235,17 +248,19 @@ declare function setInterval(callback: (...args: any[]) => void, ms?: number, ..
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
-  interface FetchResponse { status: number; text: string }
+  type FetchResponse = { status: number; text: string }
 }
 declare function fetch(url: string): Promise<Gary.FetchResponse>;
 declare namespace Gary {
-  interface Session { locked: boolean }
+  type Session = { locked: boolean }
 }
 
 declare namespace Gary {
   interface Module {
     effect?: import("effect").Effect.Effect<void, unknown, import("effect").Scope.Scope>;
   }
+  interface HandlerResults { effect: import("effect").Effect.Effect<unknown, unknown> }
+  interface MethodResults { effect: import("effect").Effect.Effect<Json | void, unknown> }
 }
 
 declare module "gary:effect" {
@@ -261,7 +276,9 @@ declare module "gary:effect" {
   type Lift<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => E.Effect<Awaited<R>, HostError>
     : { readonly [K in keyof T]: Lift<T[K]> };
-  export const host: Lift<Gary.Host>;
+  export const host: {
+    readonly [K in keyof Gary.Host]: K extends "spawn" ? (argv: string[]) => S.Stream<string, HostError> : Lift<Gary.Host[K]>;
+  };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
   export const settings: Gary.State["settings"];
   export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;
