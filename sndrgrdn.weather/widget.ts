@@ -1,14 +1,14 @@
 type Weather = { icon: string; temperature: string };
 
-const icons: [RegExp, string][] = [
-  [/thunder|lightning/, "cloud.bolt.rain"],
-  [/sleet|freez|hail|ice/, "cloud.sleet"],
-  [/snow|blizzard|flurr/, "cloud.snow"],
-  [/rain|drizzle|shower/, "cloud.rain"],
-  [/fog|mist|haze/, "cloud.fog"],
-  [/partly/, "cloud.sun"],
-  [/cloud|overcast/, "cloud"],
-  [/clear|sunny/, "sun.max"],
+const icons: [number[], string][] = [
+  [[95, 96, 99], "cloud.bolt.rain"],
+  [[56, 57, 66, 67], "cloud.sleet"],
+  [[71, 73, 75, 77, 85, 86], "cloud.snow"],
+  [[51, 53, 55, 61, 63, 65, 80, 81, 82], "cloud.rain"],
+  [[45, 48], "cloud.fog"],
+  [[1, 2], "cloud.sun"],
+  [[3], "cloud"],
+  [[0], "sun.max"],
 ];
 const interval = 15 * 60_000;
 let weather: Weather | null = null;
@@ -16,30 +16,37 @@ let attempted = 0;
 let locked = false;
 
 function parse(output: string): Weather | null {
-  const match = output.replace(/−/g, "-").match(/^\s*([+-]?\d+(?:[.,]\d+)?)\s*°\s*C\s+and\s+(.*\S)\s*$/i);
-  if (!match) return null;
-  const condition = match[2].toLowerCase();
-  return { temperature: match[1] + "°C", icon: icons.find(([pattern]) => pattern.test(condition))?.[1] ?? "cloud" };
+  try {
+    const current = JSON.parse(output)?.current;
+    if (typeof current?.temperature_2m !== "number" || typeof current?.weather_code !== "number") return null;
+    return {
+      temperature: Math.round(current.temperature_2m) + "°C",
+      icon: icons.find(([codes]) => codes.includes(current.weather_code))?.[1] ?? "cloud",
+    };
+  } catch {
+    return null;
+  }
 }
 
-function refresh() {
+function refresh(state?: Gary.State) {
   attempted = Date.now();
-  host.exec(["timeout", "30", "shortcuts", "run", "Current Weather", "--output-type", "public.plain-text"], (result) => {
+  const latitude = Number(state?.settings.latitude ?? 53.2);
+  const longitude = Number(state?.settings.longitude ?? 5.8);
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
+  host.exec(["curl", "-fsS", "--max-time", "20", url], (result) => {
     const parsed = result.status === 0 ? parse(result.stdout) : null;
     if (parsed) weather = parsed;
-    else host.log("Current Weather failed: " + (result.stderr.trim() || result.stdout.trim()));
+    else host.log("weather request failed: " + (result.stderr.trim() || result.stdout.trim()));
   });
 }
-
-refresh();
 
 module.exports = {
   onTopic(topic, _value, state) {
     if (topic === "session") {
-      if (locked && !state.session?.locked) setTimeout(refresh, 10_000);
+      if (locked && !state.session?.locked) setTimeout(() => refresh(state), 10_000);
       locked = state.session?.locked ?? false;
     } else if (Date.now() - attempted >= interval) {
-      refresh();
+      refresh(state);
     }
   },
 
