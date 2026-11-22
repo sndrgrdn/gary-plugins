@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = (string & {});
-  type FontName = (string & {});
-  type ColorName = (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
+  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
+  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -260,6 +260,21 @@ declare namespace Gary {
     quit(app: string): Promise<{ asked: number }>;
   }
 }
+declare namespace Gary {
+  type ClipboardChange = { count: number; types: string[]; access: "default" | "ask" | "always" | "never" }
+  type ClipboardContents = { count: number; text: string | null; image: string | null; files: string[] }
+  interface Host { clipboard: ClipboardApi }
+  interface ClipboardApi {
+    read(): Promise<ClipboardContents>;
+    writeText(text: string, concealed?: boolean): { count: number };
+    writeImage(path: string): { count: number };
+    writeFiles(paths: string[]): { count: number };
+  }
+}
+declare namespace Gary {
+  type FetchResponse = { status: number; text: string }
+}
+declare function fetch(url: string): Promise<Gary.FetchResponse>;
 
 declare namespace Gary {
   interface Module {
