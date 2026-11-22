@@ -1,6 +1,6 @@
 # Clipboard
 
-Keeps a history of the text you copy, and pastes an earlier entry into the app you were in.
+Keeps a history of the text, images and files you copy, and pastes an earlier entry into the app you were in.
 
 ![Clipboard menu with four entries, the newest selected](screenshot.png)
 
@@ -8,7 +8,8 @@ Keeps a history of the text you copy, and pastes an earlier entry into the app y
 - ↑ and ↓ move the selection. Return pastes the selected entry into the app you came from, and ⌫ removes it from the history.
 - Click an entry to paste it, or right-click it to remove it.
 - The history keeps the 50 newest entries and survives restarts. Copying an entry again moves it to the top.
-- It keeps text only. It skips images and files, text over 100,000 characters, and anything that a password manager marks as concealed or transient.
+- It skips text over 100,000 characters, and anything that a password manager marks as concealed or transient.
+- Gary saves a copied image as a PNG in the temporary folder, so macOS can delete it after a few days. Pasting an image whose file is gone fails, and the log says so.
 
 The plugin has two parts. A service watches the clipboard, keeps the history in Gary's storage, and publishes it as the `sndrgrdn.clipboard` topic. The menu draws that topic, and asks the service to paste or remove an entry.
 

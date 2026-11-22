@@ -1,7 +1,6 @@
 import type { Entry } from "./topic";
 
 const width = 440;
-const previewLength = 56;
 const opened = Date.now();
 
 let entries: Entry[] = [];
@@ -15,22 +14,28 @@ function age(copied: number) {
   return `${Math.floor(minutes / (24 * 60))}d`;
 }
 
-function preview(text: string) {
-  const line = text.replace(/\s+/g, " ").trim();
-  return line.length > previewLength ? line.slice(0, previewLength - 1) + "…" : line;
+function Preview({ entry }: { entry: Entry }) {
+  if ("image" in entry) return <image key="image" path={entry.image} width={64} height={36} fit="fill" radius={4} clip />;
+  const text = "text" in entry ? entry.text.replace(/\s+/g, " ").trim() : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
+  return (
+    <row key="text" gap={6}>
+      {"files" in entry && <icon key="icon" symbol="doc" style="dim" />}
+      <text key="text" lines={1}>{text}</text>
+    </row>
+  );
 }
 
 function paste(index: number) {
   const entry = entries[index];
   if (!entry) return;
-  host.call("paste", entry.text).catch((error) => host.log(`paste failed: ${error}`));
+  host.call("paste", String(entry.copied)).catch((error) => host.log(`paste failed: ${error}`));
   host.hide();
 }
 
 function remove(index: number) {
   const entry = entries[index];
   if (!entry) return;
-  host.call("remove", entry.text).catch((error) => host.log(`remove failed: ${error}`));
+  host.call("remove", String(entry.copied)).catch((error) => host.log(`remove failed: ${error}`));
 }
 
 function row(entry: Entry, index: number) {
@@ -40,13 +45,12 @@ function row(entry: Entry, index: number) {
       gap={8}
       padding={[6, 8]}
       radius={6}
-      clip
       style={index === selected ? "selected" : undefined}
       hovered={{ background: "hover" }}
       action={`paste:${index}`}
       rightAction={`remove:${index}`}
     >
-      <text key="text" width={width - 76}>{preview(entry.text)}</text>
+      <Preview entry={entry} />
       <spacer key="gap" />
       <text key="age" style="dim">{age(entry.copied)}</text>
     </row>
