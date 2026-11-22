@@ -1,9 +1,11 @@
 # Tray
 
-Shows the menu bar icons of other apps, such as 1Password and Tailscale, in the bar. Gary's bar covers the macOS menu bar, so these icons are otherwise out of sight.
+Shows the menu bar icons of other apps, such as 1Password and Tailscale, in a drawer in the bar. Gary's bar covers the macOS menu bar, so these icons are otherwise out of sight.
 
-![Tray widget showing the icons of Hex, Amp, Rex, OrbStack, dinky, 1Password, Tailscale and CleanShot X](screenshot.png)
+![Tray drawer open, with its chevron and the icons of Hex, Amp, Rex, OrbStack, dinky, 1Password, Tailscale and CleanShot X](screenshot.png)
 
+- Closed, the drawer shows one chevron. Clicking it shows the icons beside it, and clicking it again hides them.
+- The drawer closes by itself 5 seconds after the last click on the chevron or an icon.
 - Each icon is drawn in the theme's foreground color, whatever colors the app uses.
 - Clicking an icon opens that app's own menu, and right-clicking it opens the menu the app shows on a right click. Gary briefly reveals the macOS menu bar to open it.
 - Resting the pointer on an icon shows the app's description of it, or the app's name.
@@ -15,6 +17,8 @@ Shows the menu bar icons of other apps, such as 1Password and Tailscale, in the 
 It uses Gary's `tray` capability, which needs Accessibility to list and press the items, and Screen Recording to capture their icons. Grant both to Gary with `gary onboarding`. Without Accessibility the widget shows a warning icon that names the problem. Without Screen Recording it shows each app's name instead of its icon.
 
 ## Settings
+
+`collapseAfter` is the number of seconds the drawer stays open after the last click, 5 by default.
 
 `hide` lists the items to leave out. Each entry is the start of an item id, which is the app's bundle id followed by `#1`, `#2`, and so on. To hide dinky's workspace number and keep Apple's items out, set this in `~/.config/gary/shell.json`:
 

@@ -1,8 +1,11 @@
-import { Effect, Schema, host, settings } from "gary:effect";
+import { Effect, Queue, Schema, Stream, host, settings } from "gary:effect";
 
 const height = 30;
 const hidden = Schema.decodeUnknownSync(Schema.Array(Schema.String))(settings.hide ?? ["com.apple."]);
+const collapseAfter = Schema.decodeUnknownSync(Schema.Number)(settings.collapseAfter ?? 5);
+const touches = Effect.runSync(Queue.unbounded<void>());
 let tray: Gary.Tray | null = null;
+let open = false;
 
 function TrayItem({ item }: { item: Gary.TrayItem }) {
   const tooltip = item.description ?? item.title ?? item.name;
@@ -12,16 +15,33 @@ function TrayItem({ item }: { item: Gary.TrayItem }) {
 }
 
 export default {
+  effect: Stream.fromQueue(touches).pipe(
+    Stream.debounce(`${collapseAfter} seconds`),
+    Stream.runForEach(() => Effect.sync(() => (open = false))),
+  ),
+
   onTopic({ topic, value }) {
     if (topic === "tray") tray = { ...value, items: value.items.filter((item) => !hidden.some((prefix) => item.id.startsWith(prefix))) };
   },
 
   render() {
     if (tray && !tray.available) return <icon symbol="exclamationmark.triangle" color="alpha(foreground, 0.5)" tooltip={tray.reason} />;
-    return <row>{(tray?.items ?? []).map((item) => <TrayItem item={item} />)}</row>;
+    const items = tray?.items ?? [];
+    if (items.length === 0) return <row />;
+    return (
+      <row animation="smooth" duration={0.3}>
+        <icon key="drawer" symbol={open ? "chevron.right" : "chevron.left"} action="toggle" tooltip={open ? "Hide tray" : "Show tray"} fontSize={10} width={14} height={height} style="dim" hovered={{ color: "foreground" }} />
+        {open && items.map((item) => <TrayItem item={item} />)}
+      </row>
+    );
   },
 
   onAction(action) {
+    Queue.offerUnsafe(touches, undefined);
+    if (action === "toggle") {
+      open = !open;
+      return;
+    }
     const [button, id] = action.startsWith("right:") ? (["right", action.slice(6)] as const) : (["left", action] as const);
     return host.tray.press(id, { button }).pipe(Effect.catchTag("HostError", (error) => host.log(`press failed: ${error.message}`)));
   },
