@@ -2,7 +2,7 @@
 
 A keyboard-driven main menu, like the Omarchy menu, opened from a snail in the bar or with ⌥⇧Space.
 
-![The Capture section of the menu, open below the snail in the bar](screenshot.png)
+![The Capture section of the menu, with Screenshot, Record, Text, QR Code and Color](screenshot.png)
 
 | Section | Rows |
 | --- | --- |

@@ -2,6 +2,8 @@
 
 Shows Bluetooth in the bar with Omarchy's icon, and opens Omarchy's Bluetooth panel below it: a switch to turn Bluetooth on or off, then your connected and paired devices.
 
+![Bluetooth menu with the switch on and the paired devices](screenshot.png)
+
 - The icon is off, on, or on with a device connected, as in Omarchy. Right-click it to turn Bluetooth on or off.
 - Click a device to connect or disconnect it. A connected device shows its battery level when it reports one.
 - Gary lists only paired devices, so the panel cannot scan for new devices, pair them or forget them. Pair a new device in System Settings.

@@ -2,7 +2,7 @@
 
 Shows the current temperature and conditions in the bar, from [Open-Meteo](https://open-meteo.com).
 
-![Weather widget showing a partly cloudy icon and 7°C](screenshot.png)
+![Weather menu with the temperature, conditions, and a chart of the forecast](screenshot.png)
 
 - The icon is Omarchy's Nerd Font glyph for the weather: sun, partly cloudy, cloud, fog, rain, snow or thunder, with the moon at night. The bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`.
 - It shows `--°C` until the first request succeeds.

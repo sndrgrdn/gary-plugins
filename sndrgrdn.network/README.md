@@ -2,6 +2,8 @@
 
 Shows Wi‑Fi in the bar with Omarchy's signal icon, and opens Omarchy's network panel below it: the network you are on with its details, and the networks nearby.
 
+![Network menu with the Wi‑Fi network, its signal, rate and address](screenshot.png)
+
 - The icon shows the signal in five steps, or Wi‑Fi off when it is off or not connected.
 - The panel shows the signal, rate, channel and noise of the network you are on, with this Mac's IP address and the gateway.
 - The switch turns Wi‑Fi on or off.

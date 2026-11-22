@@ -2,6 +2,8 @@
 
 Shows the battery in the bar with Omarchy's battery icon, and opens Omarchy's power panel below it with the battery's details and the system's load.
 
+![Power menu with the battery charge, its health, and the system load](screenshot.png)
+
 - The icon fills in tenths, shows a bolt while the Mac charges, and turns `bad` at 20% or less on battery.
 - The panel shows the battery's health, charge cycles, the time to empty or to full, and the rate it charges or drains at, from `ioreg`.
 - Below them it shows CPU and memory use and memory pressure, from Gary's `system` topic.

@@ -2,7 +2,7 @@
 
 Shows CPU use over the last 60 seconds as a sparkline in the bar, with the current CPU and memory use.
 
-![System Load widget showing a CPU sparkline, 4% CPU and 58% memory](screenshot.png)
+![System Load widget showing a CPU sparkline, 5% CPU and 59% memory](screenshot.png)
 
 - The sparkline draws one point every 2 seconds, from 0 to 100% CPU.
 - Memory counts what Activity Monitor calls Memory Used: app memory, wired memory and compressed memory.

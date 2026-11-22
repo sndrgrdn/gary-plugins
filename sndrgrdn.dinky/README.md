@@ -2,7 +2,7 @@
 
 Shows the workspaces of the [dinky](https://github.com/mikker/Dinky) window manager in the bar, one row per display.
 
-![Dinky widget showing the focused workspace as a glyph, then workspaces 2 to 5](screenshot.png)
+![Dinky widget showing workspaces 1 to 3, the focused workspace as a glyph, then workspace 5](screenshot.png)
 
 - The focused workspace shows a glyph for its layout: 󰝥 for scrolling and 󱓻 for every other layout. The others show their number.
 - Empty workspaces are dimmed.

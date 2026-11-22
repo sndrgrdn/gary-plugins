@@ -2,7 +2,7 @@
 
 Shows small icons in the bar while something is on, like the indicators next to Omarchy's clock. With nothing on, it draws nothing, though Gary still keeps the bar's gap between widgets for it.
 
-![Indicators showing a focus session with 28 seconds left, before the clock](screenshot.png)
+![Indicators showing a focus session with 01:37 left, and Do Not Disturb](screenshot.png)
 
 - **Screen recording**, a record icon, while `sndrgrdn.menu` records the screen.
 - **Focus timer**, a stopwatch and the time left, while a `sndrgrdn.focus-timer` session runs. A break shows a cup instead of the stopwatch.

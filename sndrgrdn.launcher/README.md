@@ -2,7 +2,7 @@
 
 Opens apps from a picker, like [Walker](https://github.com/abenz1267/walker) in [Omarchy](https://github.com/basecamp/omarchy).
 
-![Launcher: a search field with "saf" typed, and Safari selected below it, over the dimmed desktop](screenshot.png)
+![Launcher: a search field with "saf" typed, and Safari selected below it](screenshot.png)
 
 ## Use
 

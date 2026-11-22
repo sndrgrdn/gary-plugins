@@ -2,7 +2,7 @@
 
 Counts down a focus or break session in the bar, with a ring that empties as time runs out.
 
-![Focus timer in the bar with 9 seconds left, and its panel with the ring and the Focus and Break buttons](screenshot.png)
+![Focus timer menu with a ring that is nearly full, 01:47 left, and the Focus and Break buttons](screenshot.png)
 
 - The bar shows the time left. Scroll over it to add or remove 5 minutes. Scrolling up with no session running starts a 5-minute focus session.
 - Click it to open the panel. Focus starts 25 minutes and Break starts 5 minutes. Click the lit button again to stop.

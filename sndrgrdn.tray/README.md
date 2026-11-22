@@ -2,7 +2,7 @@
 
 Shows the menu bar icons of other apps, such as 1Password and Tailscale, in a drawer in the bar. Gary's bar covers the macOS menu bar, so these icons are otherwise out of sight.
 
-![Tray drawer open, with its chevron and the icons of Hex, Amp, Rex, OrbStack, dinky, 1Password, Tailscale and CleanShot X](screenshot.png)
+![Tray drawer open, with its chevron and the icons of the apps in the menu bar](screenshot.png)
 
 - Closed, the drawer shows one chevron. Clicking it shows the icons beside it, and clicking it again hides them.
 - The drawer closes by itself 5 seconds after the last click on the chevron or an icon.

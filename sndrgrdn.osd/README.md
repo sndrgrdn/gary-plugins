@@ -2,6 +2,8 @@
 
 Takes over the volume, mute and brightness keys and shows the level in a card near the bottom of the screen, like Omarchy's on-screen display.
 
+![OSD card with the volume at 25%](screenshot.png)
+
 - Each key changes the level in steps of 1/16, like macOS, and the card shows the new level at once, before the change reaches the system.
 - Presses in quick succession each count, so five presses of volume up add five steps.
 - The card shows a Nerd Font icon, a bar, and the level as a percentage. Muted shows the muted icon with the level that unmuting returns to, as Omarchy does.

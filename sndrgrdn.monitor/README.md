@@ -2,6 +2,8 @@
 
 Shows a display icon in the bar, as Omarchy does, and opens Omarchy's monitor panel below it with a brightness slider for each display whose brightness Gary can set.
 
+![Monitor menu with the display brightness slider](screenshot.png)
+
 - The icon shows two screens when more than one display is connected.
 - Scroll over the icon to change the brightness of the built-in display.
 - Gary sets the brightness of the built-in display and of external displays that support DDC. It cannot change text size or scaling, or turn a display on or off, so the panel leaves those out.

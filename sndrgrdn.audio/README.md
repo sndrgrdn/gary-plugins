@@ -2,6 +2,8 @@
 
 Shows the volume in the bar with Omarchy's speaker icon, and opens Omarchy's audio panel below it: a switch that mutes everything, then the output and the input, each with a volume slider and its devices.
 
+![Audio menu with the output and input volume sliders and their devices](screenshot.png)
+
 - The icon shows the volume in three steps, muted, or headphones when the output is headphones.
 - Right-click the icon to mute or unmute the output and the input. Scroll over it to change the volume.
 - Click a device to make it the output or the input. Right-click a slider to mute or unmute that side.

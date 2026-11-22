@@ -2,7 +2,7 @@
 
 Shows the date and the time in the bar, such as `Sun 22 Nov  13:45`. Click it to open a month calendar with today's events.
 
-![Clock widget showing Sun 22 Nov and 13:45](screenshot.png)
+![Clock calendar menu for November 2026, with today selected and no events](screenshot.png)
 
 - The time uses the 24-hour clock and updates every minute.
 - The time has a fixed width, so the widgets next to it don't shift when the minutes change.

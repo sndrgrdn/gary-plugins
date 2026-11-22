@@ -2,7 +2,7 @@
 
 Shows the icon and name of the focused app in the bar.
 
-![Front App widget showing the Amp icon and name](screenshot.png)
+![Front App widget showing the Finder icon and name](screenshot.png)
 
 - It takes the app from [Dinky](../sndrgrdn.dinky), so it follows dinky's focus rather than the macOS menu bar.
 - The icon is a glyph from `sketchybar-app-font`. `app_icons.tsv` maps app names to glyphs. A name that ends in `*` matches every app that starts with it, and the line without a name is the fallback.
