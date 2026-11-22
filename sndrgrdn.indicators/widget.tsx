@@ -1,6 +1,6 @@
 import { Stream, topic } from "gary:effect";
 
-type Indicator = { key: string; symbol: string; tooltip: string; text?: string };
+type Indicator = { key: string; glyph: string; tooltip: string; text?: string };
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -16,15 +16,15 @@ function active(state: Gary.State): Indicator[] {
   const session = state["sndrgrdn.focus-timer"]?.session;
   const focus = state.focus;
   return [
-    menu?.recording && { key: "recording", symbol: "record.circle", tooltip: "Screen recording" },
+    menu?.recording && { key: "recording", glyph: "\u{F0EC2}", tooltip: "Screen recording" },
     session && {
       key: "timer",
-      symbol: session.mode === "focus" ? "timer" : "cup.and.saucer",
+      glyph: session.mode === "focus" ? "\u{F13AB}" : "\u{F0176}",
       tooltip: session.mode === "focus" ? "Focus session" : "Break",
       text: remaining(session.endsAt),
     },
-    focus?.active && { key: "focus", symbol: focus.symbol ?? "moon.fill", tooltip: focus.name ?? "Do Not Disturb" },
-    menu?.awake && { key: "awake", symbol: "mug", tooltip: "Staying awake" },
+    focus?.active && { key: "focus", glyph: "\u{F009B}", tooltip: focus.name ?? "Do Not Disturb" },
+    menu?.awake && { key: "awake", glyph: "\u{EF59}", tooltip: "Staying awake" },
   ].filter((indicator) => !!indicator);
 }
 
@@ -39,10 +39,10 @@ export default {
     if (!indicators.length) return null;
     return (
       <row gap={state.theme.spacing.section}>
-        {indicators.map(({ key, symbol, tooltip, text }) => (
-          <row key={key} tooltip={tooltip}>
-            <icon symbol={symbol} color="foreground" />
-            {text !== undefined && <text color="foreground">{text}</text>}
+        {indicators.map(({ key, glyph, tooltip, text }) => (
+          <row key={key} gap={0} tooltip={tooltip}>
+            <text key="glyph" fontSize={13} color="foreground">{`${glyph} `}</text>
+            {text !== undefined && <text key="text" color="foreground">{text}</text>}
           </row>
         ))}
       </row>

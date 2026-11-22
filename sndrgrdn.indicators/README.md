@@ -5,11 +5,11 @@ Shows small icons in the bar while something is on, like the indicators next to 
 ![Indicators showing a focus session with 28 seconds left, before the clock](screenshot.png)
 
 - **Screen recording**, a record icon, while `sndrgrdn.menu` records the screen.
-- **Focus timer**, a timer and the time left, while a `sndrgrdn.focus-timer` session runs. A break shows a cup instead of the timer.
-- **Focus**, the Focus's own icon, such as a moon for Do Not Disturb, while a macOS Focus is on. Its name shows in the tooltip.
-- **Stay awake**, a mug, while `sndrgrdn.menu` keeps the Mac awake.
+- **Focus timer**, a stopwatch and the time left, while a `sndrgrdn.focus-timer` session runs. A break shows a cup instead of the stopwatch.
+- **Focus**, Omarchy's Do Not Disturb bell, while a macOS Focus is on. Its name shows in the tooltip.
+- **Stay awake**, a steaming cup, while `sndrgrdn.menu` keeps the Mac awake.
 
-The icons show in that order. Each has a tooltip, but clicking does nothing, because a Gary plugin cannot open another plugin's panel or call its methods.
+The icons are Omarchy's Nerd Font glyphs, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. They show in that order. Each has a tooltip, but clicking does nothing, because a Gary plugin cannot open another plugin's panel or call its methods.
 
 It reads the `sndrgrdn.focus-timer` and `sndrgrdn.menu` topics, so those plugins must be enabled for their indicators to show. The Focus indicator reads Gary's `focus` topic, which needs Full Disk Access. `gary permissions request full-disk-access` opens its pane.
 
