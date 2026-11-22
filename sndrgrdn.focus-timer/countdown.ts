@@ -1,4 +1,4 @@
-import { Effect, Stream, topic } from "gary:effect";
+import { Stream, topic } from "gary:effect";
 import type { Session } from "./topic";
 
 export const ring = "M12 2 A10 10 0 1 1 11.99 2";
@@ -14,11 +14,7 @@ export function format(milliseconds: number) {
   return hours ? `${hours}:${clock}` : clock;
 }
 
-export type View = { session: Session | null; now: number };
-
-export function follow(onChange: (view: View) => void) {
-  return topic("sndrgrdn.focus-timer").pipe(
-    Stream.switchMap(({ session }) => (session ? Stream.map(Stream.tick("1 second"), () => session) : Stream.make(null))),
-    Stream.runForEach((session) => Effect.sync(() => onChange({ session, now: Date.now() }))),
-  );
-}
+export const ticking = topic("sndrgrdn.focus-timer").pipe(
+  Stream.switchMap(({ session }) => (session ? Stream.tick("1 second") : Stream.empty)),
+  Stream.runDrain,
+);

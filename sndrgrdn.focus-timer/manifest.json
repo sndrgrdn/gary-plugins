@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "kinds": ["service", "bar-widget", "panel"],
   "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "panel": "panel.tsx" },
-  "subscribes": ["sndrgrdn.focus-timer"],
+  "subscribes": { "bar-widget": ["sndrgrdn.focus-timer"], "panel": ["sndrgrdn.focus-timer"] },
   "uses": ["exec"],
   "bar": "right"
 }

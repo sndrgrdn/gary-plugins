@@ -1,5 +1,5 @@
 import { Effect, host } from "gary:effect";
-import { type View, follow, format, left, ring } from "./countdown";
+import { format, left, ring, ticking } from "./countdown";
 import type { Mode } from "./topic";
 
 const size = 120;
@@ -8,22 +8,18 @@ const modes: [Mode, string][] = [
   ["break", "Break"],
 ];
 
-let view: View = { session: null, now: 0 };
-
 function call(method: string, ...args: string[]) {
-  Effect.runFork(host.call(method, ...args).pipe(Effect.catch((error) => host.log(`${method} failed: ${error.message}`))));
+  return host.call(method, ...args).pipe(Effect.catch((error) => host.log(`${method} failed: ${error.message}`)));
 }
 
 export default {
   surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
 
-  effect: follow((next) => {
-    view = next;
-  }),
+  effect: ticking,
 
-  render() {
-    const { session, now } = view;
-    const remaining = session ? left(session, now) : 0;
+  render(state) {
+    const session = state["sndrgrdn.focus-timer"]?.session;
+    const remaining = session ? left(session, Date.now()) : 0;
     return (
       <column style="panel" gap={12}>
         <stack key="ring" width={size} height={size}>
@@ -56,9 +52,8 @@ export default {
     );
   },
 
-  onAction(action) {
+  onAction(action, _, state) {
     if (action !== "focus" && action !== "break") return;
-    if (view.session?.mode === action) call("stop");
-    else call("start", action);
+    return state["sndrgrdn.focus-timer"]?.session?.mode === action ? call("stop") : call("start", action);
   },
 } satisfies Gary.Panel;

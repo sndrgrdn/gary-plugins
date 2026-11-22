@@ -1,22 +1,16 @@
 import { Effect, host } from "gary:effect";
-import { type View, follow, format, left, ring } from "./countdown";
+import { format, left, ring, ticking } from "./countdown";
 
 const pointsPerStep = 24;
 
-let view: View = { session: null, now: 0 };
 let travel = 0;
 
-function add(steps: number) {
-  Effect.runFork(host.call("add", String(steps * 5)).pipe(Effect.catch((error) => host.log(`add failed: ${error.message}`))));
-}
-
 export default {
-  effect: follow((next) => {
-    view = next;
-  }),
+  effect: ticking,
 
-  render() {
-    const { session, now } = view;
+  render(state) {
+    const session = state["sndrgrdn.focus-timer"]?.session;
+    const now = Date.now();
     const paths: Gary.Shape["paths"] = [{ d: ring, stroke: "alpha(foreground, 0.25)", lineWidth: 4 }];
     if (session) paths.push({ d: ring, stroke: "foreground", lineWidth: 4, cap: "round", trim: [0, left(session, now) / session.length] });
     return (
@@ -33,7 +27,7 @@ export default {
   },
 
   onAction(action) {
-    if (action === "open") Effect.runSync(host.toggle());
+    if (action === "open") return host.toggle();
   },
 
   onScroll(event) {
@@ -42,6 +36,6 @@ export default {
     travel += event.precise ? event.y / pointsPerStep : Math.sign(event.y);
     const steps = Math.trunc(travel);
     travel -= steps;
-    if (steps) add(steps);
+    if (steps) return host.call("add", String(steps * 5)).pipe(Effect.catch((error) => host.log(`add failed: ${error.message}`)));
   },
 } satisfies Gary.BarWidget;
