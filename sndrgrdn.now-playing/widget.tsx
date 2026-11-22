@@ -35,11 +35,11 @@ export default {
         </row>
       );
     }
-    if (!track) return null;
+    if (!track?.playing) return null;
     return (
-      <row gap={4} padding={[0, state.theme.spacing.item]} action="open" scrollAction="volume">
-        <text key="glyph" fontSize={13} width={20} align="center" color={track.playing ? "foreground" : "dim"}>{"\u{F075A}"}</text>
-        <text key="text" color={track.playing ? "foreground" : "dim"}>{label(track)}</text>
+      <row gap={4} padding={[0, state.theme.spacing.item]} action="open" scrollAction="volume" tooltip={label(track)}>
+        <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{"\u{F075A}"}</text>
+        {state.settings.showTitle === true && <text key="text" color="foreground">{label(track)}</text>}
       </row>
     );
   },
