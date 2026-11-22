@@ -28,4 +28,4 @@ export function filterHistory(history: HistoryEntry[] | null | undefined, query:
 export const HISTORY_LIMIT: number;
 export const HISTORY_MAX_AGE_MS: number;
 export const CURRENCIES: { [code: string]: { symbol: string; names: string[]; decimals?: number } };
-export const UNITS: { [symbol: string]: unknown };
+export const UNITS: { [symbol: string]: { sym: string; name: string; plural: string } };
