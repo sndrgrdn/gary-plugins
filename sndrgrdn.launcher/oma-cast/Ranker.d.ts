@@ -1,0 +1,40 @@
+import type { SearchTerm } from "./Frecency";
+
+export type Candidate = {
+  id: string;
+  type: string;
+  title: string;
+  subtitle?: string;
+  alternateTitles?: string[];
+  keywords?: string[];
+  bundleId?: string;
+  alias?: string;
+  boostedTerms?: string[];
+  alwaysMatching?: boolean;
+  pinPriority?: number | null;
+  sortHeuristic?: number;
+  extensionTitle?: string;
+  frecency?: number;
+  openedAt?: number | null;
+  searchTerms?: SearchTerm[];
+};
+export type Match = "exact" | "unmatched" | { score: number; skipped: number };
+export type SearchTermMatch = { kind: "none" | "exact" | "prefix" | "overbounds"; count: number };
+export type Options = { sensitivity?: "low" | "medium" | "high"; nowMs?: number; literalQueryDots?: boolean };
+export type Scored = { candidate: Candidate; isMatching: boolean; textMatched: boolean; frecency: number; searchTerm: SearchTermMatch; [field: string]: unknown };
+export type Ranked<C extends Candidate> = { candidate: C; record: Scored };
+
+export const SEPARATORS: string;
+export const TYPE_PRIORITY: { [type: string]: number };
+export function normalize(s: string): { normalizedText: string; wordBoundaries: boolean[] };
+export function transliterate(s: string): string;
+export function fuzzyMatch(target: string, query: string, options?: { literalQueryDots?: boolean }): Match;
+export function matchScore(match: Match): number;
+export function passesThreshold(match: Match | null, queryLength: number, sensitivity?: Options["sensitivity"]): boolean;
+export function aliasMatch(alias: string, query: string): "exact" | "prefix" | "unmatched";
+export function searchTermMatch(terms: SearchTerm[] | undefined, query: string, frecency: number, openedAtMs: number | null | undefined, nowMs: number): SearchTermMatch;
+export function wholeWordIn(title: string, q: string): boolean;
+export function buildRecord(candidate: Candidate, query: string, options?: Options): Scored;
+export function comparePlain(a: Scored, b: Scored): number;
+export function compareMatched(a: Scored, b: Scored, ctx?: { hasExactTitle?: boolean; hasExactSearchTerm?: boolean }): number;
+export function rank<C extends Candidate>(candidates: readonly C[], query: string, options?: Options): Ranked<C>[];
