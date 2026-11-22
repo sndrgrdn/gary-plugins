@@ -37,12 +37,15 @@ sqrt 16|sqrt(16)|5!|2^10|pi|2pi|1/3|10 mod 3`.split(/[|\n]/);
 const expected = {
   "2+": "2", "2 +": "2", "10 +": "10", "(2+3": "5", "2*(3+": "6", "sqrt(16": "4", "2^": "2", "(1+2)*(3": "9",
   "3x3": "9", "1920x1080": "2,073,600", "10k": "10,000", "2.5k": "2,500", "1e3": "1,000", "1.5e-3": "0.0015",
+  "5 km is how many miles": "3.1069 mi", "convert 5 km to miles": "3.1069 mi", "convert 5 km": "3.1069 mi",
+  "how many feet in a mile": "5,280 ft", "how many weeks in a year": "52.1775 weeks", "how many miles is 5 km": "3.1069 mi",
   "5km": "3.1069 mi", "5 km": "3.1069 mi", "1m": "3.2808 ft", "10 mi": "16.0934 km", "6 ft": "1.8288 m",
   "180 cm": "70.8661 in", "12 in": "30.48 cm", "70 kg": "154.3236 lb", "150 lb": "68.0389 kg", "500 g": "17.637 oz",
   "20 c": "68 °F", "20°C": "68 °F", "100f": "37.7778 °C", "2 L": "0.5283 gal", "1 gal": "3.7854 L", "330 ml": "11.1586 fl oz",
   "100 km/h": "62.1371 mph", "60 mph": "96.5606 km/h",
   "1 gb to mb": "1,000 MB", "1 gib to mb": "1,073.7418 MB", "100mbps to MB/s": "12.5 MB/s", "500 mb in gb": "0.5 GB",
   "100 usd": "€91.00", "10 euro": "$10.99", "$100": "€91.00", "€20": "$21.98", "£10": "€11.88", "10k usd": "€9,100.01",
+  "15% tip on 42": "6.3", "half of 90": "45", "a quarter of 200": "50", "half of 5 km": "2.5 km",
   "5'10\" to cm": "177.8 cm", "5'10\"": "5.8333 ft", "6'": "1.8288 m",
   now: null, "42": null, "5": null, "1": null, km: null, "5 s": null, "+": null, "(": null, "-": null,
 };
@@ -99,7 +102,7 @@ const percentile = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.floor(
 const summary = ({ cold, times }) => {
   const sorted = [...times].sort((a, b) => a - b);
   const worst = corpus[times.indexOf(sorted.at(-1))];
-  return `cold first call ${cold.toFixed(3)} ms, p50 ${percentile(sorted, 0.5).toFixed(4)} ms, p95 ${percentile(sorted, 0.95).toFixed(4)} ms, max ${sorted.at(-1).toFixed(3)} ms (${JSON.stringify(worst)})`;
+  return `cold first call ${cold.toFixed(3)} ms, p50 ${percentile(sorted, 0.5).toFixed(4)} ms, p95 ${percentile(sorted, 0.95).toFixed(4)} ms, max ${sorted.at(-1).toFixed(3)} ms (${JSON.stringify(worst.length > 40 ? `${worst.slice(0, 40)}…` : worst)})`;
 };
 
 function timeNode() {

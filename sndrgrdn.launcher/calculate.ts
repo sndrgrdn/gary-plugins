@@ -19,6 +19,7 @@ const unitNames = new Map<string, string>([
 ]);
 
 const currencySymbols = new Map(Object.entries(Calculator.CURRENCIES).filter(([, currency]) => currency.symbol).map(([code, currency]) => [currency.symbol, code]));
+const fractions = new Map([["half", 2], ["third", 3], ["quarter", 4]]);
 const identities = new Map([["+", "0"], ["-", "0"], ["−", "0"], ["*", "1"], ["×", "1"], ["/", "1"], ["÷", "1"], ["^", "1"]]);
 const decimalPrefixes = new Map([["k", "k"], ["m", "M"], ["g", "G"], ["t", "T"], ["p", "P"]]);
 
@@ -42,7 +43,22 @@ function complete(query: string) {
   return body + ")".repeat(Math.max(0, depth));
 }
 
+function howManyIn(query: string) {
+  const match = /^how\s+many\s+(.+?)\s+(?:are\s+)?(?:in|is|per)\s+(.+?)\s*\??$/i.exec(query);
+  if (!match) return null;
+  const amount = match[2].replace(/^(?:a|an|one)\s+/i, "");
+  return `${/^[\d.$€£¥]/.test(amount) ? amount : `1 ${amount}`} to ${match[1]}`;
+}
+
 const rules: readonly Rule[] = [
+  { name: "convert", rewrite: (query) => /^convert\s+(.+)$/i.exec(query)?.[1] ?? null },
+  { name: "how-many-in", rewrite: howManyIn },
+  { name: "is-how-many", rewrite: (query) => query.replace(/^(.+?)\s+(?:is|are)\s+how\s+many\s+(.+?)\s*\??$/i, "$1 to $2") },
+  { name: "tip", rewrite: (query) => query.replace(/^(.*?%)\s*tip\s+(?:on|for|of)\s+/i, "$1 of ") },
+  {
+    name: "fraction",
+    rewrite: (query) => query.replace(/^(?:(?:a|one)\s+)?(half|third|quarter)\s+of\s+(.+)$/i, (_, word: string, rest: string) => `(${rest}) / ${fractions.get(word.toLowerCase())}`),
+  },
   { name: "feet-inches", rewrite: (query) => query.replace(/(\d)\s*['′](?!['′])\s*/g, "$1 ft ").replace(/(\d)\s*(?:["″]|['′]{2})\s*/g, "$1 in ").trim() },
   {
     name: "data-case",
