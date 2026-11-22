@@ -12,6 +12,28 @@ Shows the date and the time in the bar, such as `Sun 22 Nov  13:45`. Click it to
 
 The calendar panel reads Gary's `calendar` capability, which needs the Calendars permission. Without it, the calendar shows only the month and the reason. `gary permissions request calendars` asks for it.
 
+## Settings
+
+Set `format` in `~/.config/gary/shell.json` to show the clock in one line in another format. Omarchy's format shows `Sunday 19:18`:
+
+```json
+{ "settings": { "sndrgrdn.clock": { "format": "dddd HH:mm" } } }
+```
+
+The format takes Omarchy's date tokens:
+
+| Token | Shows |
+| --- | --- |
+| `dddd`, `ddd` | The day's name, such as `Sunday`, or `Sun` |
+| `dd`, `d` | The day of the month, such as `08`, or `8` |
+| `MMMM`, `MMM` | The month's name, such as `November`, or `Nov` |
+| `MM`, `M` | The month's number, such as `03`, or `3` |
+| `yyyy` | The year |
+| `HH`, `H` | The hour on the 24-hour clock, such as `09`, or `9` |
+| `mm` | The minutes |
+
+Any other character shows as itself. Put text in single quotes to keep its letters from being read as tokens, such as `ddd d MMM 'at' HH:mm` for `Sun 22 Nov at 19:18`. Without `format`, the clock shows `Sun 22 Nov  13:45`, with the time brighter than the date.
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:
