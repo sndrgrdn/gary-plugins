@@ -38,9 +38,9 @@ export default {
     const indicators = active(state);
     if (!indicators.length) return null;
     return (
-      <row gap={10}>
+      <row gap={state.theme.spacing.section}>
         {indicators.map(({ key, symbol, tooltip, text }) => (
-          <row key={key} gap={5} tooltip={tooltip}>
+          <row key={key} tooltip={tooltip}>
             <icon symbol={symbol} color="foreground" />
             {text !== undefined && <text color="foreground">{text}</text>}
           </row>

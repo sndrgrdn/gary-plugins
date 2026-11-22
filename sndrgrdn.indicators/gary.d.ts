@@ -172,6 +172,7 @@ declare namespace Gary {
     mode: "light" | "dark";
     colors: { [name: string]: string };
     palette: { [name: string]: string };
+    spacing: { item: number; section: number; edge: number };
   }
   interface Topics {
     "sndrgrdn.focus-timer": import("../sndrgrdn.focus-timer/topic").Topic;
