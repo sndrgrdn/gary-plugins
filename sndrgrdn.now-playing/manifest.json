@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.now-playing",
+  "name": "Now Playing",
+  "version": "0.1.0",
+  "kinds": ["bar-widget", "panel"],
+  "entryPoints": { "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "bar": "right",
+  "subscribes": ["nowplaying", "audio"],
+  "uses": ["nowplaying", "audio"]
+}
