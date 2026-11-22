@@ -6,13 +6,13 @@ A keyboard-driven main menu, like the Omarchy menu, opened from a snail in the b
 
 | Section | Rows |
 | --- | --- |
-| Capture | Screenshot of a region, a window or the display, saved to the Desktop and copied. Record a region, a window or the display to a `.mov` on the Desktop, the display also with the sound the Mac plays, and Stop Recording. Text and QR Code read a region and copy what they find. Color copies the colour you click as `#rrggbb`. |
+| Capture | Screenshot of a region, a window or the display, saved to the Desktop and copied. Record a region, a window or the display to a `.mov` on the Desktop, the display also with the sound the Mac plays, and Stop Recording. Text and QR Code read a region and copy what they find. QR Code reads only QR codes and copies their contents as concealed, so the toast doesn't show it and clipboard history skips it, because QR codes often hold secrets such as 2FA setup links. Color copies the colour you click as `#rrggbb`. |
 | Style | Theme opens the picker of [Theme](../sndrgrdn.theme). Next Background and Previous Background change the wallpaper and keep the menu open. |
 | Toggle | Stay Awake keeps the Mac and its display awake until you choose Allow Sleep. |
 | System | Lock, Sleep, Log Out, Restart and Shut Down. The last three ask first. |
 
 - ↑ and ↓ or tab move, ↵ or → opens a row, ← or ⌫ goes back, and esc closes the menu. In a confirm, ← and → choose and ↵ answers.
-- A toast confirms each capture. Click it to open the file, or the link a QR code holds.
+- A toast confirms each capture. Click it to open the file.
 - For Region or Window, drag a region, click a window, or click the desktop for the whole display.
 - Display captures and records the main display.
 

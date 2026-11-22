@@ -85,12 +85,10 @@ const readText = Effect.gen(function* () {
 const readCode = Effect.gen(function* () {
   const area = yield* select;
   if (!area) return;
-  const payloads = (yield* host.vision.readCodes(area)).flatMap((code) => (code.payload ? [code.payload] : []));
+  const payloads = (yield* host.vision.readCodes(area)).flatMap((code) => (code.symbology === "qr" && code.payload ? [code.payload] : []));
   if (!payloads.length) return yield* toast({ title: "No QR code found", icon: "qrcode.viewfinder" });
-  const text = payloads.join("\n");
-  yield* host.clipboard.writeText(text);
-  const link = payloads.find((payload) => /^https?:\/\//i.test(payload));
-  yield* toast({ title: "QR code copied", body: preview(text), icon: "qrcode.viewfinder" }, link ? open(link) : Effect.void);
+  yield* host.clipboard.writeText(payloads.join("\n"), true);
+  yield* toast({ title: "QR code copied", icon: "qrcode.viewfinder" });
 });
 
 const theme = Effect.fn("Menu.theme")(function* (...args: string[]) {
