@@ -1,4 +1,4 @@
-import { Deferred, Effect, Exit, Option, Queue, Schema, Scope, Stream, host as lifted, topic } from "gary:effect";
+import { Effect, Exit, Option, Schema, Scope, Semaphore, Stream, host as lifted, topic } from "gary:effect";
 import type { HostError } from "gary:effect";
 
 type Palette = Record<string, string>;
@@ -10,7 +10,6 @@ type ApplyReport = { background?: string; results: TargetResult[]; theme: string
 type Applied = { theme: Theme; background: string | null; notes: string[] };
 type Failed = ThemeError | HostError;
 type Target = { name: string; installed: Effect.Effect<boolean, HostError>; apply(applied: Applied): Effect.Effect<void, Failed> };
-type Job = { label: string; run: Effect.Effect<boolean> };
 
 class ThemeError extends Schema.TaggedError<ThemeError>()("ThemeError", { message: Schema.String }) {}
 
@@ -24,8 +23,8 @@ const parseState = Schema.decodeUnknownOption(Schema.fromJsonString(StateFile));
 const parseObject = Schema.decodeUnknownOption(Schema.fromJsonString(JsonObject));
 const parseRegistry = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Array(JsonObject)));
 
-const { exec, log, wallpaper, watchFile } = lifted;
-const jobs = Effect.runSync(Queue.unbounded<Job>());
+const { exec, log, mkdir, readFile, remove, wallpaper, watchFile, writeFile } = lifted;
+const lock = Semaphore.makeUnsafe(1);
 const lifetime = Effect.runSync(Scope.make());
 
 let home = "";
@@ -52,14 +51,6 @@ function makePaths(home: string) {
     palette: `${home}/.config/gary/palette.toml`,
     previews: `${home}/Library/Caches/sndrgrdn.theme/previews`,
   };
-}
-
-function message(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
-function attempt<A>(body: () => A) {
-  return Effect.try({ try: body, catch: (cause) => new ThemeError({ message: message(cause) }) });
 }
 
 function detach<A, E>(effect: Effect.Effect<A, E>) {
@@ -353,10 +344,8 @@ const syncLibrary = Effect.fn("Theme.syncLibrary")(function* () {
     yield* run("git", ["-C", paths.omarchy, "reset", "--hard", "FETCH_HEAD"]);
   } else {
     const staging = `${paths.support}/omarchy.clone`;
-    yield* attempt(() => {
-      host.mkdir(paths.support);
-      host.remove(staging);
-    });
+    yield* mkdir(paths.support);
+    yield* remove(staging);
     yield* run("git", ["clone", "--depth", "1", "--filter=blob:none", "--sparse", "https://github.com/basecamp/omarchy.git", staging]);
     yield* run("git", ["-C", staging, "sparse-checkout", "set", "themes"]);
     yield* run("mv", [staging, paths.omarchy]);
@@ -372,8 +361,7 @@ const State = {
   },
 
   save(state: ThemeState) {
-    host.mkdir(paths.support);
-    host.writeFile(paths.state, JSON.stringify(state));
+    return Effect.andThen(mkdir(paths.support), writeFile(paths.state, JSON.stringify(state)));
   },
 };
 
@@ -385,16 +373,16 @@ const realpath = Effect.fn("Theme.realpath")(function* (path: string) {
 const backUp = Effect.fn("Theme.backUp")(function* (path: string) {
   const backup = `${paths.backups}/${path.replace(/\//g, "%")}`;
   if (!exists(path) || exists(backup)) return;
-  yield* attempt(() => host.mkdir(paths.backups));
+  yield* mkdir(paths.backups);
   const copied = yield* exec(["/bin/cp", path, backup]);
   if (copied.status !== 0) return yield* new ThemeError({ message: copied.stderr.trim() });
 });
 
 const write = Effect.fn("Theme.write")(function* (text: string, path: string) {
   const target = exists(path) ? yield* realpath(path) : path;
-  yield* attempt(() => host.mkdir(dirname(target)));
+  yield* mkdir(dirname(target));
   yield* backUp(target);
-  yield* attempt(() => host.writeFile(target, text));
+  yield* writeFile(target, text);
 });
 
 function setJSONString(key: string, value: string, text: string) {
@@ -436,7 +424,7 @@ function currentFile(name: string) {
 }
 
 function copyCurrent(name: string, path: string) {
-  return attempt(() => host.readFile(currentFile(name))).pipe(Effect.flatMap((text) => write(text, path)));
+  return readFile(currentFile(name)).pipe(Effect.flatMap((text) => write(text, path)));
 }
 
 const heliumBundle = "net.imput.helium";
@@ -480,7 +468,7 @@ const targets: Target[] = [
         "active-color": `#${strip(theme.palette.accent)}ff`,
         "inactive-color": `#${strip(theme.palette.muted)}aa`,
       };
-      const text = yield* attempt(() => host.readFile(config));
+      const text = yield* readFile(config);
       let section = "";
       const replaced = new Set<string>();
       const lines = text.split("\n").map((line) => {
@@ -505,15 +493,13 @@ const targets: Target[] = [
     apply: Effect.fn("Theme.rex")(function* ({ theme }: Applied) {
       const backup = `${paths.backups}/com.superlogical.rex.plist`;
       if (!exists(backup)) {
-        yield* attempt(() => host.mkdir(paths.backups));
+        yield* mkdir(paths.backups);
         yield* run("defaults", ["export", "com.superlogical.rex", backup]);
       }
       const file = `${paths.support}/rex/Omarchy ${theme.name}`;
-      yield* attempt(() => {
-        host.mkdir(dirname(file));
-        host.remove(file);
-        host.writeFile(file, host.readFile(currentFile("ghostty.conf")));
-      });
+      yield* mkdir(dirname(file));
+      yield* remove(file);
+      yield* writeFile(file, yield* readFile(currentFile("ghostty.conf")));
       yield* run("rex", ["do", "client.theme.import", `path=${file}`]);
       yield* run("rex", ["do", "client.setting.interface.appearance.scheme", `value=${theme.mode}`]);
     }),
@@ -611,7 +597,7 @@ const targets: Target[] = [
       const sudoers = list("/etc/sudoers.d")?.some((entry) => entry.name === "theme-switcher-helium") ?? false;
       const installed = read(heliumHelper);
       if (!sudoers || installed === null) return yield* new ThemeError({ message: "Run theme-switcher helium setup to let Theme Switcher colour Helium" });
-      if (installed !== (yield* attempt(() => host.readFile("helium-helper.sh")))) {
+      if (installed !== (yield* readFile("helium-helper.sh"))) {
         return yield* new ThemeError({ message: "Run theme-switcher helium setup again to update the Helium helper" });
       }
       yield* run("sudo", ["-n", heliumHelper, heliumColor(theme)]);
@@ -663,7 +649,11 @@ function cursorTarget(): Target {
   const extensionTheme = Effect.fn("Theme.cursorExtension")(function* (applied: Applied) {
     const descriptor = applied.theme.files["vscode.json"];
     if (!descriptor) return null;
-    const json: unknown = yield* attempt(() => JSON.parse(host.readFile(descriptor)));
+    const text = yield* readFile(descriptor);
+    const json: unknown = yield* Effect.try({
+      try: () => JSON.parse(text),
+      catch: (cause) => new ThemeError({ message: cause instanceof Error ? cause.message : String(cause) }),
+    });
     const name = field(json, "name");
     if (typeof name !== "string" || !/^[^\p{Cc}"\\]+$/u.test(name)) return yield* new ThemeError({ message: "vscode.json has no usable theme name" });
     const id = field(json, "extension");
@@ -680,7 +670,7 @@ function cursorTarget(): Target {
   });
 
   const installGenerated = Effect.fn("Theme.cursorGenerated")(function* (theme: string) {
-    const data = yield* attempt(() => host.readFile(theme));
+    const data = yield* readFile(theme);
     const type = Option.getOrUndefined(parseObject(data))?.type;
     const bytes = unescape(encodeURIComponent(data));
     let hash = 2166136261;
@@ -692,11 +682,9 @@ function cursorTarget(): Target {
       publisher: "local", version, engines: { vscode: "^1.70.0" }, categories: ["Themes"],
       contributes: { themes: [{ label: "Omarchy", uiTheme: type === "light" ? "vs" : "vs-dark", path: "./themes/omarchy-color-theme.json", _watch: true }] },
     };
-    yield* attempt(() => {
-      host.mkdir(`${directory}/themes`);
-      host.writeFile(`${directory}/themes/omarchy-color-theme.json`, data);
-      host.writeFile(`${directory}/package.json`, pretty(manifest));
-    });
+    yield* mkdir(`${directory}/themes`);
+    yield* writeFile(`${directory}/themes/omarchy-color-theme.json`, data);
+    yield* writeFile(`${directory}/package.json`, pretty(manifest));
 
     const obsoleteFile = `${extensions()}/.obsolete`;
     const gone = obsolete();
@@ -704,7 +692,7 @@ function cursorTarget(): Target {
     if (key in gone) {
       delete gone[key];
       yield* backUp(obsoleteFile);
-      yield* attempt(() => Object.keys(gone).length === 0 ? host.remove(obsoleteFile) : host.writeFile(obsoleteFile, JSON.stringify(gone).replace(/\//g, "\\/")));
+      yield* Object.keys(gone).length === 0 ? remove(obsoleteFile) : writeFile(obsoleteFile, JSON.stringify(gone).replace(/\//g, "\\/"));
     }
 
     const entry = {
@@ -716,7 +704,7 @@ function cursorTarget(): Target {
     const entries = [...registry().filter((each) => field(each.identifier, "id") !== generatedID), entry];
     const registryFile = `${extensions()}/extensions.json`;
     yield* backUp(registryFile);
-    yield* attempt(() => host.writeFile(registryFile, JSON.stringify(entries)));
+    yield* writeFile(registryFile, JSON.stringify(entries));
   });
 
   return {
@@ -727,22 +715,22 @@ function cursorTarget(): Target {
       if (extension === null) yield* installGenerated(currentFile("vscode-theme.json"));
       const colorTheme = extension ?? "Omarchy";
       const preferred = applied.theme.mode === "dark" ? "workbench.preferredDarkColorTheme" : "workbench.preferredLightColorTheme";
-      const text = yield* attempt(() => host.readFile(settings()));
+      const text = yield* readFile(settings());
       const updated = [preferred, "workbench.colorTheme"].reduce((each, key) => setJSONString(key, colorTheme, each), text);
       if (updated !== text) yield* write(updated, settings());
     }),
   };
 }
 
-function stage(theme: Theme) {
-  host.remove(paths.next);
-  host.mkdir(paths.next);
+const stage = Effect.fn("Theme.stage")(function* (theme: Theme) {
+  yield* remove(paths.next);
+  yield* mkdir(paths.next);
   const render = renderer(theme.palette);
   for (const template of templates) {
     const shipped = theme.files[template.name];
-    host.writeFile(`${paths.next}/${template.name}`, shipped ? host.readFile(shipped) : render(template.text));
+    yield* writeFile(`${paths.next}/${template.name}`, shipped ? yield* readFile(shipped) : render(template.text));
   }
-}
+});
 
 const swapStaged = Effect.fn("Theme.swapStaged")(function* () {
   const result = yield* exec(["/bin/sh", "-c", 'rm -rf "$1" && mv "$2" "$1"', "sh", paths.current, paths.next]);
@@ -771,9 +759,9 @@ const apply = Effect.fn("Theme.apply")(function* (theme: Theme) {
     background = theme.backgrounds[index];
   }
 
-  yield* attempt(() => stage(theme));
+  yield* stage(theme);
   yield* swapStaged();
-  yield* attempt(() => State.save({ backgrounds: state.backgrounds, theme: theme.id }));
+  yield* State.save({ backgrounds: state.backgrounds, theme: theme.id });
 
   const applied: Applied = { theme, background, notes: [] };
   const results = yield* Effect.forEach(targets, (target) => applyTarget(target, applied), { concurrency: "unbounded" });
@@ -799,7 +787,7 @@ const showBackground = Effect.fn("Theme.showBackground")(function* (step: number
   const index = (((state.backgrounds[id] ?? 0) + step) % count + count) % count;
   const background = theme.backgrounds[index];
   state.backgrounds[id] = index;
-  yield* attempt(() => State.save({ backgrounds: state.backgrounds, theme: id }));
+  yield* State.save({ backgrounds: state.backgrounds, theme: id });
   yield* detach(appendLog([`${timestamp()} ${id} background=${basename(background)}`]));
   yield* detach(wallpaper.set(background).pipe(Effect.catch((error) => log(`Background failed: ${error.message}`))));
   return { background: basename(background), current: id };
@@ -831,24 +819,16 @@ function syncPalette(state: string | null) {
 }
 
 function enqueue<A, E>(label: string, job: Effect.Effect<A, E>) {
-  return Effect.gen(function* () {
-    const done = yield* Deferred.make<A, E>();
-    yield* Queue.offer(jobs, { label, run: Deferred.into(job, done) });
-    return yield* Deferred.await(done);
-  });
-}
-
-function runJob(job: Job) {
-  return Effect.sync(() => {
-    busy = job.label;
+  return lock.withPermit(Effect.sync(() => {
+    busy = label;
     publish();
   }).pipe(
-    Effect.andThen(job.run),
+    Effect.andThen(job),
     Effect.ensuring(Effect.sync(() => {
       busy = null;
       publish();
     })),
-  );
+  ));
 }
 
 function reload() {
@@ -857,7 +837,7 @@ function reload() {
 }
 
 const warmPreviews = Effect.fn("Theme.warmPreviews")(function* () {
-  yield* attempt(() => host.mkdir(paths.previews));
+  yield* mkdir(paths.previews);
   const cached = new Set((list(paths.previews) ?? []).map((entry) => entry.name));
   const pending = themes.map((theme) => {
     const source = theme.files["preview.png"] ?? theme.backgrounds[0];
@@ -870,9 +850,7 @@ const warmPreviews = Effect.fn("Theme.warmPreviews")(function* () {
 
   const make = Effect.fnUntraced(function* (each: { id: string; source: string; file: string }) {
     if (!cached.has(each.file)) {
-      yield* attempt(() => {
-        for (const stale of cached) if (stale.startsWith(`${each.id}-`) && /^[0-9a-f]+\.jpg$/.test(stale.slice(each.id.length + 1))) host.remove(`${paths.previews}/${stale}`);
-      });
+      for (const stale of cached) if (stale.startsWith(`${each.id}-`) && /^[0-9a-f]+\.jpg$/.test(stale.slice(each.id.length + 1))) yield* remove(`${paths.previews}/${stale}`);
       const result = yield* exec(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "85", "-Z", String(previewSize), each.source, "--out", `${paths.previews}/${each.file}`]);
       if (result.status !== 0) return yield* log(`preview for ${each.id} failed: ${result.stderr.trim()}`);
     }
@@ -929,25 +907,24 @@ function background(step: number): Gary.Json {
   return Effect.runSync(showBackground(step).pipe(Effect.catch((error) => Effect.succeed({ error: error.message }))));
 }
 
-function initialize(path: string) {
+const initialize = Effect.fn("Theme.initialize")(function* (path: string) {
   home = path;
   paths = makePaths(home);
   searchPath = [
     "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", `${home}/.local/bin`, `${home}/.hunk/bin`,
     `${home}/Library/Application Support/com.superlogical.rex/RexServer/Versions/Current/Rex Server.app/Contents/MacOS`,
   ];
-  templates = (list("templates") ?? []).filter((entry) => entry.name.endsWith(".tpl"))
-    .map((entry) => ({ name: entry.name.slice(0, -4), text: host.readFile(`templates/${entry.name}`) }));
+  templates = yield* Effect.forEach((list("templates") ?? []).filter((entry) => entry.name.endsWith(".tpl")),
+    (entry) => Effect.map(readFile(`templates/${entry.name}`), (text) => ({ name: entry.name.slice(0, -4), text })));
   const started = Date.now();
   reload();
-  host.log(`loaded ${themes.length} themes in ${Date.now() - started} ms`);
-}
+  yield* log(`loaded ${themes.length} themes in ${Date.now() - started} ms`);
+});
 
 const start = Effect.gen(function* () {
   yield* Effect.addFinalizer(() => Scope.close(lifetime, Exit.void));
-  yield* Effect.forkScoped(Stream.runForEach(Stream.fromQueue(jobs), runJob));
   const printenv = yield* exec(["/usr/bin/printenv", "HOME"]);
-  yield* attempt(() => initialize(printenv.stdout.trim()));
+  yield* initialize(printenv.stdout.trim());
   if (!themes.length) yield* detach(update());
   syncPalette(read(paths.state));
   yield* watchFile(paths.state, (text) => {
@@ -961,7 +938,7 @@ const start = Effect.gen(function* () {
     Stream.drop(1),
     Stream.runForEach(() => followWorkspace()),
   );
-}).pipe(Effect.catch((error) => log(`start failed: ${error.message}`)));
+}).pipe(Effect.catch((error) => log(`start failed: ${error.message}`)), Effect.orDie);
 
 function whenReady(body: () => Gary.Json): Gary.Json {
   if (!home) return { error: "Theme is starting" };

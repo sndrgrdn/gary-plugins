@@ -267,15 +267,15 @@ declare namespace Gary {
 declare module "gary:effect" {
   import type { Effect as E, Stream as S } from "effect";
   export {
-    Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope, Stream,
-    SubscriptionRef, pipe,
+    Cache, Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope,
+    Semaphore, Stream, SubscriptionRef, pipe,
   } from "effect";
   export interface HostError {
     readonly _tag: "HostError";
     readonly message: string;
   }
   type Lift<T> = T extends (...args: infer A) => infer R
-    ? (...args: A) => E.Effect<Awaited<R>, R extends PromiseLike<unknown> ? HostError : never>
+    ? (...args: A) => E.Effect<Awaited<R>, HostError>
     : { readonly [K in keyof T]: Lift<T[K]> };
   export const host: Lift<Gary.Host>;
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
