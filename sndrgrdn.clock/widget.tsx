@@ -14,11 +14,13 @@ const tokens: Record<string, (date: Date) => string | number> = {
   yyyy: (date) => date.getFullYear(),
   HH: (date) => pad(date.getHours()),
   H: (date) => date.getHours(),
+  h: (date) => ((date.getHours() + 11) % 12) + 1,
   mm: (date) => pad(date.getMinutes()),
+  a: (date) => (date.getHours() < 12 ? "AM" : "PM"),
 };
 
 function format(pattern: string, date: Date) {
-  return pattern.replace(/'([^']*)'|dddd|ddd|dd|d|MMMM|MMM|MM|M|yyyy|HH|H|mm/g, (token, quoted?: string) =>
+  return pattern.replace(/'([^']*)'|dddd|ddd|dd|d|MMMM|MMM|MM|M|yyyy|HH|H|h|mm|a/g, (token, quoted?: string) =>
     String(quoted ?? tokens[token](date)),
   );
 }
@@ -32,7 +34,7 @@ export default {
     return (
       <row gap={spacing.section} padding={[0, spacing.item]} action="toggle">
         <text key="date" color="foreground">{format("ddd dd MMM", now)}</text>
-        <text key="time" color="bright_foreground">{format("HH:mm", now)}</text>
+        <text key="time" color="bright_foreground">{format(state.clock?.hour12 ? "h:mm a" : "HH:mm", now)}</text>
       </row>
     );
   },

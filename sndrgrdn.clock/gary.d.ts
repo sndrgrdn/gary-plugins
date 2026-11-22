@@ -269,7 +269,7 @@ declare namespace Gary {
   }
 }
 declare namespace Gary {
-  type Clock = { epoch: number }
+  type Clock = { epoch: number; hour12: boolean }
 }
 
 declare namespace Gary {

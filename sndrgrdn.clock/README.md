@@ -4,7 +4,7 @@ Shows the date and the time in the bar, such as `Sun 22 Nov  13:45`. Click it to
 
 ![Clock calendar menu for November 2026, with today selected and no events](screenshot.png)
 
-- The time uses the 24-hour clock and updates every minute.
+- The time follows the 24-hour time setting in System Settings > General > Date & Time, and updates every minute.
 - The time has a fixed width, so the widgets next to it don't shift when the minutes change.
 - Scroll over the calendar, or click the arrows, to change the month. Click the month name to go back to today.
 - Click the clock again to close the calendar.
@@ -30,7 +30,9 @@ The format takes Omarchy's date tokens:
 | `MM`, `M` | The month's number, such as `03`, or `3` |
 | `yyyy` | The year |
 | `HH`, `H` | The hour on the 24-hour clock, such as `09`, or `9` |
+| `h` | The hour on the 12-hour clock, such as `9` |
 | `mm` | The minutes |
+| `a` | `AM` or `PM` |
 
 Any other character shows as itself. Put text in single quotes to keep its letters from being read as tokens, such as `ddd d MMM 'at' HH:mm` for `Sun 22 Nov at 19:18`. Without `format`, the clock shows `Sun 22 Nov  13:45`, with the time brighter than the date.
 

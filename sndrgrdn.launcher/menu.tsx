@@ -28,7 +28,7 @@ const ratesUrl = "https://api.frankfurter.dev/v1/latest";
 const ratesMaxAge = 12 * 3_600_000;
 const zonesMaxAge = 10 * 60_000;
 const zoneNames = Calculator.zoneList();
-const hour12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12;
+let hour12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12;
 
 let apps: readonly App[] = [];
 let visits: { [id: string]: Frecency.Visits } = Option.getOrElse(Schema.decodeUnknownOption(Visits)(host.storage.get("visits")), () => ({}));
@@ -202,6 +202,10 @@ export default {
     yield* Effect.forkScoped(Effect.repeat(refreshRates, Schedule.spaced("1 hour")));
     yield* refresh();
   }),
+
+  onTopic({ topic, value }) {
+    if (topic === "clock") hour12 = value.hour12;
+  },
 
   render(state) {
     const width = state.display?.width ?? 1728;
