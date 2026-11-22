@@ -14,8 +14,8 @@ export default {
     const memory = state.system && Math.round((100 * state.system.memory.used) / state.system.memory.total);
     const color = state.system ? "foreground" : "dim";
     return (
-      <row gap={12}>
-        <row key="cpu" gap={6}>
+      <row gap={state.theme.spacing.section} padding={[0, state.theme.spacing.item]}>
+        <row key="cpu" gap={4}>
           <text key="label" color={color}>CPU</text>
           <chart key="chart" width={40} height={12} min={0} max={100} series={[{ values: cpu, color }]} />
           <text key="value" color={color}>{percent(cpu.at(-1))}</text>
