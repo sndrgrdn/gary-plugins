@@ -175,7 +175,7 @@ declare namespace Gary {
   }
   interface Topics {
     "sndrgrdn.focus-timer": import("../sndrgrdn.focus-timer/topic").Topic;
-    "sndrgrdn.menu": Json;
+    "sndrgrdn.menu": import("../sndrgrdn.menu/topic").Topic;
     "focus": Focus;
   }
   interface State extends Partial<Topics> {

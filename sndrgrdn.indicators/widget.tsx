@@ -1,6 +1,5 @@
 import { Stream, topic } from "gary:effect";
 
-type Menu = { recording: boolean; awake: boolean };
 type Indicator = { key: string; symbol: string; tooltip: string; text?: string };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -13,7 +12,7 @@ function remaining(endsAt: number) {
 }
 
 function active(state: Gary.State): Indicator[] {
-  const menu = state["sndrgrdn.menu"] as Menu | undefined;
+  const menu = state["sndrgrdn.menu"];
   const session = state["sndrgrdn.focus-timer"]?.session;
   const focus = state.focus;
   return [
