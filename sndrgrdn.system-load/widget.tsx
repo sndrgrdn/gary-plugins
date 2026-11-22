@@ -1,17 +1,26 @@
+const samples = 30;
+let cpu: number[] = [];
+
 function percent(value: number | undefined) {
   return `${(value === undefined ? "--" : String(value)).padStart(3)}%`;
 }
 
 export default {
+  onTopic({ topic, value }) {
+    if (topic === "system") cpu = [...cpu, Math.round(100 * (1 - value.cpu.idle))].slice(-samples);
+  },
+
   render(state) {
-    const load = state["sndrgrdn.system-load"];
-    const color = load ? "foreground" : "dim";
+    const memory = state.system && Math.round((100 * state.system.memory.used) / state.system.memory.total);
+    const color = state.system ? "foreground" : "dim";
     return (
-      <row gap={6}>
-        <text key="cpu" color={color}>CPU</text>
-        <chart key="chart" width={40} height={12} min={0} max={100} series={[{ values: load?.cpu ?? [], color }]} />
-        <text key="cpu-value" color={color}>{percent(load?.cpu.at(-1))}</text>
-        <text key="memory" color={color} padding={[0, 0, 0, 6]}>{`MEM ${percent(load?.memory)}`}</text>
+      <row gap={12}>
+        <row key="cpu" gap={6}>
+          <text key="label" color={color}>CPU</text>
+          <chart key="chart" width={40} height={12} min={0} max={100} series={[{ values: cpu, color }]} />
+          <text key="value" color={color}>{percent(cpu.at(-1))}</text>
+        </row>
+        <text key="memory" color={color}>{`MEM ${percent(memory)}`}</text>
       </row>
     );
   },

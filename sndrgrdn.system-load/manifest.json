@@ -4,9 +4,8 @@
   "id": "sndrgrdn.system-load",
   "name": "System Load",
   "version": "0.1.0",
-  "kinds": ["service", "bar-widget"],
-  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx" },
-  "subscribes": ["sndrgrdn.system-load"],
-  "uses": ["exec"],
+  "kinds": ["bar-widget"],
+  "entryPoints": { "bar-widget": "widget.tsx" },
+  "subscribes": ["system"],
   "bar": "right"
 }
