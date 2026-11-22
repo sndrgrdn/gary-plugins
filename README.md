@@ -6,7 +6,6 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 
 - [`sndrgrdn.battery`](sndrgrdn.battery) shows the battery level in the bar.
 - [`sndrgrdn.calendar`](sndrgrdn.calendar) shows the date and time in the bar, like Clock, and opens a month calendar with today's events from icalBuddy when you click it.
-||||||| 9022311
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text you copy, and pastes an earlier entry from a menu on ⌘⇧V.
 - [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar.
 - [`sndrgrdn.control-center`](sndrgrdn.control-center) opens Wi‑Fi, Bluetooth, Focus, volume and brightness controls from the bar, and shows a pill when you press the volume or brightness keys.
@@ -14,11 +13,11 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.focus-timer`](sndrgrdn.focus-timer) counts down focus and break sessions in the bar, with a panel to start them and a sound at the end.
 - [`sndrgrdn.front-app`](sndrgrdn.front-app) shows the name and icon of the app that dinky reports as focused. It needs `sndrgrdn.dinky` and an `app-icon` font in `~/.config/gary/theme.json`, such as `sketchybar-app-font`.
 - [`sndrgrdn.launcher`](sndrgrdn.launcher) opens apps from a picker that fuzzy-matches their names, like Walker in Omarchy.
-||||||| 9022311
+- [`sndrgrdn.now-playing`](sndrgrdn.now-playing) shows the playing track in the bar, and opens a panel with the artwork, a seek bar and controls when you click it. Scrolling over it changes the volume.
 - [`sndrgrdn.system-load`](sndrgrdn.system-load) shows CPU use over the last minute as a sparkline in the bar, with the current memory use.
 - [`sndrgrdn.theme`](sndrgrdn.theme) switches between the Omarchy themes of [theme-switcher](https://github.com/sndrgrdn/theme-switcher) from a menu, and applies the theme to Gary, the wallpaper, and several apps.
 - [`sndrgrdn.tray`](sndrgrdn.tray) shows the menu bar icons of other apps in the bar, and opens an app's menu when you click its icon.
-- [`sndrgrdn.weather`](sndrgrdn.weather) shows the weather from [Open-Meteo](https://open-meteo.com) in the bar. It shows Leeuwarden unless you set `latitude` and `longitude` in its settings.
+- [`sndrgrdn.weather`](sndrgrdn.weather) shows the weather from [Open-Meteo](https://open-meteo.com) in the bar, and opens a 12-hour forecast when you click it. It shows Leeuwarden unless you set `latitude` and `longitude` in its settings.
 
 ## Install
 
