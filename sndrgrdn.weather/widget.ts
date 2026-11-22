@@ -42,7 +42,7 @@ function refresh(state?: Gary.State) {
     .catch((error) => host.log("weather request failed: " + String(error)));
 }
 
-module.exports = {
+export default {
   onTopic(topic, _value, state) {
     if (topic === "session") {
       if (locked && !state.session?.locked) setTimeout(() => refresh(state), 10_000);

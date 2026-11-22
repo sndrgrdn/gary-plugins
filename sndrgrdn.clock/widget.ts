@@ -2,7 +2,7 @@ const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const pad = (n: number) => String(n).padStart(2, "0");
 
-module.exports = {
+export default {
   render(state) {
     const now = new Date(state.clock?.epoch ?? Date.now());
     return {

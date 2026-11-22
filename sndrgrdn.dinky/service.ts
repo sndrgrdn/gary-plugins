@@ -57,7 +57,7 @@ function refresh() {
 
 readDisplays().then(refresh);
 
-module.exports = {
+export default {
   methods: {
     "startup": () => void readDisplays().then(refresh),
     "workspace-changing": (display, workspace) => {

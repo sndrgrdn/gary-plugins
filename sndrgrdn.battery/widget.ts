@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   render(state) {
     const battery = state.battery;
     if (!battery?.present || battery.percent === null) return { type: "row" };

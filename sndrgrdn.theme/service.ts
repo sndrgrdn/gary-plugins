@@ -961,7 +961,7 @@ function whenStarted<T>(body: () => Promise<T>): Promise<T> {
   return home ? body() : Promise.reject(new Failure("Theme is starting"));
 }
 
-module.exports = {
+export default {
   onTopic(topic, value) {
     if (topic !== "sndrgrdn.dinky" || !home) return;
     const focused = ((value as Workspaces | null)?.displays ?? [])

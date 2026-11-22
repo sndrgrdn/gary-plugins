@@ -14,7 +14,7 @@ function label(workspace: Workspace): Gary.Node {
   };
 }
 
-module.exports = {
+export default {
   render(state) {
     const dinky = state["sndrgrdn.dinky"] as Dinky | undefined;
     const workspaces = dinky?.displays.find((display) => display.uuid === state.display?.id)?.workspaces ?? [];

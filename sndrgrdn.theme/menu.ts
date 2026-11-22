@@ -155,7 +155,7 @@ function caption(): Gary.Node {
   };
 }
 
-module.exports = {
+export default {
   surface: { anchors: { top: true, bottom: true, left: true, right: true }, exclusionMode: "ignore", background: "backdrop" },
 
   onTopic(topic, value) {

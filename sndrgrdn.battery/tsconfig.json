@@ -4,6 +4,7 @@
     "noEmit": true,
     "target": "es2023",
     "lib": ["es2023"],
+    "module": "preserve",
     "types": [],
     "moduleDetection": "force",
     "isolatedModules": true

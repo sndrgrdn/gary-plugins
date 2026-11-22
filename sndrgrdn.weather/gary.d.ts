@@ -7,11 +7,13 @@ declare namespace Gary {
     y: number;
     precise: boolean;
     phase: "began" | "changed" | "ended" | "momentum" | "none";
+    action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "tooltip" | (string & {});
   type FontName = "body" | "mono" | "strong" | "title" | (string & {});
   type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
+  type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
   interface StyleProps {
     width?: number;
@@ -23,11 +25,13 @@ declare namespace Gary {
     opacity?: number;
     scale?: number;
     duration?: number;
+    blur?: number;
     padding?: number | [number, number] | [number, number, number, number];
     offset?: number;
     x?: number;
     y?: number;
     zIndex?: number;
+    rotation?: number;
     align?: "leading" | "center" | "trailing";
     animation?: "smooth" | "spring" | "none";
     material?: "vibrant" | "glass" | "none";
@@ -37,7 +41,9 @@ declare namespace Gary {
     clip?: boolean;
     shadow?: { color: Color; radius?: number; y?: number };
     border?: { color: Color; width?: number };
-    background?: Color;
+    blend?: "normal" | "multiply" | "screen" | "overlay" | "plusLighter" | "plusDarker" | "difference";
+    loop?: { opacity?: [number, number]; scale?: [number, number]; rotation?: [number, number]; x?: [number, number]; y?: [number, number]; duration?: number; reverse?: boolean };
+    background?: Paint;
     color?: Color;
     font?: FontName;
   }
@@ -45,6 +51,10 @@ declare namespace Gary {
     key?: string;
     style?: StyleName;
     action?: string;
+    rightAction?: string;
+    middleAction?: string;
+    scrollAction?: string;
+    tooltip?: string;
     hovered?: StyleProps;
     pressed?: StyleProps;
   }
@@ -100,7 +110,31 @@ declare namespace Gary {
   interface Spacer extends Style {
     type: "spacer";
   }
-  type Node = Row | Column | Stack | Scroll | Button | Text | Icon | Image | Slider | Progress | Input | Spacer;
+  interface Shape extends Style {
+    type: "shape";
+    viewBox?: [number, number];
+    paths: { d: string; fill?: Paint; stroke?: Paint; lineWidth?: number; cap?: "butt" | "round" | "square"; join?: "miter" | "round" | "bevel"; dash?: number[]; trim?: [number, number] }[];
+  }
+  interface Chart extends Style {
+    type: "chart";
+    series: { values: number[]; mark?: "line" | "area" | "bar"; color?: Paint; smooth?: boolean }[];
+    min?: number;
+    max?: number;
+    axes?: boolean;
+  }
+  interface Grid extends Style {
+    type: "grid";
+    columns: number;
+    children?: Node[];
+  }
+  interface Shader extends Style {
+    type: "shader";
+    path: string;
+    function: string;
+    args?: number[];
+    animated?: boolean;
+  }
+  type Node = Row | Column | Stack | Scroll | Button | Text | Icon | Image | Slider | Progress | Input | Spacer | Shape | Chart | Grid | Shader;
 
   interface Display {
     id: string;
@@ -120,6 +154,7 @@ declare namespace Gary {
     settings: { [key: string]: Json };
     theme: Theme;
     display?: Display;
+    surface?: string;
 
   }
 
@@ -135,6 +170,7 @@ declare namespace Gary {
     clickThrough?: boolean;
     focusable?: boolean;
     background?: "solid" | "none" | "backdrop";
+    attach?: boolean;
   }
 
   type ActionPayload = null | number | string;
@@ -146,9 +182,9 @@ declare namespace Gary {
     log(message: string): void;
     storage: Storage;
     publish(value: Json): void;
-    show(): void;
-    hide(): void;
-    toggle(): void;
+    show(surface?: string): void;
+    hide(surface?: string): void;
+    toggle(surface?: string): void;
     call(method: string, ...args: string[]): Promise<Json | undefined>;
   }
 
@@ -160,8 +196,10 @@ declare namespace Gary {
     onHotkey?(id: string, state: State): void;
     onTopic?(topic: string, value: Json, state: State): void;
     methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
-    surface?: Surface | null | ((state: State) => Surface | null | undefined);
+    surface?: SurfaceExport;
+    surfaces?: { [name: string]: SurfaceExport };
   }
+  type SurfaceExport = Surface | null | ((state: State) => Surface | null | undefined);
   interface Rendered extends Module {
     render(state: State): Node;
   }
@@ -174,8 +212,6 @@ declare namespace Gary {
 }
 
 declare const host: Gary.Host;
-declare var module: { exports: Gary.Module };
-declare var exports: Gary.Module;
 declare function setTimeout(callback: (...args: any[]) => void, ms?: number, ...args: any[]): number;
 declare function setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): number;
 declare function clearTimeout(id?: number): void;

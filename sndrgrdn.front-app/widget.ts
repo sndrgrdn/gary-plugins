@@ -16,7 +16,7 @@ function icon(app: string) {
   return exact.get(app) ?? prefixes.find(([prefix]) => app.startsWith(prefix))?.[1] ?? fallback;
 }
 
-module.exports = {
+export default {
   render(state) {
     const app = (state["sndrgrdn.dinky"] as Dinky | undefined)?.app;
     if (!app) return { type: "row" };
