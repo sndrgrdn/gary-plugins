@@ -17,6 +17,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 ||||||| 9022311
 - [`sndrgrdn.system-load`](sndrgrdn.system-load) shows CPU use over the last minute as a sparkline in the bar, with the current memory use.
 - [`sndrgrdn.theme`](sndrgrdn.theme) switches between the Omarchy themes of [theme-switcher](https://github.com/sndrgrdn/theme-switcher) from a menu, and applies the theme to Gary, the wallpaper, and several apps.
+- [`sndrgrdn.tray`](sndrgrdn.tray) shows the menu bar icons of other apps in the bar, and opens an app's menu when you click its icon.
 - [`sndrgrdn.weather`](sndrgrdn.weather) shows the weather from [Open-Meteo](https://open-meteo.com) in the bar. It shows Leeuwarden unless you set `latitude` and `longitude` in its settings.
 
 ## Install
