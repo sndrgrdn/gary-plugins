@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.audio",
+  "name": "Audio",
+  "version": "0.1.0",
+  "kinds": ["bar-widget", "menu"],
+  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx" },
+  "bar": "right",
+  "subscribes": ["audio"],
+  "uses": ["audio"]
+}
