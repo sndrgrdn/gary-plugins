@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.focus-timer",
+  "name": "Focus Timer",
+  "version": "0.1.0",
+  "kinds": ["service", "bar-widget", "panel"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "subscribes": ["sndrgrdn.focus-timer"],
+  "uses": ["exec"],
+  "bar": "right"
+}
