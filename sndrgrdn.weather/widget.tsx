@@ -55,7 +55,7 @@ export default {
   render() {
     return (
       <row gap={8}>
-        <image key="icon" path={`icons/${weather?.icon ?? "cloud"}.png`} width={19} height={18} offset={-1} />
+        <image key="icon" path={`icons/${weather?.icon ?? "cloud"}.png`} width={19} height={18} y={-1} />
         <text key="temperature" color={weather ? "foreground" : "dark_foreground"}>{weather?.temperature ?? "--°C"}</text>
       </row>
     );
