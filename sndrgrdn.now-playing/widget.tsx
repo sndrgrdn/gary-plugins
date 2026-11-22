@@ -29,15 +29,15 @@ export default {
     const track = state.nowplaying?.track;
     if (volume !== null) {
       return (
-        <row gap={4} action="open" scrollAction="volume">
+        <row gap={4} padding={[0, state.theme.spacing.item]} action="open" scrollAction="volume">
           <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{volume === 0 ? "\u{EEE8}" : "\u{F028}"}</text>
           <text key="text" color="foreground">{`${Math.round(volume * 100)}%`}</text>
         </row>
       );
     }
-    if (!track) return <text>{""}</text>;
+    if (!track) return null;
     return (
-      <row gap={4} action="open" scrollAction="volume">
+      <row gap={4} padding={[0, state.theme.spacing.item]} action="open" scrollAction="volume">
         <text key="glyph" fontSize={13} width={20} align="center" color={track.playing ? "foreground" : "dim"}>{"\u{F075A}"}</text>
         <text key="text" color={track.playing ? "foreground" : "dim"}>{label(track)}</text>
       </row>

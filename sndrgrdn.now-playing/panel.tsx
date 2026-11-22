@@ -59,14 +59,14 @@ function Seek({ track, width }: { track: Gary.Track; width: number }) {
 
 function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
   const { spacing, radius } = theme;
-  const detail = [track.artist, track.album].filter(Boolean).join(" · ");
+  const detail = [...new Set([track.artist, track.album].filter(Boolean))].join(" · ");
   return (
     <column width={width} padding={spacing.section} gap={spacing.section}>
       <row key="track">
         <Artwork path={track.artwork} radius={radius.control} />
         <column key="text" gap={0} width={width - 2 * spacing.section - artworkSize - spacing.item}>
-          <text key="title" style="title">{track.title}</text>
-          {detail ? <text key="detail" style="dim">{detail}</text> : null}
+          <text key="title" style="title" lines={1}>{track.title}</text>
+          {detail ? <text key="detail" style="dim" lines={1}>{detail}</text> : null}
         </column>
       </row>
       <Seek track={track} width={width - 2 * spacing.section} />
