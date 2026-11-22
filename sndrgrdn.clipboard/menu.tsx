@@ -1,6 +1,6 @@
 import type { Entry } from "./topic";
 
-type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 
 const width = 440;
 const rowHeight = 32;
@@ -18,8 +18,12 @@ function age(copied: number) {
   return `${Math.floor(minutes / (24 * 60))}d`;
 }
 
-function Preview({ entry }: { entry: Entry }) {
-  if ("image" in entry) return <image key="image" path={entry.image} width={48} height={24} fit="fill" radius={4} clip />;
+function rowRadius({ radius, spacing }: Theme) {
+  return Math.max(0, radius.surface - spacing.item);
+}
+
+function Preview({ entry, theme }: { entry: Entry; theme: Theme }) {
+  if ("image" in entry) return <image key="image" path={entry.image} width={48} height={24} fit="fill" radius={rowRadius(theme)} clip />;
   const text = "text" in entry ? entry.text.replace(/\s+/g, " ").trim() : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
   return (
     <row key="text">
@@ -42,19 +46,19 @@ function remove(index: number) {
   host.call("remove", String(entry.copied)).catch((error) => host.log(`remove failed: ${error}`));
 }
 
-function row(entry: Entry, index: number, spacing: Spacing) {
+function row(entry: Entry, index: number, theme: Theme) {
   return (
     <row
       key={String(entry.copied)}
       height={rowHeight}
-      padding={[0, spacing.item]}
-      radius={6}
+      padding={[0, theme.spacing.item]}
+      radius={rowRadius(theme)}
       style={index === selected ? "selected" : undefined}
       hovered={{ background: "hover" }}
       action={`paste:${index}`}
       rightAction={`remove:${index}`}
     >
-      <Preview entry={entry} />
+      <Preview entry={entry} theme={theme} />
       <spacer key="gap" />
       <text key="age" style="dim">{age(entry.copied)}</text>
     </row>
@@ -79,10 +83,12 @@ export default {
           <spacer key="gap" />
           <text key="hotkey" style="dim">⌘⇧V</text>
         </row>
-        <row key="divider" height={1} background="border" />
+        <row key="divider" height={0}>
+          <row key="line" height={1} width={width - 2 * spacing.item} background="border" />
+        </row>
         {entries.length ? (
           <scroll key="entries" height={visibleRows * rowHeight} reveal={String(entries[selected]?.copied)}>
-            <column key="rows" gap={0}>{entries.map((entry, index) => row(entry, index, spacing))}</column>
+            <column key="rows" gap={0}>{entries.map((entry, index) => row(entry, index, state.theme))}</column>
           </scroll>
         ) : (
           <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>Nothing copied yet</text>
