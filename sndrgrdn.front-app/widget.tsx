@@ -19,15 +19,12 @@ function icon(app: string) {
 export default {
   render(state) {
     const app = (state["sndrgrdn.dinky"] as Dinky | undefined)?.app;
-    if (!app) return { type: "row" };
-    return {
-      type: "row",
-      gap: 8,
-      padding: [0, 0, 0, 5],
-      children: [
-        { type: "text", key: "icon", text: icon(app), font: "app-icon", color: "accent", width: 14 },
-        { type: "text", key: "name", text: app, color: "foreground" },
-      ],
-    };
+    if (!app) return <row />;
+    return (
+      <row gap={8} padding={[0, 0, 0, 5]}>
+        <text key="icon" font="app-icon" color="accent" width={14}>{icon(app)}</text>
+        <text key="name" color="foreground">{app}</text>
+      </row>
+    );
   },
 } satisfies Gary.BarWidget;

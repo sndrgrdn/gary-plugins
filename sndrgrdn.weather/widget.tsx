@@ -53,13 +53,11 @@ export default {
   },
 
   render() {
-    return {
-      type: "row",
-      gap: 8,
-      children: [
-        { type: "image", key: "icon", path: "icons/" + (weather?.icon ?? "cloud") + ".png", width: 19, height: 18, offset: -1 },
-        { type: "text", key: "temperature", text: weather?.temperature ?? "--°C", color: weather ? "foreground" : "dark_foreground" },
-      ],
-    };
+    return (
+      <row gap={8}>
+        <image key="icon" path={`icons/${weather?.icon ?? "cloud"}.png`} width={19} height={18} offset={-1} />
+        <text key="temperature" color={weather ? "foreground" : "dark_foreground"}>{weather?.temperature ?? "--°C"}</text>
+      </row>
+    );
   },
 } satisfies Gary.BarWidget;

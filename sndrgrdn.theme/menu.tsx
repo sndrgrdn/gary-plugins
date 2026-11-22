@@ -78,81 +78,83 @@ function pick(theme: Item) {
 
 function artwork(theme: Item, card: Frame): Gary.Node {
   const place = { x: (card.width - expanded.width) / 2, y: (card.height - expanded.height) / 2, ...expanded };
-  if (theme.preview) return { type: "image", key: "preview", path: theme.preview, fit: "fill", animation: "smooth", duration: 0.35, ...place };
-  return {
-    type: "row",
-    key: "stripes",
-    gap: 0,
-    ...place,
-    children: stripes.map((name) => ({ type: "row", key: name, width: expanded.width / stripes.length, height: expanded.height, background: theme.colors[name] ?? "#808080" })),
-  };
+  if (theme.preview) return <image key="preview" path={theme.preview} fit="fill" animation="smooth" duration={0.35} {...place} />;
+  return (
+    <row key="stripes" gap={0} {...place}>
+      {stripes.map((name) => (
+        <row key={name} width={expanded.width / stripes.length} height={expanded.height} background={theme.colors[name] ?? "#808080"} />
+      ))}
+    </row>
+  );
 }
 
 function card(theme: Item, relative: number, previewX: number, radius: number): Gary.Node {
   const chosen = relative === 0;
   const place = frame(relative, previewX, radius);
-  return {
-    type: "stack",
-    key: theme.id,
-    ...place,
-    radius: corner(place),
-    clip: true,
-    action: `pick:${theme.id}`,
-    pressed: { scale: 0.97 },
-    border: { color: chosen ? theme.colors.accent ?? "accent" : "alpha(#ffffff, 0.12)", width: chosen ? 2.5 : 1 },
-    shadow: { color: `alpha(#000000, ${chosen ? 0.45 : 0})`, radius: chosen ? 30 : 0, y: chosen ? 18 : 0 },
-    opacity: Math.abs(relative) >= radius ? 0 : 1,
-    zIndex: chosen ? 100 : 50 - Math.min(Math.abs(relative), 40),
-    children: [
-      artwork(theme, place),
-      { type: "row", key: "dim", width: place.width, height: place.height, background: "background", opacity: chosen ? 0 : 0.42, hovered: { opacity: chosen ? 0 : 0.2 } },
-    ],
-  };
+  return (
+    <stack
+      key={theme.id}
+      {...place}
+      radius={corner(place)}
+      clip
+      action={`pick:${theme.id}`}
+      pressed={{ scale: 0.97 }}
+      border={{ color: chosen ? theme.colors.accent ?? "accent" : "alpha(#ffffff, 0.12)", width: chosen ? 2.5 : 1 }}
+      shadow={{ color: `alpha(#000000, ${chosen ? 0.45 : 0})`, radius: chosen ? 30 : 0, y: chosen ? 18 : 0 }}
+      opacity={Math.abs(relative) >= radius ? 0 : 1}
+      zIndex={chosen ? 100 : 50 - Math.min(Math.abs(relative), 40)}
+    >
+      {artwork(theme, place)}
+      <row
+        key="dim"
+        width={place.width}
+        height={place.height}
+        background="background"
+        opacity={chosen ? 0 : 0.42}
+        hovered={{ opacity: chosen ? 0 : 0.2 }}
+      />
+    </stack>
+  );
 }
 
 function caption(): Gary.Node {
   const theme = selected();
   const title: Gary.Node[] = theme
     ? [
-      { type: "text", key: "name", text: theme.name, font: "picker-title", color: "#ffffff" },
-      {
-        type: "row",
-        key: "dots",
-        gap: 5,
-        children: dots.map((name) => ({
-          type: "row", key: name, width: 9, height: 9, radius: 4.5, background: theme.colors[name] ?? "#808080", border: { color: "alpha(#ffffff, 0.2)", width: 0.5 },
-        })),
-      },
+      <text key="name" font="picker-title" color="#ffffff">{theme.name}</text>,
+      <row key="dots" gap={5}>
+        {dots.map((name) => (
+          <row key={name} width={9} height={9} radius={4.5} background={theme.colors[name] ?? "#808080"} border={{ color: "alpha(#ffffff, 0.2)", width: 0.5 }} />
+        ))}
+      </row>,
     ]
-    : [{ type: "text", key: "name", text: "No matches", font: "picker-title", color: "alpha(#ffffff, 0.6)" }];
+    : [<text key="name" font="picker-title" color="alpha(#ffffff, 0.6)">No matches</text>];
   const filter: Gary.Node[] = query
     ? [
-      { type: "row", key: "divider", width: 1, height: 16, background: "alpha(#ffffff, 0.2)" },
-      {
-        type: "row",
-        key: "query",
-        gap: 5,
-        children: [
-          { type: "icon", key: "search", symbol: "magnifyingglass", fontSize: 14, color: "alpha(#ffffff, 0.75)" },
-          { type: "text", key: "text", text: query, font: "picker-query", color: "alpha(#ffffff, 0.75)" },
-        ],
-      },
+      <row key="divider" width={1} height={16} background="alpha(#ffffff, 0.2)" />,
+      <row key="query" gap={5}>
+        <icon key="search" symbol="magnifyingglass" fontSize={14} color="alpha(#ffffff, 0.75)" />
+        <text key="text" font="picker-query" color="alpha(#ffffff, 0.75)">{query}</text>
+      </row>,
     ]
     : [];
-  return {
-    type: "row",
-    key: "caption",
-    gap: 12,
-    height: 40,
-    padding: [0, 18],
-    radius: 20,
-    material: "vibrant",
-    colorScheme: "dark",
-    border: { color: "alpha(#ffffff, 0.14)", width: 1 },
-    shadow: { color: "alpha(#000000, 0.25)", radius: 12, y: 6 },
-    animation: "none",
-    children: [...title, ...filter],
-  };
+  return (
+    <row
+      key="caption"
+      gap={12}
+      height={40}
+      padding={[0, 18]}
+      radius={20}
+      material="vibrant"
+      colorScheme="dark"
+      border={{ color: "alpha(#ffffff, 0.14)", width: 1 }}
+      shadow={{ color: "alpha(#000000, 0.25)", radius: 12, y: 6 }}
+      animation="none"
+    >
+      {title}
+      {filter}
+    </row>
+  );
 }
 
 export default {
@@ -171,24 +173,16 @@ export default {
     const radius = carouselRadius(width);
     const previewX = (width - expanded.width) / 2;
     const cards = visible(radius).sort((a, b) => Math.abs(a.relative) - Math.abs(b.relative));
-    return {
-      type: "column",
-      key: "picker",
-      gap: 0,
-      padding: [topMargin, 0, 0, 0],
-      children: [
-        {
-          type: "stack",
-          key: "carousel",
-          width,
-          height: expanded.height,
-          animation: "smooth",
-          duration: 0.35,
-          children: cards.map(({ theme, relative }) => card(theme, relative, previewX, radius)),
-        },
-        { type: "column", key: "chrome", width, height: chromeHeight, padding: [26, 0, 0, 0], align: "center", children: [caption()] },
-      ],
-    };
+    return (
+      <column key="picker" gap={0} padding={[topMargin, 0, 0, 0]}>
+        <stack key="carousel" width={width} height={expanded.height} animation="smooth" duration={0.35}>
+          {cards.map(({ theme, relative }) => card(theme, relative, previewX, radius))}
+        </stack>
+        <column key="chrome" width={width} height={chromeHeight} padding={[26, 0, 0, 0]} align="center">
+          {caption()}
+        </column>
+      </column>
+    );
   },
 
   onKey(key) {

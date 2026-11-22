@@ -136,6 +136,21 @@ declare namespace Gary {
   }
   type Node = Row | Column | Stack | Scroll | Button | Text | Icon | Image | Slider | Progress | Input | Spacer | Shape | Chart | Grid | Shader;
 
+  type Child = Node | false | null | undefined | Child[];
+  type TextChild = string | number | false | null | undefined;
+  type ElementProps<N extends Node> = N extends Text
+    ? Omit<Text, "type" | "text"> & ({ text: string | number; children?: never } | { text?: never; children: TextChild | TextChild[] })
+    : "children" extends keyof N ? Omit<N, "type" | "children"> & { children?: Child } : Omit<N, "type">;
+  function h(type: string | ((props: any) => Node), props: object | null, ...children: unknown[]): Node;
+  function Fragment(props: { children?: Child }): Node[];
+  namespace JSX {
+    type Element = Node;
+    interface ElementChildrenAttribute { children: {} }
+    interface IntrinsicAttributes { key?: string }
+    type Elements = { [N in Node as N["type"]]: ElementProps<N> };
+    interface IntrinsicElements extends Elements {}
+  }
+
   interface Display {
     id: string;
     index: number;

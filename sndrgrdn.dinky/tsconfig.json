@@ -5,6 +5,9 @@
     "target": "es2023",
     "lib": ["es2023"],
     "module": "preserve",
+    "jsx": "react",
+    "jsxFactory": "Gary.h",
+    "jsxFragmentFactory": "Gary.Fragment",
     "types": [],
     "moduleDetection": "force",
     "isolatedModules": true

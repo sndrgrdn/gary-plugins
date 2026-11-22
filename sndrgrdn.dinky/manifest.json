@@ -5,7 +5,7 @@
   "name": "Dinky",
   "version": "0.1.0",
   "kinds": ["service", "bar-widget"],
-  "entryPoints": { "service": "service.ts", "bar-widget": "widget.ts" },
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx" },
   "subscribes": ["sndrgrdn.dinky"],
   "uses": ["exec"]
 }

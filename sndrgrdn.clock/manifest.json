@@ -5,6 +5,6 @@
   "name": "Clock",
   "version": "0.1.0",
   "kinds": ["bar-widget"],
-  "entryPoints": { "bar-widget": "widget.ts" },
+  "entryPoints": { "bar-widget": "widget.tsx" },
   "subscribes": ["clock"]
 }
