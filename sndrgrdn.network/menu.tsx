@@ -13,6 +13,7 @@ const checkWidth = 18;
 let address: { ip: string; gateway: string } | null = null;
 let busy: string | null = null;
 let secret: string | null = null;
+let forgetting: string | null = null;
 let problem: string | null = null;
 
 function run(effect: Effect.Effect<unknown, HostError>) {
@@ -116,7 +117,17 @@ function Network({ network, state }: { network: Gary.WiFiNetwork; state: Gary.St
   const current = ssid === state.wifi?.ssid;
   const pending = busy === ssid;
   return (
-    <row key={ssid} height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action={`join:${ssid}`} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
+    <row
+      key={ssid}
+      height={rowHeight}
+      padding={[0, spacing.item]}
+      radius={rowRadius(state.theme)}
+      action={`join:${ssid}`}
+      rightAction={network.known ? `options:${ssid}` : undefined}
+      tooltip={network.known ? "Right-click to forget" : undefined}
+      hovered={{ background: "hover" }}
+      width={width - 2 * spacing.item}
+    >
       <icon
         key="icon"
         symbol={pending ? "arrow.triangle.2.circlepath" : "wifi"}
@@ -126,7 +137,7 @@ function Network({ network, state }: { network: Gary.WiFiNetwork; state: Gary.St
       />
       <text key="name" color={current ? "bright" : "foreground"}>{ssid}</text>
       <spacer />
-      {pending ? <text key="status" color="dim">Connecting…</text> : current ? <text key="status" color="dim">Connected</text> : null}
+      {pending ? <text key="status" color="dim">{busy === forgetting ? "Forgetting…" : "Connecting…"}</text> : current ? <text key="status" color="dim">Connected</text> : null}
       {network.secure ? <icon key="lock" symbol="lock.fill" fontSize={10} color="dim" /> : null}
     </row>
   );
@@ -148,6 +159,15 @@ function list(state: Gary.State) {
   const other = found.filter((network) => !network.known);
   const rows = (each: Gary.WiFiNetwork) => {
     const row = <Network network={each} state={state} />;
+    if (forgetting === each.ssid) {
+      return [
+        row,
+        <row key="forget" height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action={`forget:${forgetting}`} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
+          <icon key="icon" symbol="minus.circle" width={checkWidth} color="dim" />
+          <text key="text">Forget This Network</text>
+        </row>,
+      ];
+    }
     if (secret !== each.ssid) return [row];
     return [row, <input key="password" placeholder={`Password for ${secret}`} submit="password" height={rowHeight} padding={[0, 2 * spacing.item + checkWidth]} />];
   };
@@ -201,6 +221,12 @@ export default {
   onAction(action, payload, state) {
     if (action === "power") return run(lifted.wifi.setPower(state.wifi?.power !== true)).pipe(Effect.andThen(Effect.delay(scan, "2 seconds")));
     if (action === "location") return run(lifted.wifi.requestLocation());
+    if (action.startsWith("options:")) return void (forgetting = forgetting === action.slice(8) ? null : action.slice(8));
+    if (action.startsWith("forget:")) {
+      if (busy) return;
+      busy = action.slice(7);
+      return run(lifted.wifi.forget(busy)).pipe(Effect.ensuring(Effect.sync(() => void (busy = forgetting = null))));
+    }
     const ssid = action.startsWith("join:") ? action.slice(5) : action === "password" ? secret : null;
     const network = strongest(state).find((each) => each.ssid === ssid);
     if (!network || network.ssid === state.wifi?.ssid || busy) return;

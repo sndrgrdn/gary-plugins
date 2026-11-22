@@ -8,7 +8,8 @@ Shows Wi‑Fi in the bar with Omarchy's signal icon, and opens Omarchy's network
 - The panel shows the signal, rate, channel and noise of the network you are on, with this Mac's IP address and the gateway.
 - The switch turns Wi‑Fi on or off.
 - Known networks come first, then other networks, each with a lock when it needs a password. Click one to join it. If it needs a password you haven't saved, a password field opens below it.
-- Gary cannot disconnect from or forget a network, pick the band or the DNS servers, or tell Ethernet or a captive portal apart, so the panel leaves those out.
+- Right-click a known network for Forget This Network.
+- Gary cannot disconnect from a network, pick the band or the DNS servers, or tell Ethernet or a captive portal apart, so the panel leaves those out.
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. Network names need Location. Until you allow it, the panel offers to ask for it.
 

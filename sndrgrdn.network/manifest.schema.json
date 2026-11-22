@@ -15,7 +15,8 @@
       "enum" : [
         "left",
         "center",
-        "right"
+        "right",
+        "notchLeft"
       ]
     },
     "entryPoints" : {

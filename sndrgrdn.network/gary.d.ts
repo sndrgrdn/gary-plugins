@@ -278,6 +278,7 @@ declare namespace Gary {
     setPower(on: boolean): null;
     scan(): Promise<WiFiNetwork[]>;
     join(ssid: string, password?: string | null): Promise<"joined">;
+    forget(ssid: string): Promise<"forgotten">;
     requestLocation(): Promise<string>;
   }
 }
