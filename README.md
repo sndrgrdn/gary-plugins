@@ -1,6 +1,6 @@
 # Gary plugins
 
-These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need Gary 0.3.1 or later, which finds the files a plugin ships relative to its folder. Dinky and Weather are written with Effect, so they need a Gary that provides `gary:effect`.
+These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need a Gary built from `main` at [`1d70d89`](https://github.com/sndrgrdn/gary/commit/1d70d89) or later, which reads surfaces and media keys from the manifest and has the `calendar`, `system` and `tray` topics they use.
 
 ![The bar with Dinky and Front App on the left, and Weather, Battery and Clock on the right](bar.png)
 
