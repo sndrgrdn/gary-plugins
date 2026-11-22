@@ -117,7 +117,7 @@ function card(theme: Item, relative: number, previewX: number, radius: number): 
   );
 }
 
-function caption(): Gary.Node {
+function caption(spacing: Gary.Theme["spacing"]): Gary.Node {
   const theme = selected();
   const title: Gary.Node[] = theme
     ? [
@@ -132,7 +132,7 @@ function caption(): Gary.Node {
   const filter: Gary.Node[] = query
     ? [
       <row key="divider" width={1} height={16} background="alpha(#ffffff, 0.2)" />,
-      <row key="query" gap={5}>
+      <row key="query">
         <icon key="search" symbol="magnifyingglass" fontSize={14} color="alpha(#ffffff, 0.75)" />
         <text key="text" font="picker-query" color="alpha(#ffffff, 0.75)">{query}</text>
       </row>,
@@ -141,9 +141,8 @@ function caption(): Gary.Node {
   return (
     <row
       key="caption"
-      gap={12}
       height={40}
-      padding={[0, 18]}
+      padding={[0, spacing.section]}
       radius={20}
       material="vibrant"
       colorScheme="dark"
@@ -179,7 +178,7 @@ export default {
           {cards.map(({ theme, relative }) => card(theme, relative, previewX, radius))}
         </stack>
         <column key="chrome" width={width} height={chromeHeight} padding={[26, 0, 0, 0]} align="center">
-          {caption()}
+          {caption(state.theme.spacing)}
         </column>
       </column>
     );
