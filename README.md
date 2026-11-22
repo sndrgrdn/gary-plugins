@@ -19,7 +19,6 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.network`](sndrgrdn.network) shows the Wi‑Fi signal in the bar, and opens a panel with the network's details and the networks nearby to join, like Omarchy's.
 - [`sndrgrdn.now-playing`](sndrgrdn.now-playing) shows the playing track in the bar, and opens a panel with the artwork, a seek bar and controls when you click it. Scrolling over it changes the volume.
 - [`sndrgrdn.osd`](sndrgrdn.osd) takes over the volume and brightness keys and shows the level in a pill near the bottom of the screen, like Omarchy's on-screen display.
-- [`sndrgrdn.power`](sndrgrdn.power) locks the screen, sleeps, restarts, shuts down or logs out from a menu at the end of the bar, and asks before it restarts, shuts down or logs out.
 - [`sndrgrdn.system-load`](sndrgrdn.system-load) shows CPU use over the last minute as a sparkline in the bar, with the current memory use.
 - [`sndrgrdn.theme`](sndrgrdn.theme) switches between the Omarchy themes of [theme-switcher](https://github.com/sndrgrdn/theme-switcher) from a menu, and applies the theme to Gary, the wallpaper, and several apps.
 - [`sndrgrdn.tray`](sndrgrdn.tray) shows the menu bar icons of other apps in a drawer in the bar, and opens an app's menu when you click its icon.
