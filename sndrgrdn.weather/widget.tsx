@@ -20,17 +20,29 @@ const longitude = Number(settings.longitude ?? 5.8);
 const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
 let weather: Weather | null = null;
 
-const refresh = Effect.gen(function* () {
+class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", { status: Schema.Number, message: Schema.String }) {}
+
+const request = Effect.fn("Weather.request")(function* () {
   const response = yield* fetch(url);
   if (response.status !== 200) {
-    return yield* host.log(`weather request failed with status ${response.status}: ${response.text.trim()}`);
+    return yield* new RequestFailed({ status: response.status, message: `status ${response.status}: ${response.text.trim()}` });
   }
-  const { current } = yield* Schema.decodeUnknownEffect(Forecast)(response.text);
+  return yield* Schema.decodeUnknownEffect(Forecast)(response.text);
+});
+
+const refresh = Effect.gen(function* () {
+  const { current } = yield* request().pipe(
+    Effect.tapError((error) => host.log(`weather request failed: ${error.message}`)),
+    Effect.retry({
+      schedule: Schedule.exponential("10 seconds").pipe(Schedule.jittered, Schedule.upTo({ times: 5 })),
+      while: (error) => error._tag === "HostError" || (error._tag === "RequestFailed" && (error.status === 429 || error.status >= 500)),
+    }),
+  );
   weather = {
     temperature: Math.round(current.temperature_2m) + "°C",
     icon: icons.find(([codes]) => codes.includes(current.weather_code))?.[1] ?? "cloud",
   };
-}).pipe(Effect.catch((error) => host.log(`weather request failed: ${error.message}`)));
+}).pipe(Effect.ignore);
 
 export default {
   effect: Effect.gen(function* () {
