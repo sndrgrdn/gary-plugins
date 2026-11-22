@@ -5,7 +5,7 @@ import type { Topic } from "./topic";
 type Leaf = { label: string; icon: string; command: Command; confirm?: string; stay?: boolean };
 type Branch = { label: string; icon: string; rows: (status: Topic) => Row[] };
 type Row = Leaf | Branch;
-type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 
 const width = 280;
 const rowHeight = 32;
@@ -117,13 +117,14 @@ function answer(confirm: boolean) {
   if (confirm && leaf) return run(leaf);
 }
 
-function Item({ row, index, chosen, spacing }: { row: Row; index: number; chosen: boolean; spacing: Spacing }) {
+function Item({ row, index, chosen, theme }: { row: Row; index: number; chosen: boolean; theme: Theme }) {
+  const { radius, spacing } = theme;
   return (
     <row
       key={row.label}
       height={rowHeight}
       padding={[0, spacing.item]}
-      radius={6}
+      radius={Math.max(0, radius.surface - spacing.item)}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
       action={`row:${index}`}
@@ -136,13 +137,13 @@ function Item({ row, index, chosen, spacing }: { row: Row; index: number; chosen
   );
 }
 
-function Choice({ label, action, chosen, color, width }: { label: string; action: string; chosen: boolean; color: Gary.Color; width: number }) {
+function Choice({ label, action, chosen, color, width, radius }: { label: string; action: string; chosen: boolean; color: Gary.Color; width: number; radius: number }) {
   return (
     <row
       key={action}
       width={width}
       height={rowHeight}
-      radius={6}
+      radius={radius}
       align="center"
       border={{ color: chosen ? color : "border" }}
       background={chosen ? `alpha(${color}, 0.25)` : undefined}
@@ -155,15 +156,15 @@ function Choice({ label, action, chosen, color, width }: { label: string; action
 }
 
 function body(state: Gary.State): Gary.Node {
-  const { spacing } = state.theme;
+  const { spacing, radius } = state.theme;
   if (confirming) {
     const choice = (width - 5 * spacing.item) / 2;
     return (
-      <column key="confirm" gap={spacing.section} padding={[0, spacing.item, spacing.item, spacing.item]}>
-        <text key="message">{confirming.leaf.confirm ?? ""}</text>
+      <column key="confirm" gap={spacing.item} padding={[0, spacing.item, spacing.item, spacing.item]}>
+        <text key="message" height={rowHeight}>{confirming.leaf.confirm ?? ""}</text>
         <row key="choices">
-          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} color="accent" width={choice} />
-          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} color="bad" width={choice} />
+          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} color="accent" width={choice} radius={radius.control} />
+          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} color="bad" width={choice} radius={radius.control} />
         </row>
       </column>
     );
@@ -171,13 +172,13 @@ function body(state: Gary.State): Gary.Node {
   const at = level().at;
   return (
     <column key={`rows:${trail.length}`} gap={0}>
-      {rows(state).map((row, index) => <Item row={row} index={index} chosen={index === at} spacing={spacing} />)}
+      {rows(state).map((row, index) => <Item row={row} index={index} chosen={index === at} theme={state.theme} />)}
     </column>
   );
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, left: true }, margins: { top: 6, left: 20 } },
+  surface: { attach: true, anchors: { top: true, left: true }, margins: { top: 8, left: 20 } },
 
   render(state) {
     const title = confirming ? confirming.leaf.label : level().branch.label;
@@ -188,7 +189,9 @@ export default {
           {(trail.length > 1 || confirming) && <icon key="back" symbol="chevron.left" style="dim" action="back" />}
           <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
         </row>
-        <row key="divider" height={1} background="border" />
+        <row key="divider" height={0}>
+          <row key="line" height={1} width={width - 2 * spacing.item} background="border" />
+        </row>
         {body(state)}
       </column>
     );
