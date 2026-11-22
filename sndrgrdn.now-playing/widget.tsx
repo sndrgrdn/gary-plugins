@@ -29,7 +29,7 @@ export default {
     const track = state.nowplaying?.track;
     if (volume !== null) {
       return (
-        <row gap={6} action="open" scrollAction="volume">
+        <row action="open" scrollAction="volume">
           <icon key="icon" symbol={volume === 0 ? "speaker.slash.fill" : "speaker.wave.2.fill"} />
           <text key="text">{`${Math.round(volume * 100)}%`}</text>
         </row>
@@ -37,7 +37,7 @@ export default {
     }
     if (!track) return <text>{""}</text>;
     return (
-      <row gap={6} action="open" scrollAction="volume" color={track.playing ? "foreground" : "dim"}>
+      <row action="open" scrollAction="volume" color={track.playing ? "foreground" : "dim"}>
         <icon key="icon" symbol="music.note" />
         <text key="text">{label(track)}</text>
       </row>

@@ -35,11 +35,10 @@ function Artwork({ path }: { path: string | null }) {
   return <image key="artwork" path={path} width={artworkSize} height={artworkSize} radius={6} clip fit="fill" />;
 }
 
-function Seek({ track }: { track: Gary.Track }) {
+function Seek({ track, width }: { track: Gary.Track; width: number }) {
   if (!track.duration) return null;
   return (
-    <row key="seek" gap={8}>
-      <text key="elapsed" style="dim" font="mono">{clock(position(track))}</text>
+    <column key="seek" gap={0}>
       <slider
         key="slider"
         value={(track.elapsed ?? 0) / track.duration}
@@ -47,25 +46,30 @@ function Seek({ track }: { track: Gary.Track }) {
         at={track.elapsedAt ?? undefined}
         release="seek"
         color="foreground"
+        width={width}
       />
-      <text key="duration" style="dim" font="mono">{clock(track.duration)}</text>
-    </row>
+      <row key="times" width={width}>
+        <text key="elapsed" style="dim" font="mono">{clock(position(track))}</text>
+        <spacer />
+        <text key="duration" style="dim" font="mono">{clock(track.duration)}</text>
+      </row>
+    </column>
   );
 }
 
-function Player({ track }: { track: Gary.Track }) {
+function Player({ track, spacing }: { track: Gary.Track; spacing: Gary.Theme["spacing"] }) {
   const detail = [track.artist, track.album].filter(Boolean).join(" · ");
   return (
-    <column style="panel" width={width} gap={12}>
-      <row key="track" gap={12}>
+    <column style="panel" width={width} padding={spacing.section} gap={spacing.section}>
+      <row key="track">
         <Artwork path={track.artwork} />
-        <column key="text" gap={2} width={width - 28 - artworkSize - 12}>
+        <column key="text" gap={0} width={width - 2 * spacing.section - artworkSize - spacing.item}>
           <text key="title" style="title">{track.title}</text>
           {detail ? <text key="detail" style="dim">{detail}</text> : null}
         </column>
       </row>
-      <Seek track={track} />
-      <row key="controls" gap={20}>
+      <Seek track={track} width={width - 2 * spacing.section} />
+      <row key="controls" gap={spacing.section}>
         <spacer key="start" />
         <Control action="previous" symbol="backward.fill" size={16} />
         <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} size={22} />
@@ -83,10 +87,11 @@ export default {
 
   render(state) {
     const nowplaying = state.nowplaying;
-    if (nowplaying?.track) return <Player track={nowplaying.track} />;
+    const { spacing } = state.theme;
+    if (nowplaying?.track) return <Player track={nowplaying.track} spacing={spacing} />;
     const message = nowplaying && !nowplaying.available ? nowplaying.reason ?? "Now playing is unavailable" : "Nothing playing";
     return (
-      <column style="panel" width={width}>
+      <column style="panel" width={width} padding={spacing.section}>
         <text style="dim">{message}</text>
       </column>
     );
