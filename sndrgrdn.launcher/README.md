@@ -19,7 +19,15 @@ The picker learns from the apps you open. Each app you open moves up the list, a
 
 ## Calculator
 
-The calculator works out arithmetic, percentages, units, currencies, dates, time zones, and number bases. It shows an answer only when the query is clearly a calculation, so "42" or "firefox" shows apps only.
+The calculator works out arithmetic, percentages, units, currencies, dates, time zones, and number bases. It shows an answer only when the query is clearly a calculation, so "42" or "firefox" shows apps only, and Return still opens the app.
+
+Beyond what omacast reads on its own, the calculator understands these forms:
+
+- A calculation that you are still typing. `2+` shows 2 and `(2+3` shows 5, so the answer row stays while you type.
+- An amount on its own, which converts to a related unit. `5 km` shows miles, `1m` shows feet, `70 kg` shows pounds, `20 c` shows Fahrenheit, `180 cm` shows inches, and `2 L` shows gallons, and each converts back the other way. A currency amount such as `100 usd` or `£10` shows euros, and euros show US dollars.
+- Data sizes in lowercase, such as `1 gb to mb` and `1 gib to mb`. A lowercase `b` means bytes, except in `bps`, which means bits per second, as in `100mbps to MB/s`.
+- Number shorthand: `10k`, `1e3`, and an `x` between numbers to multiply, as in `3x3` or `1920x1080`.
+- Questions and phrases: `5 km is how many miles`, `convert 5 km to miles`, `how many feet in a mile`, `15% tip on 42`, `half of 90`, and `5'10" to cm`. A tip shows the tip itself, not the total.
 
 Currency conversions use the European Central Bank's reference rates from [Frankfurter](https://frankfurter.dev). The plugin fetches them from `api.frankfurter.dev` when Gary loads it, and again once they are more than 12 hours old. It keeps them in Gary's storage, so conversions work offline with the last rates. This request is the plugin's only network use.
 
@@ -27,7 +35,7 @@ Currency conversions use the European Central Bank's reference rates from [Frank
 
 ```sh
 gary call sndrgrdn.launcher open    # open the picker
-gary call sndrgrdn.launcher state   # the app count, the query, the answer, and the first results
+gary call sndrgrdn.launcher state   # the app count, the query, the answer, the rules that rewrote the query, and the first results
 ```
 
 ## Install
@@ -47,4 +55,5 @@ The calculator, the fuzzy ranking, and the visit scores come from [omacast](http
 ## Develop
 
 Gary reloads the plugin each time you save a file in its folder. Type-check it with `npx tsc -p .`.
+Check the calculator with `node scripts/check-calculator.mjs`, which needs Node 24 or later. The script checks that omacast's own answers stay the same and that each added form gives its expected answer. It also checks that no installed app's name, and no prefix of one, shows an answer, and it times every query in Node and in JavaScriptCore.
 After you change `uses` or `subscribes` in `manifest.json`, run `gary plugin types .` to refresh `gary.d.ts`.
