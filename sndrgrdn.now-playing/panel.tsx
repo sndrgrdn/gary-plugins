@@ -22,9 +22,9 @@ function clock(seconds: number) {
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${minutes}:${rest}`;
 }
 
-function Control({ action, symbol, size, fontSize }: { action: string; symbol: string; size: number; fontSize: number }) {
+function Control({ action, symbol, fontSize }: { action: string; symbol: string; fontSize: number }) {
   return (
-    <button key={action} action={action} hover="hover" width={size} height={size} align="center">
+    <button key={action} action={action} hover="hover" width={32} height={20} align="center">
       <icon symbol={symbol} fontSize={fontSize} />
     </button>
   );
@@ -48,7 +48,7 @@ function Seek({ track, width }: { track: Gary.Track; width: number }) {
         color="foreground"
         width={width}
       />
-      <row key="times" width={width}>
+      <row key="times" width={width} height={16}>
         <text key="elapsed" style="dim" font="mono">{clock(position(track))}</text>
         <spacer />
         <text key="duration" style="dim" font="mono">{clock(track.duration)}</text>
@@ -69,14 +69,16 @@ function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
           {detail ? <text key="detail" style="dim" lines={1}>{detail}</text> : null}
         </column>
       </row>
-      <Seek track={track} width={width - 2 * spacing.section} />
-      <row key="controls" gap={spacing.section}>
-        <spacer key="start" />
-        <Control action="previous" symbol="backward.fill" size={32} fontSize={16} />
-        <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} size={40} fontSize={22} />
-        <Control action="next" symbol="forward.fill" size={32} fontSize={16} />
-        <spacer key="end" />
-      </row>
+      <column key="playback" gap={spacing.section - 4}>
+        <Seek track={track} width={width - 2 * spacing.section} />
+        <row key="controls" gap={spacing.section}>
+          <spacer key="start" />
+          <Control action="previous" symbol="backward.fill" fontSize={16} />
+          <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} fontSize={20} />
+          <Control action="next" symbol="forward.fill" fontSize={16} />
+          <spacer key="end" />
+        </row>
+      </column>
     </column>
   );
 }
