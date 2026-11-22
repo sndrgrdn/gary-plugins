@@ -1,6 +1,10 @@
 import type { Entry } from "./topic";
 
+type Spacing = Gary.Theme["spacing"];
+
 const width = 440;
+const rowHeight = 32;
+const visibleRows = 9;
 const opened = Date.now();
 
 let entries: Entry[] = [];
@@ -15,10 +19,10 @@ function age(copied: number) {
 }
 
 function Preview({ entry }: { entry: Entry }) {
-  if ("image" in entry) return <image key="image" path={entry.image} width={64} height={36} fit="fill" radius={4} clip />;
+  if ("image" in entry) return <image key="image" path={entry.image} width={48} height={24} fit="fill" radius={4} clip />;
   const text = "text" in entry ? entry.text.replace(/\s+/g, " ").trim() : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
   return (
-    <row key="text" gap={6}>
+    <row key="text">
       {"files" in entry && <icon key="icon" symbol="doc" style="dim" />}
       <text key="text" lines={1}>{text}</text>
     </row>
@@ -38,12 +42,12 @@ function remove(index: number) {
   host.call("remove", String(entry.copied)).catch((error) => host.log(`remove failed: ${error}`));
 }
 
-function row(entry: Entry, index: number) {
+function row(entry: Entry, index: number, spacing: Spacing) {
   return (
     <row
       key={String(entry.copied)}
-      gap={8}
-      padding={[6, 8]}
+      height={rowHeight}
+      padding={[0, spacing.item]}
       radius={6}
       style={index === selected ? "selected" : undefined}
       hovered={{ background: "hover" }}
@@ -66,20 +70,22 @@ export default {
     selected = Math.max(0, Math.min(selected, entries.length - 1));
   },
 
-  render() {
+  render(state) {
+    const { spacing } = state.theme;
     return (
-      <column width={width} gap={6} padding={8}>
-        <row key="header" padding={[2, 8, 0, 8]}>
-          <text key="title" style="dim">Clipboard</text>
+      <column width={width} padding={spacing.item}>
+        <row key="header" height={rowHeight} padding={[0, spacing.item]}>
+          <text key="title" style="dim" fontSize={15}>Clipboard</text>
           <spacer key="gap" />
           <text key="hotkey" style="dim">⌘⇧V</text>
         </row>
+        <row key="divider" height={1} background="border" />
         {entries.length ? (
-          <scroll key="entries" height={300} reveal={String(entries[selected]?.copied)}>
-            <column key="rows" gap={2}>{entries.map(row)}</column>
+          <scroll key="entries" height={visibleRows * rowHeight} reveal={String(entries[selected]?.copied)}>
+            <column key="rows" gap={0}>{entries.map((entry, index) => row(entry, index, spacing))}</column>
           </scroll>
         ) : (
-          <text key="empty" style="dim" padding={[6, 8]}>Nothing copied yet</text>
+          <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>Nothing copied yet</text>
         )}
       </column>
     );
