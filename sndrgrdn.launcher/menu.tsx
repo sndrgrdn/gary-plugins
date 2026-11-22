@@ -1,7 +1,19 @@
-import { Effect, host as lifted } from "gary:effect";
+import { Effect, Option, Schema, host as lifted } from "gary:effect";
+import * as Frecency from "./oma-cast/Frecency";
+import * as Ranker from "./oma-cast/Ranker";
 
-type App = { name: string; key: string; path: string };
+type App = { id: string; title: string; path: string };
+type Candidate = App & { type: "application"; frecency: number; openedAt: number | null; searchTerms: Frecency.SearchTerm[] };
 type Theme = Gary.Theme;
+
+const Visits = Schema.Record(
+  Schema.String,
+  Schema.Struct({
+    anchor: Schema.Finite,
+    openedAt: Schema.Finite,
+    searchTerms: Schema.mutable(Schema.Array(Schema.Struct({ term: Schema.String, at: Schema.Finite }))),
+  }),
+);
 
 const cardWidth = 600;
 const rowHeight = 40;
@@ -11,52 +23,40 @@ const headerHeight = 48;
 const maxRows = 150;
 
 let apps: readonly App[] = [];
+let visits: { [id: string]: Frecency.Visits } = Option.getOrElse(Schema.decodeUnknownOption(Visits)(host.storage.get("visits")), () => ({}));
 let query = "";
-let results: readonly App[] = [];
+let results: readonly Candidate[] = [];
 let selected = 0;
 
-function startsWord(name: string, at: number) {
-  if (at === 0) return true;
-  const before = name[at - 1];
-  return /[\s\-_.]/.test(before) || (before === before.toLowerCase() && name[at] !== name[at].toLowerCase());
-}
-
-function score(needle: string, app: App): number | null {
-  const at = app.key.indexOf(needle);
-  if (at === 0) return 3000 - app.key.length;
-  if (at > 0) return (startsWord(app.name, at) ? 2500 : 2000) - at;
-  let total = 1000;
-  let last = -1;
-  for (const char of needle) {
-    const next = app.key.indexOf(char, last + 1);
-    if (next < 0) return null;
-    total += (startsWord(app.name, next) ? 15 : 0) - (next - last - 1);
-    last = next;
-  }
-  return total;
+function candidate(app: App, nowMs: number): Candidate {
+  const seen = visits[app.id];
+  return {
+    ...app,
+    type: "application",
+    frecency: seen ? Frecency.score(seen.anchor, nowMs / 1000) : 1,
+    openedAt: seen?.openedAt ?? null,
+    searchTerms: seen?.searchTerms ?? [],
+  };
 }
 
 function rank() {
-  const needle = query.trim().toLowerCase();
-  const ranked = needle
-    ? apps
-      .map((app) => ({ app, score: score(needle, app) }))
-      .filter((each): each is { app: App; score: number } => each.score !== null)
-      .sort((a, b) => b.score - a.score)
-      .map((each) => each.app)
-    : apps;
-  results = ranked.slice(0, maxRows);
+  const nowMs = Date.now();
+  results = Ranker.rank(apps.map((app) => candidate(app, nowMs)), query, { nowMs })
+    .slice(0, maxRows)
+    .map((ranked) => ranked.candidate);
   selected = Math.max(0, Math.min(selected, results.length - 1));
 }
 
 const refresh = Effect.fn("Launcher.refresh")(function* () {
   const installed = yield* lifted.apps.installed();
-  apps = installed.map(({ name, path }) => ({ name, key: name.toLowerCase(), path }));
+  apps = installed.map(({ name, path, app }) => ({ id: app ?? path, title: name, path }));
   rank();
 }, Effect.catchTag("HostError", (error) => lifted.log(`listing apps failed: ${error.message}`)));
 
-const launch = Effect.fn("Launcher.launch")(function* (app: App) {
+const launch = Effect.fn("Launcher.launch")(function* (app: App, term: string) {
   yield* lifted.apps.launch(app.path);
+  visits = { ...visits, [app.id]: Frecency.recordVisit(visits[app.id], Date.now(), term) };
+  yield* lifted.storage.set("visits", visits);
 }, (effect, app) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`launch ${app.path} failed: ${error.message}`)));
 
 function open() {
@@ -70,7 +70,7 @@ function open() {
 function pick(app: App | undefined) {
   if (!app) return;
   host.hide();
-  Effect.runFork(launch(app));
+  Effect.runFork(launch(app, query));
 }
 
 function move(step: number) {
@@ -90,7 +90,7 @@ function Row({ app, chosen, theme }: { app: App; chosen: boolean; theme: Theme }
       action={`open:${app.path}`}
     >
       <image path={app.path} width={iconSize} height={iconSize} />
-      <text style={chosen ? "active" : undefined}>{app.name}</text>
+      <text style={chosen ? "active" : undefined}>{app.title}</text>
       <spacer />
       {chosen && <text style="dim">↵</text>}
     </row>
@@ -181,6 +181,6 @@ export default {
 
   methods: {
     open,
-    state: () => ({ apps: apps.length, query, selected: results[selected]?.name ?? null, results: results.slice(0, 10).map((app) => app.name) }),
+    state: () => ({ apps: apps.length, query, selected: results[selected]?.title ?? null, results: results.slice(0, 10).map((app) => app.title) }),
   },
 } satisfies Gary.Menu;
