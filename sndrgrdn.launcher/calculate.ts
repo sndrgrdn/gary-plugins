@@ -75,6 +75,7 @@ const rules: readonly Rule[] = [
 
 export function calculate(query: string, env: Calculator.Env): Answer | null {
   const input = query.trim();
+  if (/^\p{L}+$/u.test(input)) return null;
   const applied: string[] = [];
   let current = input;
   let result = Calculator.evaluate(current, env);

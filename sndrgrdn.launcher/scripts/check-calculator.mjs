@@ -75,7 +75,7 @@ const show = (answer) => answer?.result ?? null;
 const failures = [];
 const count = (kind) => failures.filter((line) => line.startsWith(kind)).length;
 
-const kept = probe.filter((query) => Calculator.evaluate(query, env));
+const kept = probe.filter((query) => !quiet.includes(query) && Calculator.evaluate(query, env));
 for (const query of kept) {
   const before = Calculator.evaluate(query, env).result;
   const after = show(calculate(query, env));
@@ -88,12 +88,9 @@ for (const [query, answer] of added) {
   if (got !== answer) failures.push(`expected ${query} → ${answer}, got ${got}`);
 }
 
-const preexisting = [];
 for (const query of quiet) {
   const answer = calculate(query, env);
-  if (!answer) continue;
-  if (Calculator.evaluate(query, env)) preexisting.push(`${query} → ${answer.result}`);
-  else failures.push(`false trigger: ${JSON.stringify(query)} → ${answer.result} via ${answer.rules.join(", ")}`);
+  if (answer) failures.push(`false trigger: ${JSON.stringify(query)} → ${answer.result} via ${answer.rules.join(", ")}`);
 }
 
 const stress = ["(".repeat(199), "1+".repeat(99), "how many ".repeat(22), "5 km is ".repeat(25), "1 ".repeat(100), "x".repeat(5000), `convert ${"9".repeat(195)}`];
@@ -149,7 +146,6 @@ if (jsc) corpus.forEach((query, at) => jsc.results[at] !== node.results[at] && f
 console.log(`(a) baseline kept: ${kept.length - count("baseline")}/${kept.length} answers of ${probe.length} probe inputs`);
 console.log(`    added cases: ${added.length - count("expected")}/${added.length} pass`);
 console.log(`(b) quiet inputs: ${quiet.length} (${names.length} apps, ${prefixes.length} prefixes, ${commonWords.length} common words), false triggers: ${count("false")}`);
-console.log(`    already answered by oma-cast alone, unchanged: ${preexisting.length ? preexisting.join("; ") : "none"}`);
 console.log(`(c) ${corpus.length} queries`);
 console.log(`    node ${summary(node)}`);
 console.log(`    jsc  ${jsc ? summary(jsc) : "not found"}`);
