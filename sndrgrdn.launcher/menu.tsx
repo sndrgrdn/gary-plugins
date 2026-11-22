@@ -1,13 +1,13 @@
 import { Effect, host as lifted } from "gary:effect";
 
 type App = { name: string; key: string; path: string };
-type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 
 const cardWidth = 600;
 const rowHeight = 40;
-const iconSize = 26;
+const iconSize = 24;
 const visibleRows = 9;
-const headerHeight = 44;
+const headerHeight = 48;
 const maxRows = 150;
 
 let apps: readonly App[] = [];
@@ -77,13 +77,14 @@ function move(step: number) {
   selected = Math.max(0, Math.min(selected + step, results.length - 1));
 }
 
-function Row({ app, chosen, spacing }: { app: App; chosen: boolean; spacing: Spacing }) {
+function Row({ app, chosen, theme }: { app: App; chosen: boolean; theme: Theme }) {
+  const { radius, spacing } = theme;
   return (
     <row
       key={app.path}
       height={rowHeight}
       padding={[0, spacing.item]}
-      radius={6}
+      radius={Math.max(0, radius.surface - spacing.item)}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
       action={`open:${app.path}`}
@@ -96,14 +97,15 @@ function Row({ app, chosen, spacing }: { app: App; chosen: boolean; spacing: Spa
   );
 }
 
-function list(spacing: Spacing): Gary.Node {
+function list(theme: Theme): Gary.Node {
+  const { spacing } = theme;
   if (!results.length) {
     const message = apps.length ? `No apps match “${query.trim()}”` : "Looking for apps…";
     return <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
   }
   return (
     <scroll key="results" height={visibleRows * rowHeight} gap={0} reveal={results[selected]?.path}>
-      {results.map((app, at) => <Row app={app} chosen={at === selected} spacing={spacing} />)}
+      {results.map((app, at) => <Row app={app} chosen={at === selected} theme={theme} />)}
     </scroll>
   );
 }
@@ -117,7 +119,7 @@ export default {
     const width = state.display?.width ?? 1728;
     const height = state.display?.height ?? 1117;
     const { spacing } = state.theme;
-    const cardHeight = 3 * spacing.item + headerHeight + 1 + visibleRows * rowHeight;
+    const cardHeight = 3 * spacing.item + headerHeight + visibleRows * rowHeight;
     return (
       <stack key="backdrop" width={width} height={height}>
         <row key="dim" width={width} height={height} background="alpha(background, 0.55)" action="close" />
@@ -129,17 +131,18 @@ export default {
           height={cardHeight}
           gap={0}
           padding={spacing.item}
-          radius={14}
-          background="panel"
+          style="surface"
           border={{ color: "border" }}
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
             <icon symbol="magnifyingglass" style="dim" fontSize={16} width={iconSize} />
             <input key="query" value={query} placeholder="Search apps" change="filter" submit="launch" fontSize={18} />
           </row>
-          <row key="divider" height={1} background="border" />
+          <row key="divider" height={0}>
+            <row key="line" height={1} width={cardWidth - 2 * spacing.item} background="border" />
+          </row>
           <column key="list" height={visibleRows * rowHeight + spacing.item} padding={[spacing.item, 0, 0, 0]}>
-            {list(spacing)}
+            {list(state.theme)}
           </column>
         </column>
       </stack>
