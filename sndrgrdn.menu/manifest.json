@@ -1,0 +1,13 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.menu",
+  "name": "Menu",
+  "version": "0.1.0",
+  "kinds": ["service", "menu", "bar-widget"],
+  "entryPoints": { "service": "service.ts", "menu": "menu.tsx", "bar-widget": "widget.tsx" },
+  "subscribes": { "menu": ["sndrgrdn.menu"] },
+  "uses": ["clipboard", "colorpicker", "exec", "power", "screen", "toast", "vision"],
+  "bar": "left",
+  "hotkeys": [{ "id": "open", "keys": "alt+shift+space" }]
+}
