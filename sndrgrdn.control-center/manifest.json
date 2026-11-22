@@ -4,9 +4,11 @@
   "id": "sndrgrdn.control-center",
   "name": "Control Center",
   "version": "0.1.0",
-  "kinds": ["service", "bar-widget", "menu", "overlay"],
-  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "menu": "menu.tsx", "overlay": "osd.tsx" },
+  "kinds": ["bar-widget", "menu", "overlay"],
+  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx", "overlay": "osd.tsx" },
   "bar": "right",
-  "subscribes": ["wifi", "bluetooth", "focus", "audio", "brightness", "sndrgrdn.control-center"],
-  "uses": ["wifi", "bluetooth", "audio", "brightness", "mediakeys"]
+  "surfaces": { "overlay": ["osd"] },
+  "mediakeys": { "overlay": ["volume-up", "volume-down", "mute", "brightness-up", "brightness-down"] },
+  "subscribes": { "menu": ["wifi", "bluetooth", "focus", "audio", "brightness"], "overlay": ["audio", "brightness"] },
+  "uses": ["wifi", "bluetooth", "audio", "brightness"]
 }

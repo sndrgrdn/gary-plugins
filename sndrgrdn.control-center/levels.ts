@@ -3,7 +3,7 @@ export type Reading = { value: number; muted: boolean; display: string | null };
 
 const steps = 16;
 
-export function read(state: Gary.State, level: Level): Reading | null {
+export function read(state: Pick<Gary.State, "audio" | "brightness">, level: Level): Reading | null {
   if (level === "volume") {
     const output = state.audio?.output;
     if (output?.volume == null) return null;

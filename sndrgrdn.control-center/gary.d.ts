@@ -2,14 +2,14 @@ declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
   type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
-  interface ScrollEvent {
+  type ScrollEvent = {
     x: number;
     y: number;
     precise: boolean;
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "tooltip" | (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
   type FontName = "body" | "mono" | "strong" | "title" | (string & {});
   type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
@@ -37,6 +37,8 @@ declare namespace Gary {
     colorScheme?: "dark" | "light";
     transition?: "opacity" | "scale" | "none";
     fit?: "fit" | "fill";
+    lines?: number;
+    truncate?: "tail" | "middle" | "head";
     clip?: boolean;
     shadow?: { color: Color; radius?: number; y?: number };
     border?: { color: Color; width?: number };
@@ -94,10 +96,15 @@ declare namespace Gary {
   interface Slider extends Style {
     type: "slider";
     value: number;
+    rate?: number;
+    at?: number;
+    release?: string;
   }
   interface Progress extends Style {
     type: "progress";
     value: number;
+    rate?: number;
+    at?: number;
   }
   interface Input extends Style {
     type: "input";
@@ -120,6 +127,7 @@ declare namespace Gary {
     min?: number;
     max?: number;
     axes?: boolean;
+    labels?: string[];
   }
   interface Grid extends Style {
     type: "grid";
@@ -150,7 +158,7 @@ declare namespace Gary {
     interface IntrinsicElements extends Elements {}
   }
 
-  interface Display {
+  type Display = {
     id: string;
     index: number;
     main: boolean;
@@ -159,7 +167,8 @@ declare namespace Gary {
     notched: boolean;
     notch: { left: number; right: number } | null;
   }
-  interface Theme {
+  type ScreenArea = { display?: string | null } | { window: number } | { x: number; y: number; width: number; height: number };
+  type Theme = {
     mode: "light" | "dark";
     colors: { [name: string]: string };
     palette: { [name: string]: string };
@@ -170,7 +179,6 @@ declare namespace Gary {
     "focus": Focus;
     "audio": Audio;
     "brightness": Brightness;
-    "sndrgrdn.control-center": import("./topic").Topic;
   }
   interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
@@ -203,21 +211,25 @@ declare namespace Gary {
   interface Host {
     log(message: string): void;
     storage: Storage;
-    publish(value: import("./topic").Topic): void;
+    publish(value: Json): void;
     show(surface?: string): void;
     hide(surface?: string): void;
     toggle(surface?: string): void;
-    call(method: string, ...args: string[]): Promise<Json | undefined>;
+    call(...call: [method: string, ...args: string[]] | [target: { kind: Kind }, method: string, ...args: string[]]): Promise<Json | undefined>;
   }
 
+  interface HandlerResults { none: void }
+  type HandlerResult = HandlerResults[keyof HandlerResults];
+  interface MethodResults { json: Json | void | Promise<Json | void> }
+  type MethodResult = MethodResults[keyof MethodResults];
   interface Module {
     render?(state: State): Node;
-    onAction?(action: string, payload: ActionPayload, state: State): void;
-    onKey?(key: Key, state: State): boolean | void;
-    onScroll?(event: ScrollEvent, state: State): void;
-    onHotkey?(id: string, state: State): void;
-    onTopic?(event: TopicEvent, state: State): void;
-    methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
+    onAction?(action: string, payload: ActionPayload, state: State): HandlerResult;
+    onKey?(key: Key, state: State): boolean | HandlerResult;
+    onScroll?(event: ScrollEvent, state: State): HandlerResult;
+    onHotkey?(id: string, state: State): HandlerResult;
+    onTopic?(event: TopicEvent, state: State): HandlerResult;
+    methods?: { [name: string]: (...args: string[]) => MethodResult };
     surface?: SurfaceExport;
     surfaces?: { [name: string]: SurfaceExport };
   }
@@ -240,14 +252,14 @@ declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
   type AudioScope = "output" | "input";
-  interface Audio {
+  type Audio = {
     devices: AudioDeviceSummary[];
     output: AudioDeviceState | null;
     input: AudioDeviceState | null;
     microphone: { pid: number; app: string | null; bundleId: string | null }[];
   }
-  interface AudioDeviceSummary { id: string; name: string; transport: string; output: boolean; input: boolean }
-  interface AudioDeviceState { id: string; name: string; transport: string; volume: number | null; muted: boolean | null }
+  type AudioDeviceSummary = { id: string; name: string; transport: string; output: boolean; input: boolean }
+  type AudioDeviceState = { id: string; name: string; transport: string; volume: number | null; muted: boolean | null }
   interface Host { audio: AudioApi }
   interface AudioApi {
     setVolume(volume: number, scope?: AudioScope): null;
@@ -256,14 +268,14 @@ declare namespace Gary {
   }
 }
 declare namespace Gary {
-  interface Bluetooth {
+  type Bluetooth = {
     available: boolean;
     permission: "allowed" | "denied" | "restricted" | "notDetermined";
     power: boolean | null;
     devices: BluetoothDevice[];
     missing: string[];
   }
-  interface BluetoothDevice { address: string; name: string | null; connected: boolean; battery: number | null }
+  type BluetoothDevice = { address: string; name: string | null; connected: boolean; battery: number | null }
   interface Host { bluetooth: BluetoothApi }
   interface BluetoothApi {
     setPower(on: boolean): null;
@@ -273,13 +285,13 @@ declare namespace Gary {
   }
 }
 declare namespace Gary {
-  interface Brightness { displays: BrightnessDisplay[]; missing: string[] }
-  interface BrightnessDisplay { id: string; name: string | null; builtin: boolean; brightness: number | null; control: "displayservices" | "ddc" | null }
+  type Brightness = { displays: BrightnessDisplay[]; missing: string[] }
+  type BrightnessDisplay = { id: string; name: string | null; builtin: boolean; brightness: number | null; control: "displayservices" | "ddc" | null }
   interface Host { brightness: BrightnessApi }
   interface BrightnessApi { set(value: number, display?: string | null): null }
 }
 declare namespace Gary {
-  interface Focus {
+  type Focus = {
     available: boolean;
     active: boolean;
     reason?: string;
@@ -290,13 +302,12 @@ declare namespace Gary {
   }
 }
 declare namespace Gary {
-  type MediaKeyName = "volume-up" | "volume-down" | "mute" | "brightness-up" | "brightness-down";
-  interface MediaKeyEvent { key: MediaKeyName; repeat: boolean; modifiers: ("shift" | "control" | "option" | "command")[] }
-  interface Module { onMediaKey?(event: MediaKeyEvent, state: State): void }
-  interface Host { mediakeys: { intercept(keys: MediaKeyName[]): boolean } }
+  type MediaKeyName = "volume-up" | "volume-down" | "mute" | "brightness-up" | "brightness-down" | "play" | "next" | "previous";
+  type MediaKeyEvent = { key: MediaKeyName; repeat: boolean; modifiers: ("shift" | "control" | "option" | "command")[] }
+  interface Module { onMediaKey?(event: MediaKeyEvent, state: State): HandlerResult }
 }
 declare namespace Gary {
-  interface WiFi {
+  type WiFi = {
     available: boolean;
     location: "authorized" | "denied" | "restricted" | "notDetermined";
     interface?: string | null;
@@ -309,7 +320,7 @@ declare namespace Gary {
     channel?: number | null;
     transmitRate?: number | null;
   }
-  interface WiFiNetwork { ssid: string | null; bssid: string | null; rssi: number; noise: number; channel: number | null; secure: boolean }
+  type WiFiNetwork = { ssid: string | null; bssid: string | null; rssi: number; noise: number; channel: number | null; secure: boolean; known: boolean }
   interface Host { wifi: WiFiApi }
   interface WiFiApi {
     setPower(on: boolean): null;
@@ -323,6 +334,8 @@ declare namespace Gary {
   interface Module {
     effect?: import("effect").Effect.Effect<void, unknown, import("effect").Scope.Scope>;
   }
+  interface HandlerResults { effect: import("effect").Effect.Effect<unknown, unknown> }
+  interface MethodResults { effect: import("effect").Effect.Effect<Json | void, unknown> }
 }
 
 declare module "gary:effect" {
@@ -338,7 +351,9 @@ declare module "gary:effect" {
   type Lift<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => E.Effect<Awaited<R>, HostError>
     : { readonly [K in keyof T]: Lift<T[K]> };
-  export const host: Lift<Gary.Host>;
+  export const host: {
+    readonly [K in keyof Gary.Host]: K extends "spawn" ? (argv: string[]) => S.Stream<string, HostError> : Lift<Gary.Host[K]>;
+  };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
   export const settings: Gary.State["settings"];
   export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;

@@ -33,15 +33,10 @@ function open(next: Page) {
 
 function join(network: Gary.WiFiNetwork, password: string | null) {
   const ssid = network.ssid ?? "";
+  secret = network.secure && !network.known && password === null ? ssid : null;
+  if (secret) return;
   busy = ssid;
-  secret = null;
-  run(
-    lifted.wifi.join(ssid, password).pipe(Effect.ensuring(settle)),
-    (error) => {
-      if (network.secure && password === null) secret = ssid;
-      else problem = error.message;
-    },
-  );
+  run(lifted.wifi.join(ssid, password).pipe(Effect.ensuring(settle)));
 }
 
 function toggle(device: Gary.BluetoothDevice) {
