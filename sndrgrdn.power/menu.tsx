@@ -1,9 +1,12 @@
 import { Effect, Schedule, host as lifted } from "gary:effect";
 
 type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 type Details = { health: number | null; cycles: number | null; toFull: number | null; toEmpty: number | null; watts: number | null };
 
 const width = 320;
+const rowHeight = 32;
+const headerHeight = 24;
 const gigabyte = 1024 ** 3;
 
 let details: Details | null = null;
@@ -62,12 +65,22 @@ function symbol(battery: Gary.Battery) {
   return battery.charging ? "battery.100percent.bolt" : `battery.${level}percent`;
 }
 
+function Divider({ name, theme }: { name: string; theme: Theme }) {
+  return (
+    <row key={name} height={0}>
+      <row key="line" height={1} width={width - 2 * theme.spacing.item} background="border" />
+    </row>
+  );
+}
+
 function Detail({ label, value, width }: { label: string; value: string; width: number }) {
   return (
-    <column key={label} gap={0} width={width}>
-      <text key="label" fontSize={11} color="dim">{label}</text>
-      <text key="value" color="bright">{value}</text>
-    </column>
+    <row key={label} width={width} height={rowHeight}>
+      <column key="text" gap={0}>
+        <text key="label" fontSize={11} color="dim">{label}</text>
+        <text key="value" color="bright">{value}</text>
+      </column>
+    </row>
   );
 }
 
@@ -101,33 +114,34 @@ function systemRows(system: Gary.System | undefined): [string, string][] {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
 
   effect: Effect.repeat(refresh, Schedule.spaced("5 seconds")),
 
   render(state) {
-    const { spacing } = state.theme;
+    const { theme } = state;
+    const { spacing } = theme;
     const battery = state.battery;
     if (!battery?.present || battery.percent === null) {
       return <text color="dim" padding={spacing.section}>No battery</text>;
     }
     return (
-      <column width={width} padding={spacing.item} gap={spacing.item}>
-        <row key="hero" padding={spacing.item}>
+      <column width={width} padding={[spacing.item, spacing.item, spacing.section, spacing.item]} gap={spacing.item}>
+        <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
           <icon key="icon" symbol={symbol(battery)} fontSize={20} width={28} color="bright" />
-          <column key="labels" gap={2}>
+          <column key="labels" gap={0}>
             <text key="title" style="title">Battery</text>
             <text key="status" fontSize={11} color="dim">{status(battery).toUpperCase()}</text>
           </column>
           <spacer />
           <text key="percent" style="title" fontSize={20}>{battery.percent}%</text>
         </row>
-        <row key="level" padding={[0, spacing.item]}>
+        <row key="level" height={spacing.item} padding={[0, spacing.item]}>
           <progress value={battery.percent / 100} width={width - 4 * spacing.item} color="foreground" />
         </row>
         <Grid name="battery" rows={batteryRows(battery)} spacing={spacing} />
-        <row key="divider" height={1} width={width - 2 * spacing.item} background="border" />
-        <text key="system" fontSize={11} font="strong" color="dim" height={24} padding={[0, spacing.item]}>SYSTEM</text>
+        <Divider name="divider" theme={theme} />
+        <text key="system" fontSize={11} font="strong" color="dim" height={headerHeight} padding={[0, spacing.item]}>SYSTEM</text>
         <Grid name="stats" rows={systemRows(state.system)} spacing={spacing} />
       </column>
     );
