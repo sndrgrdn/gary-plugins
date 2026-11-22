@@ -5,6 +5,7 @@ import type { Topic } from "./topic";
 type Leaf = { label: string; icon: string; command: Command; confirm?: string; stay?: boolean };
 type Branch = { label: string; icon: string; rows: (status: Topic) => Row[] };
 type Row = Leaf | Branch;
+type Spacing = Gary.Theme["spacing"];
 
 const width = 280;
 const rowHeight = 32;
@@ -116,13 +117,12 @@ function answer(confirm: boolean) {
   if (confirm && leaf) return run(leaf);
 }
 
-function Item({ row, index, chosen }: { row: Row; index: number; chosen: boolean }) {
+function Item({ row, index, chosen, spacing }: { row: Row; index: number; chosen: boolean; spacing: Spacing }) {
   return (
     <row
       key={row.label}
-      gap={10}
       height={rowHeight}
-      padding={[0, 10]}
+      padding={[0, spacing.item]}
       radius={6}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
@@ -136,11 +136,11 @@ function Item({ row, index, chosen }: { row: Row; index: number; chosen: boolean
   );
 }
 
-function Choice({ label, action, chosen, color }: { label: string; action: string; chosen: boolean; color: Gary.Color }) {
+function Choice({ label, action, chosen, color, width }: { label: string; action: string; chosen: boolean; color: Gary.Color; width: number }) {
   return (
     <row
       key={action}
-      width={(width - 44) / 2}
+      width={width}
       height={rowHeight}
       radius={6}
       align="center"
@@ -155,21 +155,23 @@ function Choice({ label, action, chosen, color }: { label: string; action: strin
 }
 
 function body(state: Gary.State): Gary.Node {
+  const { spacing } = state.theme;
   if (confirming) {
+    const choice = (width - 5 * spacing.item) / 2;
     return (
-      <column key="confirm" gap={12} padding={[4, 10, 2, 10]}>
+      <column key="confirm" gap={spacing.section} padding={[0, spacing.item, spacing.item, spacing.item]}>
         <text key="message">{confirming.leaf.confirm ?? ""}</text>
-        <row key="choices" gap={8}>
-          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} color="accent" />
-          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} color="bad" />
+        <row key="choices">
+          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} color="accent" width={choice} />
+          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} color="bad" width={choice} />
         </row>
       </column>
     );
   }
   const at = level().at;
   return (
-    <column key={`rows:${trail.length}`} gap={2}>
-      {rows(state).map((row, index) => <Item row={row} index={index} chosen={index === at} />)}
+    <column key={`rows:${trail.length}`} gap={0}>
+      {rows(state).map((row, index) => <Item row={row} index={index} chosen={index === at} spacing={spacing} />)}
     </column>
   );
 }
@@ -179,9 +181,10 @@ export default {
 
   render(state) {
     const title = confirming ? confirming.leaf.label : level().branch.label;
+    const { spacing } = state.theme;
     return (
-      <column key="menu" width={width} gap={6} padding={8}>
-        <row key="header" gap={8} height={30} padding={[0, 10]}>
+      <column key="menu" width={width} padding={spacing.item}>
+        <row key="header" height={rowHeight} padding={[0, spacing.item]}>
           {(trail.length > 1 || confirming) && <icon key="back" symbol="chevron.left" style="dim" action="back" />}
           <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
         </row>
