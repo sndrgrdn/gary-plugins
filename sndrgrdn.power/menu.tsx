@@ -3,9 +3,11 @@ import type { HostError } from "gary:effect";
 
 type Entry = { id: string; title: string; symbol: string; ask: string | null; run: () => Effect.Effect<null, HostError> };
 type Choice = "cancel" | "confirm";
+type Spacing = Gary.Theme["spacing"];
 type View = { page: "list"; index: number | null } | { page: "confirm"; entry: Entry; choice: Choice };
 
 const width = 208;
+const rowHeight = 32;
 const entries: readonly Entry[] = [
   { id: "lock", title: "Lock", symbol: "lock", ask: null, run: () => lifted.power.lock() },
   { id: "sleep", title: "Sleep", symbol: "moon", ask: null, run: () => lifted.power.sleep() },
@@ -46,32 +48,32 @@ function pick(entry: Entry) {
   return Effect.void;
 }
 
-function Item({ entry, selected }: { entry: Entry; selected: boolean }) {
+function Item({ entry, selected, spacing }: { entry: Entry; selected: boolean; spacing: Spacing }) {
   const color = selected ? "bright" : "foreground";
   return (
     <row
       key={entry.id}
-      gap={10}
-      padding={[6, 8]}
-      radius={8}
-      width={width - 16}
+      height={rowHeight}
+      padding={[0, spacing.item]}
+      radius={6}
+      width={width - 2 * spacing.item}
       action={`pick:${entry.id}`}
       background={selected ? "hover" : undefined}
       hovered={{ background: "hover" }}
     >
-      <icon symbol={entry.symbol} width={16} color={color} />
+      <icon symbol={entry.symbol} width={18} color={color} />
       <text color={color}>{entry.ask ? `${entry.title}…` : entry.title}</text>
     </row>
   );
 }
 
-function Button({ choice, title, selected, destructive }: { choice: Choice; title: string; selected: boolean; destructive: boolean }) {
+function Button({ choice, title, selected, destructive, width }: { choice: Choice; title: string; selected: boolean; destructive: boolean; width: number }) {
   return (
     <row
       key={choice}
-      width={(width - 24) / 2}
-      padding={[6, 0]}
-      radius={8}
+      width={width}
+      height={rowHeight}
+      radius={6}
       align="center"
       action={choice}
       background={selected ? "control" : undefined}
@@ -84,16 +86,17 @@ function Button({ choice, title, selected, destructive }: { choice: Choice; titl
   );
 }
 
-function confirm(entry: Entry, choice: Choice) {
+function confirm(entry: Entry, choice: Choice, spacing: Spacing) {
+  const button = (width - 5 * spacing.item) / 2;
   return (
-    <column gap={12} padding={[4, 4]}>
-      <column key="question" gap={4}>
+    <column key="confirm" gap={spacing.section} padding={spacing.item}>
+      <column key="question" gap={0}>
         <text key="ask" style="title">{entry.ask}</text>
         <text key="detail" color="dim" fontSize={11}>Open apps can save their work or cancel.</text>
       </column>
-      <row key="buttons" gap={8}>
-        <Button choice="cancel" title="Cancel" selected={choice === "cancel"} destructive={false} />
-        <Button choice="confirm" title={entry.title} selected={choice === "confirm"} destructive />
+      <row key="buttons">
+        <Button choice="cancel" title="Cancel" selected={choice === "cancel"} destructive={false} width={button} />
+        <Button choice="confirm" title={entry.title} selected={choice === "confirm"} destructive width={button} />
       </row>
     </column>
   );
@@ -102,14 +105,19 @@ function confirm(entry: Entry, choice: Choice) {
 export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
 
-  render() {
+  render(state) {
+    const { spacing } = state.theme;
     const body = view.page === "confirm"
-      ? confirm(view.entry, view.choice)
-      : entries.map((entry, index) => <Item entry={entry} selected={view.page === "list" && view.index === index} />);
+      ? confirm(view.entry, view.choice, spacing)
+      : (
+        <column key="list" gap={0}>
+          {entries.map((entry, index) => <Item entry={entry} selected={view.page === "list" && view.index === index} spacing={spacing} />)}
+        </column>
+      );
     return (
-      <column width={width} padding={8} gap={2}>
+      <column width={width} padding={spacing.item}>
         {body}
-        {problem ? <text key="problem" style="bad" fontSize={11} padding={[4, 8]}>{problem}</text> : null}
+        {problem ? <text key="problem" style="bad" fontSize={11} padding={[0, spacing.item]}>{problem}</text> : null}
       </column>
     );
   },
