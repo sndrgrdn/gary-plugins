@@ -2,7 +2,9 @@ import { Effect, Stream, host, topic } from "gary:effect";
 
 const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const width = 7 * 28 + 6 * 2;
+const cell = 28;
+const cellGap = 4;
+const width = 7 * cell + 6 * cellGap;
 
 let offset = 0;
 let travel = 0;
@@ -31,15 +33,15 @@ function time(event: Gary.CalendarEvent) {
   return event.allDay ? "all day" : new Date(event.start).toTimeString().slice(0, 5);
 }
 
-function day(date: Date, month: number, today: Date): Gary.Node {
+function day(date: Date, month: number, today: Date, radius: number): Gary.Node {
   const current = date.toDateString() === today.toDateString();
   return (
     <text
       key={`${date.getMonth()}-${date.getDate()}`}
-      width={28}
-      height={24}
+      width={cell}
+      height={cell}
       align="center"
-      radius={6}
+      radius={radius}
       color={current ? "bright" : date.getMonth() === month ? "foreground" : "dim"}
       background={current ? "control" : undefined}
       font={current ? "strong" : undefined}
@@ -57,7 +59,7 @@ function agenda(): Gary.Node | null {
     <column key="events" width={width}>
       {events.map((event) => (
         <row key={`${event.id}@${event.start}`}>
-          <text font="mono" color="dim" width={52}>{time(event)}</text>
+          <text font="mono" color="dim" width={56}>{time(event)}</text>
           <text>{event.title}</text>
         </row>
       ))}
@@ -66,7 +68,7 @@ function agenda(): Gary.Node | null {
 }
 
 export default {
-  surface: { attach: true, margins: { top: 6, right: 8 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
 
   effect: Stream.zipLatestAll(
     topic("calendar"),
@@ -78,18 +80,18 @@ export default {
     const first = new Date(today.getFullYear(), today.getMonth() + offset, 1);
     const start = 1 - ((first.getDay() + 6) % 7);
     const dates = Array.from({ length: 42 }, (_, index) => new Date(first.getFullYear(), first.getMonth(), start + index));
-    const { spacing } = state.theme;
+    const { spacing, radius } = state.theme;
     return (
-      <column style="panel" padding={spacing.section} gap={spacing.section}>
-        <row key="header" width={width}>
+      <column padding={spacing.section} gap={spacing.section}>
+        <row key="header" width={width} gap={cellGap}>
           <text key="month" style="title" action="today">{months[first.getMonth()]} {first.getFullYear()}</text>
           <spacer />
-          <icon key="previous" symbol="chevron.left" style="dim" action="previous" width={22} height={22} hovered={{ color: "bright" }} />
-          <icon key="next" symbol="chevron.right" style="dim" action="next" width={22} height={22} hovered={{ color: "bright" }} />
+          <icon key="previous" symbol="chevron.left" style="dim" action="previous" width={cell} height={cell} hovered={{ color: "bright" }} />
+          <icon key="next" symbol="chevron.right" style="dim" action="next" width={cell} height={cell} hovered={{ color: "bright" }} />
         </row>
-        <grid key="grid" columns={7} gap={2} align="center">
-          {weekdays.map((name, index) => <text key={`w${index}`} style="dim" width={28} align="center">{name}</text>)}
-          {dates.map((date) => day(date, first.getMonth(), today))}
+        <grid key="grid" columns={7} gap={cellGap} align="center">
+          {weekdays.map((name, index) => <text key={`w${index}`} style="dim" width={cell} height={16} align="center">{name}</text>)}
+          {dates.map((date) => day(date, first.getMonth(), today, radius.control))}
         </grid>
         {agenda()}
       </column>
