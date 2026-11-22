@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.clipboard",
+  "name": "Clipboard",
+  "version": "0.1.0",
+  "kinds": ["service", "menu"],
+  "entryPoints": { "service": "service.ts", "menu": "menu.tsx" },
+  "subscribes": ["clipboard", "sndrgrdn.clipboard"],
+  "uses": ["clipboard", "paste"],
+  "hotkeys": [{ "id": "open", "keys": "cmd+shift+v" }]
+}
