@@ -11,7 +11,7 @@ function glyph(wifi: Gary.WiFi | undefined) {
 
 export default {
   render(state) {
-    return <text action="toggle" fontSize={13} width={27} align="center" color="foreground">{glyph(state.wifi)}</text>;
+    return <text action="toggle" fontSize={13} width={28} align="center" color="foreground">{glyph(state.wifi)}</text>;
   },
 
   onAction() {

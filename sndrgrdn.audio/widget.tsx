@@ -16,7 +16,7 @@ function run(effect: Effect.Effect<unknown, HostError>) {
 
 export default {
   render(state) {
-    return <text action="toggle" rightAction="mute" scrollAction="volume" fontSize={13} width={27} align="center" color="foreground">{glyph(state.audio?.output)}</text>;
+    return <text action="toggle" rightAction="mute" scrollAction="volume" fontSize={13} width={28} align="center" color="foreground">{glyph(state.audio?.output)}</text>;
   },
 
   onAction(action, _payload, state) {

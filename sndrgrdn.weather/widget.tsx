@@ -78,7 +78,7 @@ export default {
   render() {
     return (
       <row gap={4} action="forecast">
-        <text key="glyph" fontSize={13} width={21} align="center" color="foreground">{glyph}</text>
+        <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
         <text key="temperature" color={weather ? "foreground" : "dark_foreground"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
       </row>
     );

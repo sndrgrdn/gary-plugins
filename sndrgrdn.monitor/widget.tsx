@@ -3,7 +3,7 @@ import { Effect, host } from "gary:effect";
 export default {
   render(state) {
     const displays = state.brightness?.displays ?? [];
-    return <text action="toggle" scrollAction="brightness" fontSize={13} width={27} align="center" color="foreground">{displays.length > 1 ? "\u{F037A}" : "\u{F0379}"}</text>;
+    return <text action="toggle" scrollAction="brightness" fontSize={13} width={28} align="center" color="foreground">{displays.length > 1 ? "\u{F037A}" : "\u{F0379}"}</text>;
   },
 
   onAction() {

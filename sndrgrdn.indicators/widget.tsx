@@ -41,7 +41,7 @@ export default {
       <row gap={0}>
         {indicators.map(({ key, glyph, tooltip, text }) => (
           <row key={key} gap={4} tooltip={tooltip}>
-            <text key="glyph" fontSize={13} width={21} align="center" color="foreground">{glyph}</text>
+            <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
             {text !== undefined && <text key="text" color="foreground">{text}</text>}
           </row>
         ))}

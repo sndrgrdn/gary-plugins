@@ -27,9 +27,9 @@ export default {
   render(state) {
     const now = new Date(state.clock?.epoch ?? Date.now());
     const pattern = state.settings.format;
-    if (typeof pattern === "string") return <text action="toggle" padding={[0, 8.5]} color="foreground">{format(pattern, now)}</text>;
+    if (typeof pattern === "string") return <text action="toggle" padding={[0, 8]} color="foreground">{format(pattern, now)}</text>;
     return (
-      <row gap={state.theme.spacing.section} padding={[0, 8.5]} action="toggle">
+      <row gap={state.theme.spacing.section} padding={[0, 8]} action="toggle">
         <text key="date" color="foreground">{format("ddd dd MMM", now)}</text>
         <text key="time" color="bright_foreground">{format("HH:mm", now)}</text>
       </row>
