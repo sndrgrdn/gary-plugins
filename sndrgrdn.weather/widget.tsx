@@ -79,7 +79,7 @@ export default {
     return (
       <row gap={4} action="forecast">
         <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
-        <text key="temperature" color={weather ? "foreground" : "dark_foreground"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
+        <text key="temperature" minWidth={36} color={weather ? "foreground" : "dark_foreground"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
       </row>
     );
   },
