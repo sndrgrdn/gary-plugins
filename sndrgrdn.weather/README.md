@@ -29,5 +29,5 @@ To use only this plugin, turn the others off with `gary plugin disable <id>`.
 
 ## Develop
 
-Gary reloads the plugin each time you save an entry file. Type-check it with `npx -p typescript tsc -p .`.
+Gary reloads the plugin each time you save an entry file. It uses Effect from `gary:effect`. Run `npm install` once at the repository root for the `effect` types, then type-check it with `npx tsc -p .`.
 After you change `uses` or `subscribes` in `manifest.json`, run `gary plugin types .` to refresh `gary.d.ts`.

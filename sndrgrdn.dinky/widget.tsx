@@ -1,3 +1,4 @@
+import { Effect, host } from "gary:effect";
 import type { Workspace } from "./topic";
 
 function label(workspace: Workspace): Gary.Node {
@@ -22,6 +23,6 @@ export default {
   },
 
   onAction(action) {
-    host.exec(["dinky", "workspace", action]);
+    Effect.runFork(host.exec(["dinky", "workspace", action]));
   },
 } satisfies Gary.BarWidget;

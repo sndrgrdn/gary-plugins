@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "tooltip" | (string & {});
-  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
-  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
+  type StyleName = (string & {});
+  type FontName = (string & {});
+  type ColorName = (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -27,7 +27,6 @@ declare namespace Gary {
     duration?: number;
     blur?: number;
     padding?: number | [number, number] | [number, number, number, number];
-    offset?: number;
     x?: number;
     y?: number;
     zIndex?: number;
@@ -166,7 +165,6 @@ declare namespace Gary {
     palette: { [name: string]: string };
   }
   interface Topics {
-    "clock": Clock;
     "session": Session;
   }
   interface State extends Partial<Topics> {
@@ -236,12 +234,34 @@ declare function setInterval(callback: (...args: any[]) => void, ms?: number, ..
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
-  interface Clock { epoch: number }
-}
-declare namespace Gary {
   interface FetchResponse { status: number; text: string }
 }
 declare function fetch(url: string): Promise<Gary.FetchResponse>;
 declare namespace Gary {
   interface Session { locked: boolean }
+}
+
+declare namespace Gary {
+  interface Module {
+    effect?: import("effect").Effect.Effect<void, never, import("effect").Scope.Scope>;
+  }
+}
+
+declare module "gary:effect" {
+  import type { Effect as E, Stream as S } from "effect";
+  export {
+    Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope, Stream,
+    SubscriptionRef, pipe,
+  } from "effect";
+  export interface HostError {
+    readonly _tag: "HostError";
+    readonly message: string;
+  }
+  type Lift<T> = T extends (...args: infer A) => infer R
+    ? (...args: A) => E.Effect<Awaited<R>, R extends PromiseLike<unknown> ? HostError : never>
+    : { readonly [K in keyof T]: Lift<T[K]> };
+  export const host: Lift<Gary.Host>;
+  export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
+  export const settings: Gary.State["settings"];
+  export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;
 }

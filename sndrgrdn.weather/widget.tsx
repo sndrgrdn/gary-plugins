@@ -1,3 +1,5 @@
+import { Effect, Schedule, Schema, Stream, fetch, host, settings, topic } from "gary:effect";
+
 type Weather = { icon: string; temperature: string };
 
 const icons: [number[], string][] = [
@@ -10,47 +12,37 @@ const icons: [number[], string][] = [
   [[3], "cloud"],
   [[0], "sun.max"],
 ];
-const interval = 15 * 60_000;
+const Forecast = Schema.fromJsonString(
+  Schema.Struct({ current: Schema.Struct({ temperature_2m: Schema.Number, weather_code: Schema.Number }) }),
+);
+const latitude = Number(settings.latitude ?? 53.2);
+const longitude = Number(settings.longitude ?? 5.8);
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
 let weather: Weather | null = null;
-let attempted = 0;
-let locked = false;
 
-function parse(output: string): Weather | null {
-  try {
-    const current = JSON.parse(output)?.current;
-    if (typeof current?.temperature_2m !== "number" || typeof current?.weather_code !== "number") return null;
-    return {
-      temperature: Math.round(current.temperature_2m) + "°C",
-      icon: icons.find(([codes]) => codes.includes(current.weather_code))?.[1] ?? "cloud",
-    };
-  } catch {
-    return null;
+const refresh = Effect.gen(function* () {
+  const response = yield* fetch(url);
+  if (response.status !== 200) {
+    return yield* host.log(`weather request failed with status ${response.status}: ${response.text.trim()}`);
   }
-}
-
-function refresh(state?: Gary.State) {
-  attempted = Date.now();
-  const latitude = Number(state?.settings.latitude ?? 53.2);
-  const longitude = Number(state?.settings.longitude ?? 5.8);
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
-  fetch(url)
-    .then((response) => {
-      const parsed = response.status === 200 ? parse(response.text) : null;
-      if (parsed) weather = parsed;
-      else host.log(`weather request failed with status ${response.status}: ${response.text.trim()}`);
-    })
-    .catch((error) => host.log("weather request failed: " + String(error)));
-}
+  const { current } = yield* Schema.decodeUnknownEffect(Forecast)(response.text);
+  weather = {
+    temperature: Math.round(current.temperature_2m) + "°C",
+    icon: icons.find(([codes]) => codes.includes(current.weather_code))?.[1] ?? "cloud",
+  };
+}).pipe(Effect.catch((error) => host.log(`weather request failed: ${error.message}`)));
 
 export default {
-  onTopic({ topic, value }, state) {
-    if (topic === "session") {
-      if (locked && !value.locked) setTimeout(() => refresh(state), 10_000);
-      locked = value.locked;
-    } else if (Date.now() - attempted >= interval) {
-      refresh(state);
-    }
-  },
+  effect: Effect.gen(function* () {
+    yield* Effect.forkScoped(Effect.repeat(refresh, Schedule.spaced("15 minutes")));
+    yield* topic("session").pipe(
+      Stream.map((session) => session.locked),
+      Stream.changes,
+      Stream.drop(1),
+      Stream.filter((locked) => !locked),
+      Stream.runForEach(() => Effect.delay(refresh, "10 seconds")),
+    );
+  }),
 
   render() {
     return (
