@@ -25,10 +25,10 @@ ln -s "$PWD/gary-plugins" ~/.config/gary/plugins
 
 The link works only when `~/.config/gary/plugins` does not exist yet. Gary loads every plugin in the folder. Turn on each plugin that you want with `gary plugin enable <id>`.
 
-To install single plugins instead, copy each one into `~/.config/gary/plugins` and turn it on:
+To install the plugins as a package instead, which `gary plugin update` keeps up to date:
 
 ```sh
-gary plugin add gary-plugins/sndrgrdn.clock --enable
+gary plugin install git:github.com/sndrgrdn/gary-plugins
 ```
 
 ## License

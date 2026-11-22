@@ -5,7 +5,7 @@ A Gary plugin: service, menu.
 ## Install
 
 ```sh
-gary plugin add <git-url> --enable
+gary plugin install git:github.com/sndrgrdn/gary-plugins
 ```
 
 ## Develop
