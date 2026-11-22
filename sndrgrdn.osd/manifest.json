@@ -1,0 +1,14 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.osd",
+  "name": "OSD",
+  "version": "0.1.0",
+  "kinds": ["overlay"],
+  "keepLoaded": true,
+  "entryPoints": { "overlay": "osd.tsx" },
+  "surfaces": { "overlay": ["osd"] },
+  "mediakeys": { "overlay": ["volume-up", "volume-down", "mute", "brightness-up", "brightness-down"] },
+  "subscribes": ["audio", "brightness"],
+  "uses": ["audio", "brightness"]
+}
