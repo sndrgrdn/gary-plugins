@@ -1,3 +1,6 @@
+import { Deferred, Effect, Exit, Option, Queue, Schema, Scope, Stream, host as lifted, topic } from "gary:effect";
+import type { HostError } from "gary:effect";
+
 type Palette = Record<string, string>;
 type Mode = "light" | "dark";
 type Theme = { id: string; name: string; files: Record<string, string>; palette: Palette; mode: Mode; backgrounds: string[] };
@@ -5,16 +8,32 @@ type ThemeState = { backgrounds: Record<string, number>; theme?: string };
 type TargetResult = { message?: string; status: "applied" | "skipped" | "failed"; target: string };
 type ApplyReport = { background?: string; results: TargetResult[]; theme: string };
 type Applied = { theme: Theme; background: string | null; notes: string[] };
-type Target = { name: string; installed(): boolean | Promise<boolean>; apply(applied: Applied): Promise<void> };
+type Failed = ThemeError | HostError;
+type Target = { name: string; installed: Effect.Effect<boolean, HostError>; apply(applied: Applied): Effect.Effect<void, Failed> };
+type Job = { label: string; run: Effect.Effect<boolean> };
+
+class ThemeError extends Schema.TaggedError<ThemeError>()("ThemeError", { message: Schema.String }) {}
+
+const StateFile = Schema.Struct({
+  backgrounds: Schema.Record(Schema.String, Schema.Int),
+  theme: Schema.optionalKey(Schema.NullOr(Schema.String)),
+});
+const JsonObject = Schema.Record(Schema.String, Schema.Unknown);
+const isObject = Schema.is(JsonObject);
+const parseState = Schema.decodeUnknownOption(Schema.fromJsonString(StateFile));
+const parseObject = Schema.decodeUnknownOption(Schema.fromJsonString(JsonObject));
+const parseRegistry = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Array(JsonObject)));
+
+const { exec, log, wallpaper, watchFile } = lifted;
+const jobs = Effect.runSync(Queue.unbounded<Job>());
+const lifetime = Effect.runSync(Scope.make());
 
 let home = "";
 let paths = makePaths("");
 let searchPath: string[] = [];
 let templates: { name: string; text: string }[] = [];
 let themes: Theme[] = [];
-let queue: Promise<unknown> = Promise.resolve();
 let busy: string | null = null;
-let focusedWorkspaces = "";
 const previews: Record<string, string> = {};
 const failedInstalls = new Set<string>();
 
@@ -35,10 +54,20 @@ function makePaths(home: string) {
   };
 }
 
-class Failure extends Error {}
-
 function message(error: unknown) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function attempt<A>(body: () => A) {
+  return Effect.try({ try: body, catch: (cause) => new ThemeError({ message: message(cause) }) });
+}
+
+function detach<A, E>(effect: Effect.Effect<A, E>) {
+  return Effect.asVoid(Effect.forkIn(effect, lifetime));
+}
+
+function field(value: unknown, key: string): unknown {
+  return isObject(value) ? value[key] : undefined;
 }
 
 function dirname(path: string) {
@@ -69,35 +98,38 @@ function read(path: string): string | null {
   }
 }
 
-
-async function which(command: string): Promise<string | null> {
-  if (command.startsWith("/")) return (await host.exec(["/bin/test", "-x", command])).status === 0 ? command : null;
-  const found = await host.exec(["/bin/sh", "-c", 'for d in "$@"; do [ -f "$d/$0" ] && [ -x "$d/$0" ] && { echo "$d/$0"; exit 0; }; done; exit 1', command, ...searchPath]);
+const which = Effect.fn("Theme.which")(function* (command: string) {
+  if (command.startsWith("/")) return (yield* exec(["/bin/test", "-x", command])).status === 0 ? command : null;
+  const found = yield* exec(["/bin/sh", "-c", 'for d in "$@"; do [ -f "$d/$0" ] && [ -x "$d/$0" ] && { echo "$d/$0"; exit 0; }; done; exit 1', command, ...searchPath]);
   return found.status === 0 ? found.stdout.trim() : null;
+});
+
+function onPath(command: string) {
+  return Effect.map(which(command), (found) => found !== null);
 }
 
-async function run(command: string, args: string[]): Promise<string> {
-  const executable = await which(command);
-  if (!executable) throw new Failure(`${command} not found`);
-  const result = await host.exec(["/usr/bin/env", `PATH=${searchPath.join(":")}`, executable, ...args]);
+const run = Effect.fn("Theme.run")(function* (command: string, args: string[]) {
+  const executable = yield* which(command);
+  if (!executable) return yield* new ThemeError({ message: `${command} not found` });
+  const result = yield* exec(["/usr/bin/env", `PATH=${searchPath.join(":")}`, executable, ...args]);
   const text = (result.stdout + result.stderr).trim();
-  if (result.status !== 0) throw new Failure(`${command} ${args[0] ?? ""} exited ${result.status}: ${text}`);
+  if (result.status !== 0) return yield* new ThemeError({ message: `${command} ${args[0] ?? ""} exited ${result.status}: ${text}` });
   return text;
-}
+});
 
-async function signal(name: string, process: string, onlyWithTerminal = false) {
-  const ps = await host.exec(["/bin/ps", "-axo", "pid=,tty=,ucomm="]);
+const signal = Effect.fn("Theme.signal")(function* (name: string, process: string, onlyWithTerminal = false) {
+  const ps = yield* exec(["/bin/ps", "-axo", "pid=,tty=,ucomm="]);
   const pids = ps.stdout.split("\n").map((line) => line.trim().split(/\s+/)).filter(([pid, tty, comm]) =>
     pid && comm === process && (!onlyWithTerminal || tty !== "??")).map(([pid]) => pid);
-  if (pids.length) await host.exec(["/bin/kill", `-${name}`, ...pids]);
-}
+  if (pids.length) yield* exec(["/bin/kill", `-${name}`, ...pids]);
+});
 
 function timestamp() {
   return new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, " +0000");
 }
 
 function appendLog(lines: string[]) {
-  return host.exec(["/bin/sh", "-c", 'printf "%s" "$1" >> "$2"', "sh", lines.map((line) => line + "\n").join(""), paths.log]);
+  return exec(["/bin/sh", "-c", 'printf "%s" "$1" >> "$2"', "sh", lines.map((line) => line + "\n").join(""), paths.log]);
 }
 
 const Palettes = {
@@ -313,34 +345,30 @@ const Library = {
       .map((entry) => entry.name)
       .filter((name) => !name.startsWith("."));
   },
-
-  async sync() {
-    if (exists(`${paths.omarchy}/.git`)) {
-      await run("git", ["-C", paths.omarchy, "fetch", "--depth", "1", "--filter=blob:none", "origin", "HEAD"]);
-      await run("git", ["-C", paths.omarchy, "reset", "--hard", "FETCH_HEAD"]);
-    } else {
-      host.mkdir(paths.support);
-      const staging = `${paths.support}/omarchy.clone`;
-      host.remove(staging);
-      await run("git", ["clone", "--depth", "1", "--filter=blob:none", "--sparse", "https://github.com/basecamp/omarchy.git", staging]);
-      await run("git", ["-C", staging, "sparse-checkout", "set", "themes"]);
-      await run("mv", [staging, paths.omarchy]);
-    }
-  },
 };
+
+const syncLibrary = Effect.fn("Theme.syncLibrary")(function* () {
+  if (exists(`${paths.omarchy}/.git`)) {
+    yield* run("git", ["-C", paths.omarchy, "fetch", "--depth", "1", "--filter=blob:none", "origin", "HEAD"]);
+    yield* run("git", ["-C", paths.omarchy, "reset", "--hard", "FETCH_HEAD"]);
+  } else {
+    const staging = `${paths.support}/omarchy.clone`;
+    yield* attempt(() => {
+      host.mkdir(paths.support);
+      host.remove(staging);
+    });
+    yield* run("git", ["clone", "--depth", "1", "--filter=blob:none", "--sparse", "https://github.com/basecamp/omarchy.git", staging]);
+    yield* run("git", ["-C", staging, "sparse-checkout", "set", "themes"]);
+    yield* run("mv", [staging, paths.omarchy]);
+  }
+});
 
 const State = {
   load(): ThemeState {
-    try {
-      const parsed = JSON.parse(host.readFile(paths.state));
-      const backgrounds = parsed?.backgrounds;
-      if (typeof backgrounds !== "object" || backgrounds === null || Array.isArray(backgrounds)) return { backgrounds: {} };
-      if (!Object.values(backgrounds).every((value) => Number.isInteger(value))) return { backgrounds: {} };
-      if (parsed.theme !== undefined && parsed.theme !== null && typeof parsed.theme !== "string") return { backgrounds: {} };
-      return parsed.theme ? { backgrounds, theme: parsed.theme } : { backgrounds };
-    } catch {
-      return { backgrounds: {} };
-    }
+    const parsed = parseState(read(paths.state) ?? "");
+    if (Option.isNone(parsed)) return { backgrounds: {} };
+    const { backgrounds, theme } = parsed.value;
+    return theme ? { backgrounds: { ...backgrounds }, theme } : { backgrounds: { ...backgrounds } };
   },
 
   save(state: ThemeState) {
@@ -349,110 +377,110 @@ const State = {
   },
 };
 
-const Files = {
-  async write(text: string, path: string) {
-    const target = exists(path) ? await Files.resolve(path) : path;
-    host.mkdir(dirname(target));
-    await Files.backUp(target);
-    host.writeFile(target, text);
-  },
+const realpath = Effect.fn("Theme.realpath")(function* (path: string) {
+  const result = yield* exec(["/usr/bin/realpath", path]);
+  return result.status === 0 ? result.stdout.trim() : path;
+});
 
-  async resolve(path: string) {
-    const result = await host.exec(["/usr/bin/realpath", path]);
-    return result.status === 0 ? result.stdout.trim() : path;
-  },
+const backUp = Effect.fn("Theme.backUp")(function* (path: string) {
+  const backup = `${paths.backups}/${path.replace(/\//g, "%")}`;
+  if (!exists(path) || exists(backup)) return;
+  yield* attempt(() => host.mkdir(paths.backups));
+  const copied = yield* exec(["/bin/cp", path, backup]);
+  if (copied.status !== 0) return yield* new ThemeError({ message: copied.stderr.trim() });
+});
 
-  async backUp(path: string) {
-    const backup = `${paths.backups}/${path.replace(/\//g, "%")}`;
-    if (!exists(path) || exists(backup)) return;
-    host.mkdir(paths.backups);
-    const copied = await host.exec(["/bin/cp", path, backup]);
-    if (copied.status !== 0) throw new Failure(copied.stderr.trim());
-  },
+const write = Effect.fn("Theme.write")(function* (text: string, path: string) {
+  const target = exists(path) ? yield* realpath(path) : path;
+  yield* attempt(() => host.mkdir(dirname(target)));
+  yield* backUp(target);
+  yield* attempt(() => host.writeFile(target, text));
+});
 
-  setJSONString(key: string, value: string, text: string) {
-    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const pattern = new RegExp(`("${escaped}"\\s*:\\s*")[^"]*(")`);
-    if (pattern.test(text)) return text.replace(pattern, (_, before, after) => before + value + after);
+function setJSONString(key: string, value: string, text: string) {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`("${escaped}"\\s*:\\s*")[^"]*(")`);
+  if (pattern.test(text)) return text.replace(pattern, (_, before, after) => before + value + after);
 
-    const brace = text.indexOf("{");
-    if (brace < 0) return `{\n  "${key}": "${value}"\n}\n`;
-    const head = text.slice(0, brace + 1), rest = text.slice(brace + 1);
-    if (rest.trim().startsWith("}")) return `${head}\n  "${key}": "${value}"\n` + rest.replace(/^\s+/, "");
-    const second = rest.split("\n")[1];
-    const indent = second === undefined ? "  " : second.match(/^[ \t]*/)![0];
-    return `${head}\n${indent}"${key}": "${value}",` + rest;
-  },
-
-  pretty(value: unknown, indent = ""): string {
-    const inner = indent + "  ";
-    if (Array.isArray(value)) {
-      return `[\n${value.map((each) => inner + Files.pretty(each, inner)).join(",\n")}\n${indent}]`;
-    }
-    if (value !== null && typeof value === "object") {
-      const keys = Object.keys(value).sort();
-      const object = value as Record<string, unknown>;
-      return `{\n${keys.map((key) => `${inner}${JSON.stringify(key)} : ${Files.pretty(object[key], inner)}`).join(",\n")}\n${indent}}`;
-    }
-    return JSON.stringify(value);
-  },
-};
-
-async function setTheme(theme: string, settings: string) {
-  const text = read(settings) ?? "{\n}\n";
-  const updated = Files.setJSONString("theme", theme, text);
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(updated);
-  } catch {}
-  if ((parsed as { theme?: unknown } | undefined)?.theme !== theme) throw new Failure(`could not set theme in ${settings}`);
-  if (updated !== text) await Files.write(updated, settings);
+  const brace = text.indexOf("{");
+  if (brace < 0) return `{\n  "${key}": "${value}"\n}\n`;
+  const head = text.slice(0, brace + 1), rest = text.slice(brace + 1);
+  if (rest.trim().startsWith("}")) return `${head}\n  "${key}": "${value}"\n` + rest.replace(/^\s+/, "");
+  const second = rest.split("\n")[1];
+  const indent = second === undefined ? "  " : second.match(/^[ \t]*/)![0];
+  return `${head}\n${indent}"${key}": "${value}",` + rest;
 }
+
+function pretty(value: unknown, indent = ""): string {
+  const inner = indent + "  ";
+  if (Array.isArray(value)) {
+    return `[\n${value.map((each) => inner + pretty(each, inner)).join(",\n")}\n${indent}]`;
+  }
+  if (value !== null && typeof value === "object") {
+    const keys = Object.keys(value).sort();
+    const object = value as Record<string, unknown>;
+    return `{\n${keys.map((key) => `${inner}${JSON.stringify(key)} : ${pretty(object[key], inner)}`).join(",\n")}\n${indent}}`;
+  }
+  return JSON.stringify(value);
+}
+
+const setTheme = Effect.fn("Theme.setTheme")(function* (theme: string, settings: string) {
+  const text = read(settings) ?? "{\n}\n";
+  const updated = setJSONString("theme", theme, text);
+  if (Option.getOrUndefined(parseObject(updated))?.theme !== theme) return yield* new ThemeError({ message: `could not set theme in ${settings}` });
+  if (updated !== text) yield* write(updated, settings);
+});
 
 function currentFile(name: string) {
   return `${paths.current}/${name}`;
+}
+
+function copyCurrent(name: string, path: string) {
+  return attempt(() => host.readFile(currentFile(name))).pipe(Effect.flatMap((text) => write(text, path)));
 }
 
 const heliumBundle = "net.imput.helium";
 const heliumHelper = "/Library/PrivilegedHelperTools/garden.sander.theme-switcher.helium";
 
 function jxa(script: string) {
-  return host.exec(["/usr/bin/osascript", "-l", "JavaScript", "-e", script]);
+  return exec(["/usr/bin/osascript", "-l", "JavaScript", "-e", script]);
 }
 
 const targets: Target[] = [
   {
     name: "macOS appearance",
-    installed: () => true,
-    async apply({ theme }) {
+    installed: Effect.succeed(true),
+    apply: Effect.fn("Theme.macOSAppearance")(function* ({ theme }: Applied) {
       const source = `tell application "System Events" to tell appearance preferences to set dark mode to ${theme.mode === "dark"}`;
-      const result = await host.exec(["/usr/bin/osascript", "-e", source]);
+      const result = yield* exec(["/usr/bin/osascript", "-e", source]);
       if (result.status === 0) return;
       if (/\(-1743\)/.test(result.stderr)) {
-        throw new Failure("Allow Gary to control System Events in System Settings › Privacy & Security › Automation");
+        return yield* new ThemeError({ message: "Allow Gary to control System Events in System Settings › Privacy & Security › Automation" });
       }
-      throw new Failure(result.stderr.trim().replace(/^\d+:\d+: execution error: /, "").replace(/ \(-?\d+\)$/, "") || "AppleScript failed");
-    },
+      return yield* new ThemeError({
+        message: result.stderr.trim().replace(/^\d+:\d+: execution error: /, "").replace(/ \(-?\d+\)$/, "") || "AppleScript failed",
+      });
+    }),
   },
   {
     name: "Wallpaper",
-    installed: () => true,
-    async apply({ theme, background }) {
-      if (!background) throw new Failure(`${theme.name} has no backgrounds`);
-      await host.wallpaper.set(background);
-    },
+    installed: Effect.succeed(true),
+    apply: Effect.fn("Theme.wallpaper")(function* ({ theme, background }: Applied) {
+      if (!background) return yield* new ThemeError({ message: `${theme.name} has no backgrounds` });
+      yield* wallpaper.set(background);
+    }),
   },
   {
     name: "dinky",
-    installed: () => exists(`${home}/.config/dinky/dinky.toml`),
-    async apply({ theme }) {
+    installed: Effect.sync(() => exists(`${home}/.config/dinky/dinky.toml`)),
+    apply: Effect.fn("Theme.dinky")(function* ({ theme }: Applied) {
       const config = `${home}/.config/dinky/dinky.toml`;
       const strip = (color?: string) => (color ?? "").replace(/^#+/, "");
       const colors: Record<string, string> = {
         "active-color": `#${strip(theme.palette.accent)}ff`,
         "inactive-color": `#${strip(theme.palette.muted)}aa`,
       };
-      const text = host.readFile(config);
+      const text = yield* attempt(() => host.readFile(config));
       let section = "";
       const replaced = new Set<string>();
       const lines = text.split("\n").map((line) => {
@@ -466,87 +494,83 @@ const targets: Target[] = [
         replaced.add(key);
         return line.match(/^[ \t]*/)![0] + `${key} = '${colors[key]}'`;
       });
-      if (replaced.size !== Object.keys(colors).length) throw new Failure("dinky.toml [borders] lacks active-color or inactive-color");
+      if (replaced.size !== Object.keys(colors).length) return yield* new ThemeError({ message: "dinky.toml [borders] lacks active-color or inactive-color" });
       const updated = lines.join("\n");
-      if (updated !== text) await Files.write(updated, config);
-    },
+      if (updated !== text) yield* write(updated, config);
+    }),
   },
   {
     name: "Rex",
-    installed: async () => (await which("rex")) !== null,
-    async apply({ theme }) {
+    installed: onPath("rex"),
+    apply: Effect.fn("Theme.rex")(function* ({ theme }: Applied) {
       const backup = `${paths.backups}/com.superlogical.rex.plist`;
       if (!exists(backup)) {
-        host.mkdir(paths.backups);
-        await run("defaults", ["export", "com.superlogical.rex", backup]);
+        yield* attempt(() => host.mkdir(paths.backups));
+        yield* run("defaults", ["export", "com.superlogical.rex", backup]);
       }
       const file = `${paths.support}/rex/Omarchy ${theme.name}`;
-      host.mkdir(dirname(file));
-      host.remove(file);
-      host.writeFile(file, host.readFile(currentFile("ghostty.conf")));
-      await run("rex", ["do", "client.theme.import", `path=${file}`]);
-      await run("rex", ["do", "client.setting.interface.appearance.scheme", `value=${theme.mode}`]);
-    },
+      yield* attempt(() => {
+        host.mkdir(dirname(file));
+        host.remove(file);
+        host.writeFile(file, host.readFile(currentFile("ghostty.conf")));
+      });
+      yield* run("rex", ["do", "client.theme.import", `path=${file}`]);
+      yield* run("rex", ["do", "client.setting.interface.appearance.scheme", `value=${theme.mode}`]);
+    }),
   },
   cursorTarget(),
   {
     name: "pi",
-    installed: () => exists(`${home}/.pi/agent`),
-    async apply() {
+    installed: Effect.sync(() => exists(`${home}/.pi/agent`)),
+    apply: Effect.fn("Theme.pi")(function* () {
       const agent = `${home}/.pi/agent`;
-      await Files.write(host.readFile(currentFile("pi.json")), `${agent}/themes/omarchy-system.json`);
-      await setTheme("omarchy-system", `${agent}/settings.json`);
-    },
+      yield* copyCurrent("pi.json", `${agent}/themes/omarchy-system.json`);
+      yield* setTheme("omarchy-system", `${agent}/settings.json`);
+    }),
   },
   {
     name: "Claude Code",
-    installed: () => exists(`${home}/.claude`),
-    async apply() {
+    installed: Effect.sync(() => exists(`${home}/.claude`)),
+    apply: Effect.fn("Theme.claudeCode")(function* () {
       const config = `${home}/.claude`;
-      await Files.write(host.readFile(currentFile("claude.json")), `${config}/themes/omarchy.json`);
-      await setTheme("custom:omarchy", `${config}/settings.json`);
-    },
+      yield* copyCurrent("claude.json", `${config}/themes/omarchy.json`);
+      yield* setTheme("custom:omarchy", `${config}/settings.json`);
+    }),
   },
   {
     name: "OpenCode",
-    installed: () => exists(`${home}/.config/opencode`),
-    async apply() {
+    installed: Effect.sync(() => exists(`${home}/.config/opencode`)),
+    apply: Effect.fn("Theme.openCode")(function* () {
       const config = `${home}/.config/opencode`;
-      await Files.write(host.readFile(currentFile("opencode.json")), `${config}/themes/omarchy.json`);
+      yield* copyCurrent("opencode.json", `${config}/themes/omarchy.json`);
       const cli = `${config}/cli.json`;
-      let settings: Record<string, unknown> = {};
       const text = read(cli);
-      if (text !== null) {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(text);
-        } catch {}
-        if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Failure(`could not parse ${cli}`);
-        settings = parsed as Record<string, unknown>;
-      }
+      const parsed = text === null ? Option.some({}) : parseObject(text);
+      if (Option.isNone(parsed)) return yield* new ThemeError({ message: `could not parse ${cli}` });
+      const settings: Record<string, unknown> = { ...parsed.value };
       const current = settings.theme;
-      const theme = typeof current === "object" && current !== null && !Array.isArray(current) ? { ...(current as Record<string, unknown>) } : {};
+      const theme: Record<string, unknown> = isObject(current) ? { ...current } : {};
       if (theme.name !== "omarchy") {
         theme.name = "omarchy";
         settings.theme = theme;
-        await Files.write(Files.pretty(settings) + "\n", cli);
+        yield* write(pretty(settings) + "\n", cli);
       }
-      await signal("USR2", "opencode", true);
-    },
+      yield* signal("USR2", "opencode", true);
+    }),
   },
   {
     name: "Herdr",
-    installed: () => exists(`${home}/.config/herdr-app`),
-    async apply() {
+    installed: Effect.sync(() => exists(`${home}/.config/herdr-app`)),
+    apply: Effect.fn("Theme.herdr")(function* () {
       const app = `${home}/.config/herdr-app`;
-      await Files.write(host.readFile(currentFile("herdr-app.json")), `${app}/themes/omarchy.json`);
-      await setTheme("omarchy", `${app}/settings.json`);
-    },
+      yield* copyCurrent("herdr-app.json", `${app}/themes/omarchy.json`);
+      yield* setTheme("omarchy", `${app}/settings.json`);
+    }),
   },
   {
     name: "Ghostty",
-    installed: () => ["/Applications", `${home}/Applications`].some((folder) => exists(`${folder}/Ghostty.app`)),
-    async apply() {
+    installed: Effect.sync(() => ["/Applications", `${home}/Applications`].some((folder) => exists(`${folder}/Ghostty.app`))),
+    apply: Effect.fn("Theme.ghostty")(function* () {
       const directories = [`${home}/.config/ghostty`, `${home}/Library/Application Support/com.mitchellh.ghostty`];
       const config = directories.flatMap((directory) => [`${directory}/config.ghostty`, `${directory}/config`]).find(exists)
         ?? `${home}/.config/ghostty/config`;
@@ -565,40 +589,42 @@ const targets: Target[] = [
         lines.push(line, "");
       }
       const updated = lines.join("\n");
-      if (updated !== text) await Files.write(updated, config);
-      await signal("USR2", "ghostty");
-    },
+      if (updated !== text) yield* write(updated, config);
+      yield* signal("USR2", "ghostty");
+    }),
   },
   {
     name: "Hunk",
-    installed: async () => (await which("hunk")) !== null,
-    async apply() {
-      await signal("WINCH", "hunk");
-      setTimeout(() => void signal("WINCH", "hunk"), 1000);
-    },
+    installed: onPath("hunk"),
+    apply: Effect.fn("Theme.hunk")(function* () {
+      yield* signal("WINCH", "hunk");
+      yield* detach(Effect.delay(signal("WINCH", "hunk"), "1 second"));
+    }),
   },
   {
     name: "Helium",
-    async installed() {
-      const found = await jxa(`ObjC.import("AppKit"); var url = $.NSWorkspace.sharedWorkspace.URLForApplicationWithBundleIdentifier("${heliumBundle}"); url.isNil() ? "" : url.path.js`);
-      return found.status === 0 && found.stdout.trim() !== "";
-    },
-    async apply({ theme }) {
+    installed: Effect.map(
+      jxa(`ObjC.import("AppKit"); var url = $.NSWorkspace.sharedWorkspace.URLForApplicationWithBundleIdentifier("${heliumBundle}"); url.isNil() ? "" : url.path.js`),
+      (found) => found.status === 0 && found.stdout.trim() !== "",
+    ),
+    apply: Effect.fn("Theme.helium")(function* ({ theme }: Applied) {
       const sudoers = list("/etc/sudoers.d")?.some((entry) => entry.name === "theme-switcher-helium") ?? false;
       const installed = read(heliumHelper);
-      if (!sudoers || installed === null) throw new Failure("Run theme-switcher helium setup to let Theme Switcher colour Helium");
-      if (installed !== host.readFile("helium-helper.sh")) throw new Failure("Run theme-switcher helium setup again to update the Helium helper");
-      await run("sudo", ["-n", heliumHelper, heliumColor(theme)]);
-      const running = await jxa(`ObjC.import("AppKit");
+      if (!sudoers || installed === null) return yield* new ThemeError({ message: "Run theme-switcher helium setup to let Theme Switcher colour Helium" });
+      if (installed !== (yield* attempt(() => host.readFile("helium-helper.sh")))) {
+        return yield* new ThemeError({ message: "Run theme-switcher helium setup again to update the Helium helper" });
+      }
+      yield* run("sudo", ["-n", heliumHelper, heliumColor(theme)]);
+      const running = yield* jxa(`ObjC.import("AppKit");
         ObjC.bindFunction("_CFPreferencesManagementStatusChangedForDomains", ["void", ["id"]]);
         $._CFPreferencesManagementStatusChangedForDomains($(["${heliumBundle}"]));
         var apps = $.NSRunningApplication.runningApplicationsWithBundleIdentifier("${heliumBundle}"), out = [];
         for (var i = 0; i < apps.count; i++) { var url = apps.objectAtIndex(i).executableURL; if (!url.isNil()) out.push(url.path.js); }
         out.join("\\n")`);
       for (const executable of running.stdout.split("\n").filter(Boolean)) {
-        await run(executable, ["--refresh-platform-policy", "--no-startup-window"]).catch(() => {});
+        yield* Effect.ignore(run(executable, ["--refresh-platform-policy", "--no-startup-window"]));
       }
-    },
+    }),
   },
 ];
 
@@ -619,80 +645,66 @@ function cursorTarget(): Target {
   const extensions = () => `${home}/.cursor/extensions`;
   const generatedName = "omarchy-theme";
   const generatedID = "local.omarchy-theme";
-  const parse = <T>(path: string, fallback: T, valid: (value: unknown) => boolean): T => {
-    try {
-      const value = JSON.parse(host.readFile(path));
-      return valid(value) ? value : fallback;
-    } catch {
-      return fallback;
-    }
-  };
-  const isObject = (value: unknown) => typeof value === "object" && value !== null && !Array.isArray(value);
-  const registry = () => parse<Record<string, any>[]>(`${extensions()}/extensions.json`, [], (value) => Array.isArray(value) && value.every(isObject));
-  const obsolete = () => parse<Record<string, unknown>>(`${extensions()}/.obsolete`, {}, isObject);
+  const registry = () => Option.getOrElse(parseRegistry(read(`${extensions()}/extensions.json`) ?? ""), () => []);
+  const obsolete = () => ({ ...Option.getOrElse(parseObject(read(`${extensions()}/.obsolete`) ?? ""), () => ({})) });
 
   const isInstalled = (id: string) => {
     const gone = obsolete();
     return registry().some((entry) => {
-      const entryID = entry.identifier?.id;
+      const entryID = field(entry.identifier, "id");
       if (typeof entryID !== "string" || entryID.toLowerCase() !== id.toLowerCase()) return false;
-      const location = entry.location;
-      const locationPath = location?.path ?? location?.fsPath;
+      const locationPath = field(entry.location, "path") ?? field(entry.location, "fsPath");
       const relative = typeof entry.relativeLocation === "string" ? entry.relativeLocation
         : typeof locationPath === "string" ? basename(locationPath.replace(/\/+$/, "")) : "";
       return relative !== "" && !(relative in gone) && exists(`${extensions()}/${relative}`);
     });
   };
 
-  const extensionTheme = async (applied: Applied): Promise<string | null> => {
+  const extensionTheme = Effect.fn("Theme.cursorExtension")(function* (applied: Applied) {
     const descriptor = applied.theme.files["vscode.json"];
     if (!descriptor) return null;
-    const parsed = JSON.parse(host.readFile(descriptor));
-    const json = isObject(parsed) ? parsed : {};
-    const name = json.name;
-    if (typeof name !== "string" || !/^[^\p{Cc}"\\]+$/u.test(name)) throw new Failure("vscode.json has no usable theme name");
-    const id = json.extension;
+    const json: unknown = yield* attempt(() => JSON.parse(host.readFile(descriptor)));
+    const name = field(json, "name");
+    if (typeof name !== "string" || !/^[^\p{Cc}"\\]+$/u.test(name)) return yield* new ThemeError({ message: "vscode.json has no usable theme name" });
+    const id = field(json, "extension");
     if (typeof id !== "string" || !/^[a-zA-Z0-9._-]+$/.test(id) || isInstalled(id)) return name;
     if (failedInstalls.has(id)) return null;
-    try {
-      await run("cursor", ["--install-extension", id]);
-      return name;
-    } catch (error) {
-      failedInstalls.add(id);
-      applied.notes.push(`  note   Cursor: ${id} failed to install, using the generated Omarchy theme. ${message(error)}`);
-      return null;
-    }
-  };
+    return yield* run("cursor", ["--install-extension", id]).pipe(
+      Effect.as(name),
+      Effect.catch((error) => Effect.sync(() => {
+        failedInstalls.add(id);
+        applied.notes.push(`  note   Cursor: ${id} failed to install, using the generated Omarchy theme. ${error.message}`);
+        return null;
+      })),
+    );
+  });
 
-  const installGenerated = async (theme: string) => {
-    const data = host.readFile(theme);
-    let type: unknown;
-    try {
-      type = JSON.parse(data)?.type;
-    } catch {}
+  const installGenerated = Effect.fn("Theme.cursorGenerated")(function* (theme: string) {
+    const data = yield* attempt(() => host.readFile(theme));
+    const type = Option.getOrUndefined(parseObject(data))?.type;
     const bytes = unescape(encodeURIComponent(data));
     let hash = 2166136261;
     for (let i = 0; i < bytes.length; i++) hash = Math.imul(hash ^ bytes.charCodeAt(i), 16777619) >>> 0;
     const version = `1.0.${hash}`;
     const directory = `${extensions()}/${generatedName}`;
-
-    host.mkdir(`${directory}/themes`);
-    host.writeFile(`${directory}/themes/omarchy-color-theme.json`, data);
     const manifest = {
       name: generatedName, displayName: "Omarchy", description: "Omarchy color theme",
       publisher: "local", version, engines: { vscode: "^1.70.0" }, categories: ["Themes"],
       contributes: { themes: [{ label: "Omarchy", uiTheme: type === "light" ? "vs" : "vs-dark", path: "./themes/omarchy-color-theme.json", _watch: true }] },
     };
-    host.writeFile(`${directory}/package.json`, Files.pretty(manifest));
+    yield* attempt(() => {
+      host.mkdir(`${directory}/themes`);
+      host.writeFile(`${directory}/themes/omarchy-color-theme.json`, data);
+      host.writeFile(`${directory}/package.json`, pretty(manifest));
+    });
 
     const obsoleteFile = `${extensions()}/.obsolete`;
     const gone = obsolete();
     const key = `${generatedID}-${version}`;
     if (key in gone) {
       delete gone[key];
-      await Files.backUp(obsoleteFile);
-      if (Object.keys(gone).length === 0) host.remove(obsoleteFile);
-      else host.writeFile(obsoleteFile, JSON.stringify(gone).replace(/\//g, "\\/"));
+      yield* backUp(obsoleteFile);
+      yield* attempt(() => Object.keys(gone).length === 0 ? host.remove(obsoleteFile) : host.writeFile(obsoleteFile, JSON.stringify(gone).replace(/\//g, "\\/")));
     }
 
     const entry = {
@@ -701,26 +713,24 @@ function cursorTarget(): Target {
       location: { $mid: 1, fsPath: directory, external: `file://${encodeURI(directory)}/`, path: directory, scheme: "file" },
       relativeLocation: generatedName,
     };
-    const entries = [...registry().filter((each) => each.identifier?.id !== generatedID), entry];
+    const entries = [...registry().filter((each) => field(each.identifier, "id") !== generatedID), entry];
     const registryFile = `${extensions()}/extensions.json`;
-    await Files.backUp(registryFile);
-    host.writeFile(registryFile, JSON.stringify(entries));
-  };
+    yield* backUp(registryFile);
+    yield* attempt(() => host.writeFile(registryFile, JSON.stringify(entries)));
+  });
 
   return {
     name: "Cursor",
-    installed: async () => (await which("cursor")) !== null,
-    async apply(applied) {
-      let colorTheme = await extensionTheme(applied);
-      if (colorTheme === null) {
-        await installGenerated(currentFile("vscode-theme.json"));
-        colorTheme = "Omarchy";
-      }
+    installed: onPath("cursor"),
+    apply: Effect.fn("Theme.cursor")(function* (applied: Applied) {
+      const extension = yield* extensionTheme(applied);
+      if (extension === null) yield* installGenerated(currentFile("vscode-theme.json"));
+      const colorTheme = extension ?? "Omarchy";
       const preferred = applied.theme.mode === "dark" ? "workbench.preferredDarkColorTheme" : "workbench.preferredLightColorTheme";
-      const text = host.readFile(settings());
-      const updated = [preferred, "workbench.colorTheme"].reduce((each, key) => Files.setJSONString(key, colorTheme!, each), text);
-      if (updated !== text) await Files.write(updated, settings());
-    },
+      const text = yield* attempt(() => host.readFile(settings()));
+      const updated = [preferred, "workbench.colorTheme"].reduce((each, key) => setJSONString(key, colorTheme, each), text);
+      if (updated !== text) yield* write(updated, settings());
+    }),
   };
 }
 
@@ -734,12 +744,23 @@ function stage(theme: Theme) {
   }
 }
 
-async function swapStaged() {
-  const result = await host.exec(["/bin/sh", "-c", 'rm -rf "$1" && mv "$2" "$1"', "sh", paths.current, paths.next]);
-  if (result.status !== 0) throw new Failure(result.stderr.trim() || "could not move the staged theme into place");
+const swapStaged = Effect.fn("Theme.swapStaged")(function* () {
+  const result = yield* exec(["/bin/sh", "-c", 'rm -rf "$1" && mv "$2" "$1"', "sh", paths.current, paths.next]);
+  if (result.status !== 0) return yield* new ThemeError({ message: result.stderr.trim() || "could not move the staged theme into place" });
+});
+
+function applyTarget(target: Target, applied: Applied): Effect.Effect<TargetResult> {
+  return Effect.gen(function* () {
+    const installed = yield* Effect.orElseSucceed(target.installed, () => false);
+    if (!installed) return { status: "skipped", target: target.name };
+    return yield* Effect.match(target.apply(applied), {
+      onSuccess: (): TargetResult => ({ status: "applied", target: target.name }),
+      onFailure: (error): TargetResult => ({ message: error.message, status: "failed", target: target.name }),
+    });
+  });
 }
 
-async function apply(theme: Theme): Promise<ApplyReport> {
+const apply = Effect.fn("Theme.apply")(function* (theme: Theme) {
   const state = State.load();
   let background: string | null = null;
   if (theme.backgrounds.length) {
@@ -750,75 +771,56 @@ async function apply(theme: Theme): Promise<ApplyReport> {
     background = theme.backgrounds[index];
   }
 
-  stage(theme);
-  await swapStaged();
-  state.theme = theme.id;
-  State.save({ backgrounds: state.backgrounds, theme: state.theme });
+  yield* attempt(() => stage(theme));
+  yield* swapStaged();
+  yield* attempt(() => State.save({ backgrounds: state.backgrounds, theme: theme.id }));
 
   const applied: Applied = { theme, background, notes: [] };
-  const results = await Promise.all(targets.map(async (target): Promise<TargetResult> => {
-    let installed: boolean;
-    try {
-      installed = await target.installed();
-    } catch {
-      installed = false;
-    }
-    if (!installed) return { status: "skipped", target: target.name };
-    try {
-      await target.apply(applied);
-      return { status: "applied", target: target.name };
-    } catch (error) {
-      return { message: message(error), status: "failed", target: target.name };
-    }
-  }));
+  const results = yield* Effect.forEach(targets, (target) => applyTarget(target, applied), { concurrency: "unbounded" });
 
-  await appendLog([
+  yield* appendLog([
     `${timestamp()} ${theme.id} background=${background ? basename(background) : "none"}`,
     ...applied.notes,
     ...results.map((result) => result.status === "skipped" ? `  skip   ${result.target}: not installed`
       : result.status === "failed" ? `  FAILED ${result.target}: ${result.message}` : `  ok     ${result.target}`),
   ]);
-  for (const result of results) if (result.status === "failed") host.log(`${result.target} failed: ${result.message}`);
-  return background ? { background: basename(background), results, theme: theme.id } : { results, theme: theme.id };
-}
+  for (const result of results) if (result.status === "failed") yield* log(`${result.target} failed: ${result.message}`);
+  const report: ApplyReport = background ? { background: basename(background), results, theme: theme.id } : { results, theme: theme.id };
+  return report;
+});
 
-function showBackground(step: number): Gary.Json {
+const showBackground = Effect.fn("Theme.showBackground")(function* (step: number) {
   const state = State.load();
   const id = state.theme;
   const theme = id ? Library.theme(id) : null;
-  if (!id || !theme) throw new Failure("no theme applied yet");
-  if (!theme.backgrounds.length) throw new Failure(`${theme.name} has no backgrounds`);
+  if (!id || !theme) return yield* new ThemeError({ message: "no theme applied yet" });
+  if (!theme.backgrounds.length) return yield* new ThemeError({ message: `${theme.name} has no backgrounds` });
   const count = theme.backgrounds.length;
   const index = (((state.backgrounds[id] ?? 0) + step) % count + count) % count;
   const background = theme.backgrounds[index];
   state.backgrounds[id] = index;
-  State.save({ backgrounds: state.backgrounds, theme: id });
-  void appendLog([`${timestamp()} ${id} background=${basename(background)}`]);
-  host.wallpaper.set(background).catch((error) => host.log(`Background failed: ${message(error)}`));
+  yield* attempt(() => State.save({ backgrounds: state.backgrounds, theme: id }));
+  yield* detach(appendLog([`${timestamp()} ${id} background=${basename(background)}`]));
+  yield* detach(wallpaper.set(background).pipe(Effect.catch((error) => log(`Background failed: ${error.message}`))));
   return { background: basename(background), current: id };
-}
+});
 
-function followWorkspace() {
+const followWorkspace = Effect.fn("Theme.followWorkspace")(function* () {
   const state = State.load();
   const id = state.theme;
   const index = id === undefined ? undefined : state.backgrounds[id];
-  const theme = id && index !== undefined ? themes.find((each) => each.id === id) : undefined;
-  const background = theme?.backgrounds[index!];
+  const background = index === undefined ? undefined : themes.find((each) => each.id === id)?.backgrounds[index];
   if (!background) return;
-  host.wallpaper.get().then((wallpapers) => {
-    if (wallpapers.some((each) => each.path !== background)) return host.wallpaper.set(background);
-  }).catch((error) => host.log(`wallpaper follow failed: ${message(error)}`));
-}
+  const wallpapers = yield* wallpaper.get();
+  if (wallpapers.some((each) => each.path !== background)) yield* wallpaper.set(background);
+}, Effect.catch((error) => log(`wallpaper follow failed: ${error.message}`)));
 
 function syncPalette(state: string | null) {
   if (!state) return;
-  let id: string | undefined;
-  try {
-    id = JSON.parse(state).theme;
-  } catch {
-    return;
-  }
-  const theme = id ? themes.find((each) => each.id === id) ?? Library.theme(id) : null;
+  const parsed = parseObject(state);
+  if (Option.isNone(parsed)) return;
+  const id = parsed.value.theme;
+  const theme = typeof id === "string" && id ? themes.find((each) => each.id === id) ?? Library.theme(id) : null;
   const source = theme?.files["colors.toml"] && read(theme.files["colors.toml"]);
   if (!theme || source == null) return host.log(`no colors.toml for ${id}`);
   const colors = source.split("\n").filter((line) => /^\s*[a-z0-9_]+\s*=\s*"(light|dark|#[0-9a-fA-F]{3,8})"\s*$/.test(line)).join("\n") + "\n";
@@ -828,19 +830,25 @@ function syncPalette(state: string | null) {
   publish();
 }
 
-function enqueue<T>(label: string, job: () => Promise<T>): Promise<T> {
-  const next = queue.then(async () => {
-    busy = label;
+function enqueue<A, E>(label: string, job: Effect.Effect<A, E>) {
+  return Effect.gen(function* () {
+    const done = yield* Deferred.make<A, E>();
+    yield* Queue.offer(jobs, { label, run: Deferred.into(job, done) });
+    return yield* Deferred.await(done);
+  });
+}
+
+function runJob(job: Job) {
+  return Effect.sync(() => {
+    busy = job.label;
     publish();
-    try {
-      return await job();
-    } finally {
+  }).pipe(
+    Effect.andThen(job.run),
+    Effect.ensuring(Effect.sync(() => {
       busy = null;
       publish();
-    }
-  });
-  queue = next.catch(() => {});
-  return next;
+    })),
+  );
 }
 
 function reload() {
@@ -848,8 +856,8 @@ function reload() {
   publish();
 }
 
-function warmPreviews() {
-  host.mkdir(paths.previews);
+const warmPreviews = Effect.fn("Theme.warmPreviews")(function* () {
+  yield* attempt(() => host.mkdir(paths.previews));
   const cached = new Set((list(paths.previews) ?? []).map((entry) => entry.name));
   const pending = themes.map((theme) => {
     const source = theme.files["preview.png"] ?? theme.backgrounds[0];
@@ -860,16 +868,18 @@ function warmPreviews() {
     return { id: theme.id, source, file: `${theme.id}-${hash.toString(16)}.jpg` };
   }).filter((each): each is { id: string; source: string; file: string } => each !== null);
 
-  const make = async (each: { id: string; source: string; file: string }) => {
+  const make = Effect.fnUntraced(function* (each: { id: string; source: string; file: string }) {
     if (!cached.has(each.file)) {
-      for (const stale of cached) if (stale.startsWith(`${each.id}-`) && /^[0-9a-f]+\.jpg$/.test(stale.slice(each.id.length + 1))) host.remove(`${paths.previews}/${stale}`);
-      const result = await host.exec(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "85", "-Z", String(previewSize), each.source, "--out", `${paths.previews}/${each.file}`]);
-      if (result.status !== 0) return host.log(`preview for ${each.id} failed: ${result.stderr.trim()}`);
+      yield* attempt(() => {
+        for (const stale of cached) if (stale.startsWith(`${each.id}-`) && /^[0-9a-f]+\.jpg$/.test(stale.slice(each.id.length + 1))) host.remove(`${paths.previews}/${stale}`);
+      });
+      const result = yield* exec(["/usr/bin/sips", "-s", "format", "jpeg", "-s", "formatOptions", "85", "-Z", String(previewSize), each.source, "--out", `${paths.previews}/${each.file}`]);
+      if (result.status !== 0) return yield* log(`preview for ${each.id} failed: ${result.stderr.trim()}`);
     }
     previews[each.id] = `${paths.previews}/${each.file}`;
-  };
-  pending.reduce((chain, each) => chain.then(() => make(each)).then(publish), Promise.resolve());
-}
+  });
+  yield* Effect.forEach(pending, (each) => Effect.andThen(make(each), Effect.sync(publish)), { discard: true });
+});
 
 const previewSize = 1536;
 const colorKeys = ["background", "foreground", "accent", "red", "yellow", "green", "cyan", "blue", "magenta"];
@@ -889,46 +899,38 @@ function publish() {
   });
 }
 
-async function choose(name: string): Promise<{ report: ApplyReport }> {
+const choose = Effect.fn("Theme.choose")(function* (name: string) {
   reload();
   const id = Library.normalize(name);
   const theme = themes.find((each) => each.id === id);
-  if (!theme) throw new Failure(`no theme named ${name}`);
-  try {
-    return { report: await enqueue(`Applying ${theme.name}…`, () => apply(Library.theme(theme.id) ?? theme)) };
-  } catch (error) {
-    host.log(`Apply failed: ${message(error)}`);
-    throw error;
-  }
-}
+  if (!theme) return yield* new ThemeError({ message: `no theme named ${name}` });
+  const report = yield* enqueue(`Applying ${theme.name}…`, Effect.suspend(() => apply(Library.theme(theme.id) ?? theme))).pipe(
+    Effect.tapError((error) => log(`Apply failed: ${error.message}`)),
+  );
+  return { report };
+});
 
-async function update(): Promise<{ themes: number }> {
-  try {
-    await enqueue("Updating themes…", () => Library.sync());
-  } catch (error) {
-    host.log(`Update failed: ${message(error)}`);
-    throw error;
-  } finally {
-    reload();
-    warmPreviews();
-  }
+const update = Effect.fn("Theme.update")(function* () {
+  yield* enqueue("Updating themes…", syncLibrary()).pipe(
+    Effect.tapError((error) => log(`Update failed: ${error.message}`)),
+    Effect.ensuring(Effect.suspend(() => {
+      reload();
+      return detach(warmPreviews());
+    })),
+  );
   return { themes: themes.length };
-}
+});
 
 function background(step: number): Gary.Json {
   if (busy) {
-    enqueue("Changing background…", async () => showBackground(step)).catch((error) => host.log(`Background failed: ${message(error)}`));
+    Effect.runFork(enqueue("Changing background…", showBackground(step)).pipe(Effect.catch((error) => log(`Background failed: ${error.message}`))));
     return { queued: step > 0 ? "next" : "previous" };
   }
-  try {
-    return showBackground(step);
-  } catch (error) {
-    return { error: message(error) };
-  }
+  return Effect.runSync(showBackground(step).pipe(Effect.catch((error) => Effect.succeed({ error: error.message }))));
 }
 
-host.exec(["/usr/bin/printenv", "HOME"]).then((result) => {
-  home = result.stdout.trim();
+function initialize(path: string) {
+  home = path;
   paths = makePaths(home);
   searchPath = [
     "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", `${home}/.local/bin`, `${home}/.hunk/bin`,
@@ -939,34 +941,39 @@ host.exec(["/usr/bin/printenv", "HOME"]).then((result) => {
   const started = Date.now();
   reload();
   host.log(`loaded ${themes.length} themes in ${Date.now() - started} ms`);
-  if (!themes.length) update().catch(() => {});
+}
+
+const start = Effect.gen(function* () {
+  yield* Effect.addFinalizer(() => Scope.close(lifetime, Exit.void));
+  yield* Effect.forkScoped(Stream.runForEach(Stream.fromQueue(jobs), runJob));
+  const printenv = yield* exec(["/usr/bin/printenv", "HOME"]);
+  yield* attempt(() => initialize(printenv.stdout.trim()));
+  if (!themes.length) yield* detach(update());
   syncPalette(read(paths.state));
-  host.watchFile(paths.state, (text) => {
+  yield* watchFile(paths.state, (text) => {
     syncPalette(text);
     publish();
   });
-  warmPreviews();
-});
+  yield* detach(warmPreviews());
+  yield* topic("sndrgrdn.dinky").pipe(
+    Stream.map((value) => value.displays.map((display) => display.workspaces.find((each) => each.focused)?.number ?? "").join(",")),
+    Stream.changes,
+    Stream.drop(1),
+    Stream.runForEach(() => followWorkspace()),
+  );
+}).pipe(Effect.catch((error) => log(`start failed: ${error.message}`)));
 
 function whenReady(body: () => Gary.Json): Gary.Json {
   if (!home) return { error: "Theme is starting" };
   return body();
 }
 
-function whenStarted<T>(body: () => Promise<T>): Promise<T> {
-  return home ? body() : Promise.reject(new Failure("Theme is starting"));
+function whenStarted<A>(effect: Effect.Effect<A, Failed>): Promise<A> {
+  return home ? Effect.runPromise(effect) : Promise.reject(new ThemeError({ message: "Theme is starting" }));
 }
 
 export default {
-  onTopic({ topic, value }) {
-    if (topic !== "sndrgrdn.dinky" || !home) return;
-    const focused = value.displays
-      .map((display) => display.workspaces.find((each) => each.focused)?.number ?? "").join(",");
-    if (focused === focusedWorkspaces) return;
-    const first = focusedWorkspaces === "";
-    focusedWorkspaces = focused;
-    if (!first) followWorkspace();
-  },
+  effect: start,
 
   onHotkey(id) {
     if (!home) return;
@@ -992,12 +999,12 @@ export default {
       const shown = index !== undefined ? backgrounds[index] : undefined;
       return shown ? { background: basename(shown), current: id } : { current: id };
     }),
-    set: (...words: string[]) => whenStarted(() => (words.length ? choose(words.join(" ")) : Promise.reject(new Failure("usage: set <theme>")))),
+    set: (...words: string[]) => whenStarted(words.length ? choose(words.join(" ")) : Effect.fail(new ThemeError({ message: "usage: set <theme>" }))),
     background: (direction = "next") => whenReady(() => {
       if (direction !== "next" && direction !== "previous") return { error: "usage: background [next | previous]" };
       return background(direction === "next" ? 1 : -1);
     }),
-    update: () => whenStarted(update),
+    update: () => whenStarted(update()),
     picker: () => whenReady(() => {
       reload();
       host.show();
