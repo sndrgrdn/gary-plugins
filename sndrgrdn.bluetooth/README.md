@@ -1,12 +1,14 @@
 # Bluetooth
 
-Shows Bluetooth in the bar with Omarchy's icon, and opens Omarchy's Bluetooth panel below it: a switch to turn Bluetooth on or off, then your connected and paired devices.
+Shows Bluetooth in the bar with Omarchy's icon, and opens Omarchy's Bluetooth panel below it: a switch to turn Bluetooth on or off, then your connected and paired devices and the devices nearby.
 
 ![Bluetooth menu with the switch on and the paired devices](screenshot.png)
 
 - The icon is off, on, or on with a device connected, as in Omarchy. Right-click it to turn Bluetooth on or off.
 - Click a device to connect or disconnect it. A connected device shows its battery level when it reports one.
-- Gary lists only paired devices, so the panel cannot scan for new devices, pair them or forget them. Pair a new device in System Settings.
+- While the panel is open it looks for nearby devices and lists them under Nearby. Click one to pair and connect it. A device that asks for a PIN, a passkey or a code to confirm pairs only in System Settings.
+- Like System Settings, the panel leaves out the HomePods, Apple TVs, iPads and Macs that iCloud lists as paired.
+- The panel cannot forget a device. Forget it in System Settings.
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. Bluetooth needs the Bluetooth permission. Until you allow it, the switch asks for it.
 
