@@ -2,7 +2,7 @@ import { Effect, host } from "gary:effect";
 import { format, left, ring, ticking } from "./countdown";
 import type { Mode } from "./topic";
 
-const size = 120;
+const size = 128;
 const modes: [Mode, string][] = [
   ["focus", "Focus"],
   ["break", "Break"],
@@ -13,7 +13,7 @@ function call(method: string, ...args: string[]) {
 }
 
 export default {
-  surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
 
   effect: ticking,
 
@@ -22,7 +22,7 @@ export default {
     const remaining = session ? left(session, Date.now()) : 0;
     const { spacing } = state.theme;
     return (
-      <column style="panel" padding={spacing.section} gap={spacing.section}>
+      <column padding={spacing.section} gap={spacing.section}>
         <stack key="ring" width={size} height={size}>
           <shape
             key="shape"
@@ -35,7 +35,7 @@ export default {
               { d: ring, stroke: "foreground", lineWidth: 1.5, cap: "round", trim: [0, session ? remaining / session.length : 0] },
             ]}
           />
-          <text key="left" width={size} y={size / 2 - 11} align="center" font="mono" fontSize={18} style={session ? "bright" : "dim"}>
+          <text key="left" width={size} height={size} align="center" font="mono" fontSize={18} style={session ? "bright" : "dim"}>
             {format(remaining)}
           </text>
         </stack>

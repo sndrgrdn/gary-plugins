@@ -2,6 +2,8 @@ import { Effect, host } from "gary:effect";
 import { format, left, ring, ticking } from "./countdown";
 
 const pointsPerStep = 24;
+const slot = 20;
+const ringSize = 12;
 
 let travel = 0;
 
@@ -15,11 +17,14 @@ export default {
     if (session) paths.push({ d: ring, stroke: "foreground", lineWidth: 4, cap: "round", trim: [0, left(session, now) / session.length] });
     return (
       <row
+        gap={4}
         action="open"
         scrollAction="adjust"
         tooltip={session ? `${session.mode === "focus" ? "Focus" : "Break"}, scroll to add or remove 5 minutes` : "Scroll to focus for 5 minutes"}
       >
-        <shape key="ring" width={13} height={13} viewBox={[24, 24]} paths={paths} />
+        <row key="ring" width={slot} align="center">
+          <shape key="shape" width={ringSize} height={ringSize} viewBox={[24, 24]} paths={paths} />
+        </row>
         {session && <text key="left">{format(left(session, now))}</text>}
       </row>
     );
