@@ -1,6 +1,5 @@
 import { Effect, Fiber, host, type HostError } from "gary:effect";
 
-const longest = 40;
 let volume: number | null = null;
 let hideVolume: Fiber.Fiber<void> | null = null;
 
@@ -9,8 +8,7 @@ function run(effect: Effect.Effect<unknown, HostError>) {
 }
 
 function label(track: Gary.Track) {
-  const text = track.artist ? `${track.artist} · ${track.title}` : track.title;
-  return text.length > longest ? `${text.slice(0, longest - 1)}…` : text;
+  return track.artist ? `${track.artist} · ${track.title}` : track.title;
 }
 
 function showVolume(next: number) {
@@ -47,7 +45,7 @@ export default {
   },
 
   onAction(action) {
-    if (action === "open") run(host.toggle());
+    if (action === "open") return host.toggle();
   },
 
   onScroll(event, state) {

@@ -1,17 +1,14 @@
-import { Effect, Queue, Schedule, Stream, host, type HostError } from "gary:effect";
+import { Effect, Schedule, host, type HostError } from "gary:effect";
 
 const width = 300;
 const artworkSize = 56;
-const seeks = Effect.runSync(Queue.unbounded<number>());
 let now = Date.now();
-let seeking: number | null = null;
 
 function run(effect: Effect.Effect<unknown, HostError>) {
   Effect.runSync(effect.pipe(Effect.tapError((error) => host.log(error.message)), Effect.ignore));
 }
 
 function position(track: Gary.Track) {
-  if (seeking !== null) return seeking;
   if (track.elapsed === null) return 0;
   const drift = track.playing && track.elapsedAt !== null ? ((now - track.elapsedAt) / 1000) * (track.rate ?? 1) : 0;
   return Math.min(track.duration ?? Infinity, track.elapsed + drift);
@@ -40,11 +37,17 @@ function Artwork({ path }: { path: string | null }) {
 
 function Seek({ track }: { track: Gary.Track }) {
   if (!track.duration) return null;
-  const elapsed = position(track);
   return (
     <row key="seek" gap={8}>
-      <text key="elapsed" style="dim" font="mono">{clock(elapsed)}</text>
-      <slider key="slider" value={elapsed / track.duration} action="seek" color="foreground" />
+      <text key="elapsed" style="dim" font="mono">{clock(position(track))}</text>
+      <slider
+        key="slider"
+        value={(track.elapsed ?? 0) / track.duration}
+        rate={track.playing ? (track.rate ?? 1) / track.duration : 0}
+        at={track.elapsedAt ?? undefined}
+        release="seek"
+        color="foreground"
+      />
       <text key="duration" style="dim" font="mono">{clock(track.duration)}</text>
     </row>
   );
@@ -76,20 +79,7 @@ function Player({ track }: { track: Gary.Track }) {
 export default {
   surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
 
-  effect: Effect.all(
-    [
-      Effect.repeat(Effect.sync(() => (now = Date.now())), Schedule.spaced("1 second")),
-      Stream.fromQueue(seeks).pipe(
-        Stream.debounce("200 millis"),
-        Stream.runForEach((seconds) => Effect.sync(() => run(host.nowplaying.seek(seconds)))),
-      ),
-    ],
-    { concurrency: "unbounded", discard: true },
-  ),
-
-  onTopic({ topic }) {
-    if (topic === "nowplaying") seeking = null;
-  },
+  effect: Effect.repeat(Effect.sync(() => (now = Date.now())), Schedule.spaced("1 second")),
 
   render(state) {
     const nowplaying = state.nowplaying;
@@ -104,10 +94,7 @@ export default {
 
   onAction(action, payload, state) {
     const duration = state.nowplaying?.track?.duration;
-    if (action === "seek" && typeof payload === "number" && duration) {
-      seeking = payload * duration;
-      Queue.offerUnsafe(seeks, seeking);
-    }
+    if (action === "seek" && typeof payload === "number" && duration) run(host.nowplaying.seek(payload * duration));
     if (action === "previous") run(host.nowplaying.previous());
     if (action === "toggle") run(host.nowplaying.toggle());
     if (action === "next") run(host.nowplaying.next());

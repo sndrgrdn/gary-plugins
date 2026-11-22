@@ -86,6 +86,34 @@
       "type" : "array",
       "uniqueItems" : true
     },
+    "mediakeys" : {
+      "additionalProperties" : {
+        "items" : {
+          "enum" : [
+            "volume-up",
+            "volume-down",
+            "mute",
+            "brightness-up",
+            "brightness-down",
+            "play",
+            "next",
+            "previous"
+          ]
+        },
+        "type" : "array"
+      },
+      "propertyNames" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "type" : "object"
+    },
     "name" : {
       "type" : "string"
     },
@@ -93,31 +121,100 @@
       "const" : 1
     },
     "subscribes" : {
-      "items" : {
-        "anyOf" : [
-          {
-            "enum" : [
-              "apps",
-              "audio",
-              "battery",
-              "bluetooth",
-              "brightness",
-              "clipboard",
-              "clock",
-              "focus",
-              "notifications",
-              "nowplaying",
-              "permissions",
-              "session",
-              "wifi"
+      "anyOf" : [
+        {
+          "items" : {
+            "anyOf" : [
+              {
+                "enum" : [
+                  "apps",
+                  "audio",
+                  "battery",
+                  "bluetooth",
+                  "brightness",
+                  "calendar",
+                  "clipboard",
+                  "clock",
+                  "focus",
+                  "notifications",
+                  "nowplaying",
+                  "permissions",
+                  "session",
+                  "system",
+                  "tray",
+                  "wifi"
+                ]
+              },
+              {
+                "$ref" : "#/$defs/id"
+              }
             ]
           },
-          {
-            "$ref" : "#/$defs/id"
-          }
+          "type" : "array"
+        },
+        {
+          "additionalProperties" : {
+            "items" : {
+              "anyOf" : [
+                {
+                  "enum" : [
+                    "apps",
+                    "audio",
+                    "battery",
+                    "bluetooth",
+                    "brightness",
+                    "calendar",
+                    "clipboard",
+                    "clock",
+                    "focus",
+                    "notifications",
+                    "nowplaying",
+                    "permissions",
+                    "session",
+                    "system",
+                    "tray",
+                    "wifi"
+                  ]
+                },
+                {
+                  "$ref" : "#/$defs/id"
+                }
+              ]
+            },
+            "type" : "array"
+          },
+          "propertyNames" : {
+            "enum" : [
+              "bar-widget",
+              "bar",
+              "panel",
+              "overlay",
+              "menu",
+              "service"
+            ]
+          },
+          "type" : "object"
+        }
+      ]
+    },
+    "surfaces" : {
+      "additionalProperties" : {
+        "items" : {
+          "pattern" : "^[a-z0-9-]+$",
+          "type" : "string"
+        },
+        "minItems" : 1,
+        "type" : "array",
+        "uniqueItems" : true
+      },
+      "propertyNames" : {
+        "enum" : [
+          "panel",
+          "overlay",
+          "menu"
         ]
       },
-      "type" : "array"
+      "type" : "object"
     },
     "uses" : {
       "items" : {
@@ -126,18 +223,24 @@
           "audio",
           "bluetooth",
           "brightness",
+          "calendar",
           "clipboard",
+          "colorpicker",
           "dock",
           "exec",
           "files",
-          "mediakeys",
           "menubar",
           "network",
           "notifications",
+          "notify",
           "nowplaying",
           "paste",
           "permissions",
+          "power",
+          "screen",
+          "toast",
           "tray",
+          "vision",
           "wallpaper",
           "wifi"
         ]
