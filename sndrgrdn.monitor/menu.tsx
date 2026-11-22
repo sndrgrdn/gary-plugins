@@ -1,17 +1,27 @@
 import { Effect, host as lifted } from "gary:effect";
 
 type Spacing = Gary.Theme["spacing"];
+type Theme = Gary.Theme;
 type Controlled = Gary.BrightnessDisplay & { brightness: number };
 
 const width = 320;
 const rowHeight = 32;
+const headerHeight = 24;
 
 let problem: string | null = null;
+
+function Divider({ name, theme }: { name: string; theme: Theme }) {
+  return (
+    <row key={name} height={0}>
+      <row key="line" height={1} width={width - 2 * theme.spacing.item} background="border" />
+    </row>
+  );
+}
 
 function Display({ display, title, spacing }: { display: Controlled; title: string; spacing: Spacing }) {
   return (
     <column key={display.id} gap={0}>
-      <row key="header" height={24} padding={[0, spacing.item]} width={width - 2 * spacing.item}>
+      <row key="header" height={headerHeight} padding={[0, spacing.item]} width={width - 2 * spacing.item}>
         <text key="title" fontSize={11} font="strong" color="dim">{title.toUpperCase()}</text>
         <spacer />
         <text key="percent" fontSize={11} font="strong" color="dim">{`${Math.round(display.brightness * 100)}%`}</text>
@@ -24,22 +34,23 @@ function Display({ display, title, spacing }: { display: Controlled; title: stri
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
 
   render(state) {
-    const { spacing } = state.theme;
+    const { theme } = state;
+    const { spacing } = theme;
     const displays = state.brightness?.displays ?? [];
     const controlled = displays.flatMap((display) => (display.brightness === null ? [] : [{ ...display, brightness: display.brightness }]));
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
-        <row key="hero" padding={spacing.item}>
+        <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
           <icon key="icon" symbol={displays.length > 1 ? "display.2" : "display"} fontSize={20} width={28} color="bright" />
-          <column key="labels" gap={2}>
+          <column key="labels" gap={0}>
             <text key="title" style="title">Display</text>
             {controlled.length ? null : <text key="status" fontSize={11} color="dim">FIXED BRIGHTNESS</text>}
           </column>
         </row>
-        {controlled.length ? <row key="divider" height={1} width={width - 2 * spacing.item} background="border" /> : null}
+        {controlled.length ? <Divider name="divider" theme={theme} /> : null}
         {controlled.map((display) => (
           <Display display={display} title={controlled.length > 1 ? display.name ?? (display.builtin ? "Built-in display" : "Display") : "Brightness"} spacing={spacing} />
         ))}
