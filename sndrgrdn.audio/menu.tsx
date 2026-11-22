@@ -12,6 +12,7 @@ const nameWidth = 94;
 const headphones = /headphone|headset|earbud|earphone|airpod/i;
 
 let problem: string | null = null;
+let airplay: Gary.AirPlayTarget[] = [];
 
 function run(effect: Effect.Effect<unknown, HostError>) {
   problem = null;
@@ -62,21 +63,21 @@ function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip:
   );
 }
 
-function Device({ device, scope, current, theme }: { device: Gary.AudioDeviceSummary; scope: Scope; current: boolean; theme: Theme }) {
+function Choice({ id, symbol, name, action, current, theme }: { id: string; symbol: string; name: string; action: string; current: boolean; theme: Theme }) {
   const { spacing } = theme;
   return (
     <row
-      key={device.id}
+      key={id}
       height={rowHeight}
       padding={[0, spacing.item]}
       radius={rowRadius(theme)}
       width={width - 2 * spacing.item}
-      action={`${scope}:device:${device.id}`}
+      action={action}
       background={current ? "selected" : undefined}
       hovered={{ background: "hover" }}
     >
-      <icon key="icon" symbol={deviceSymbol(device, scope)} width={18} color={current ? "bright" : "dim"} />
-      <text key="name" color={current ? "bright" : "foreground"}>{device.name}</text>
+      <icon key="icon" symbol={symbol} width={18} color={current ? "bright" : "dim"} />
+      <text key="name" color={current ? "bright" : "foreground"}>{name}</text>
     </row>
   );
 }
@@ -84,7 +85,8 @@ function Device({ device, scope, current, theme }: { device: Gary.AudioDeviceSum
 function Channel({ scope, state }: { scope: Scope; state: Gary.State }) {
   const { spacing } = state.theme;
   const now = state.audio?.[scope];
-  const devices = (state.audio?.devices ?? []).filter((device) => device[scope]);
+  const speakers = scope === "output" ? airplay : [];
+  const devices = (state.audio?.devices ?? []).filter((device) => device[scope] && !(speakers.length && device.transport === "airplay"));
   if (!now && !devices.length) return null;
   return (
     <column key={scope} gap={0}>
@@ -98,7 +100,12 @@ function Channel({ scope, state }: { scope: Scope; state: Gary.State }) {
           <slider value={level(now)} action={`${scope}:volume`} rightAction={`${scope}:mute`} width={width - 4 * spacing.item} color="foreground" />
         </row>
       ) : null}
-      {devices.map((device) => <Device device={device} scope={scope} current={device.id === now?.id} theme={state.theme} />)}
+      {devices.map((device) => (
+        <Choice id={device.id} symbol={deviceSymbol(device, scope)} name={device.name} action={`${scope}:device:${device.id}`} current={device.id === now?.id} theme={state.theme} />
+      ))}
+      {speakers.map((speaker) => (
+        <Choice id={`airplay-${speaker.name}`} symbol="airplayaudio" name={speaker.name} action={`airplay:${speaker.name}`} current={speaker.selected} theme={state.theme} />
+      ))}
     </column>
   );
 }
@@ -130,6 +137,8 @@ function Apps({ state }: { state: Gary.State }) {
 
 export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
+
+  effect: run(lifted.audio.airplay().pipe(Effect.map((targets) => void (airplay = targets)))),
 
   render(state) {
     const { theme } = state;
@@ -169,6 +178,11 @@ export default {
         audio.input ? lifted.audio.setMuted(mute, "input") : Effect.void,
       ]));
     }
+    if (action.startsWith("airplay:")) {
+      const name = action.slice("airplay:".length);
+      airplay = airplay.map((speaker) => ({ ...speaker, selected: speaker.name === name }));
+      return run(lifted.audio.selectAirPlay(name));
+    }
     if (action.startsWith("app:") && typeof payload === "number") {
       return run(lifted.audio.setAppVolume(Number(action.slice("app:".length)), payload));
     }
@@ -178,6 +192,9 @@ export default {
       return run(Effect.all([now?.muted ? lifted.audio.setMuted(false, scope) : Effect.void, lifted.audio.setVolume(payload, scope)]));
     }
     if (verb === "mute" && now) return run(lifted.audio.setMuted(!now.muted, scope));
-    if (verb === "device") return run(lifted.audio.setDefaultDevice(action.slice(`${scope}:device:`.length), scope));
+    if (verb === "device") {
+      if (scope === "output") airplay = airplay.map((speaker) => ({ ...speaker, selected: false }));
+      return run(lifted.audio.setDefaultDevice(action.slice(`${scope}:device:`.length), scope));
+    }
   },
 } satisfies Gary.Menu;

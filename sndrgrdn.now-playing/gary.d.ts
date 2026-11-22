@@ -261,12 +261,15 @@ declare namespace Gary {
   type AudioApp = { pid: number; name: string; bundleId: string | null; path: string | null; volume: number }
   type AudioDeviceSummary = { id: string; name: string; transport: string; output: boolean; input: boolean }
   type AudioDeviceState = { id: string; name: string; transport: string; volume: number | null; muted: boolean | null }
+  type AirPlayTarget = { name: string; selected: boolean }
   interface Host { audio: AudioApi }
   interface AudioApi {
     setVolume(volume: number, scope?: AudioScope): null;
     setMuted(muted: boolean, scope?: AudioScope): null;
     setDefaultDevice(id: string, scope?: AudioScope): null;
     setAppVolume(pid: number, volume: number): Promise<null>;
+    airplay(): Promise<AirPlayTarget[]>;
+    selectAirPlay(name: string): Promise<null>;
   }
 }
 declare namespace Gary {

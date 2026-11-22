@@ -7,6 +7,7 @@ Shows the volume in the bar with Omarchy's speaker icon, and opens Omarchy's aud
 - The icon shows the volume in three steps, muted, or headphones when the output is headphones.
 - Right-click the icon to mute or unmute the output and the input. Scroll over it to change the volume.
 - Click a device to make it the output or the input. Right-click a slider to mute or unmute that side.
+- The output lists your AirPlay speakers too, and clicking one plays to it. To find them, Gary opens Control Center's Sound control for about a second each time the panel opens, so Gary needs Accessibility and Control Center needs its Sound control.
 - Gary cannot set the volume of a single app, so the panel has no per-app mixer.
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. For the pill that the volume keys show, turn on `sndrgrdn.osd`.
