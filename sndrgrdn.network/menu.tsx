@@ -10,7 +10,6 @@ const headerHeight = 24;
 const visibleRows = 8;
 const checkWidth = 18;
 
-let networks: readonly Gary.WiFiNetwork[] | null = null;
 let address: { ip: string; gateway: string } | null = null;
 let busy: string | null = null;
 let secret: string | null = null;
@@ -22,11 +21,7 @@ function run(effect: Effect.Effect<unknown, HostError>) {
 }
 
 const scan = lifted.wifi.scan().pipe(
-  Effect.tap((found) => Effect.sync(() => void (networks = found))),
-  Effect.catchTag("HostError", (error) => Effect.sync(() => {
-    networks = [];
-    problem = error.message;
-  })),
+  Effect.catchTag("HostError", (error) => Effect.sync(() => void (problem = error.message))),
 );
 
 const lookup = Effect.fn("Network.lookup")(function* (device: string) {
@@ -47,7 +42,7 @@ function join(network: Gary.WiFiNetwork, password: string | null) {
 
 function strongest(state: Gary.State) {
   const best = new Map<string, Gary.WiFiNetwork>();
-  for (const network of networks ?? []) {
+  for (const network of state.wifi?.networks ?? []) {
     if (network.ssid && (best.get(network.ssid)?.rssi ?? -Infinity) < network.rssi) best.set(network.ssid, network);
   }
   const current = state.wifi?.ssid;
@@ -147,7 +142,7 @@ function list(state: Gary.State) {
       </row>
     );
   }
-  if (networks === null) return <text key="scanning" color="dim" height={rowHeight} padding={[0, spacing.item]}>Scanning Wi‑Fi…</text>;
+  if (!state.wifi?.networks && !problem) return <text key="scanning" color="dim" height={rowHeight} padding={[0, spacing.item]}>Scanning Wi‑Fi…</text>;
   const found = strongest(state);
   const known = found.filter((network) => network.known);
   const other = found.filter((network) => !network.known);
