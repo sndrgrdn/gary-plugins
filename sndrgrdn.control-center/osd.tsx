@@ -49,10 +49,11 @@ export default {
   render(state) {
     const now = read(state, level);
     const value = now ? shown(now) : 0;
+    const { spacing } = state.theme;
     return (
       <row
-        gap={12}
-        padding={[12, 18]}
+        gap={spacing.section}
+        padding={[spacing.item, spacing.section]}
         radius={22}
         material="glass"
         background="alpha(panel, 0.35)"

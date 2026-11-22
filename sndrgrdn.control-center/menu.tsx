@@ -3,9 +3,13 @@ import type { HostError } from "gary:effect";
 import { read, shown, symbol, type Level } from "./levels";
 
 type Page = "tiles" | "wifi" | "bluetooth";
+type Spacing = Gary.Theme["spacing"];
 type TileProps = { symbol: string; title: string; detail: string; on: boolean; action?: string; rightAction?: string; tooltip?: string };
 
-const width = 296;
+const width = 300;
+const rowHeight = 32;
+const visibleRows = 8;
+const checkWidth = 18;
 
 let page: Page = "tiles";
 let networks: readonly Gary.WiFiNetwork[] | null = null;
@@ -54,12 +58,11 @@ function strongest(state: Gary.State) {
   return [...best.values()].sort((a, b) => Number(b.ssid === current) - Number(a.ssid === current) || b.rssi - a.rssi);
 }
 
-function Tile(props: TileProps) {
+function Tile(props: TileProps & { width: number; spacing: Spacing }) {
   return (
     <column
-      width={(width - 44) / 3}
-      gap={8}
-      padding={10}
+      width={props.width}
+      padding={props.spacing.item}
       radius={12}
       clip
       background="control"
@@ -72,7 +75,7 @@ function Tile(props: TileProps) {
       <row key="badge" width={28} height={28} radius={14} background={props.on ? "foreground" : "control"} align="center" animation="smooth">
         <icon symbol={props.symbol} fontSize={13} width={28} color={props.on ? "background" : "foreground"} />
       </row>
-      <column key="label" gap={1}>
+      <column key="label" gap={0}>
         <text font="strong" color="bright">{props.title}</text>
         <text fontSize={11} color="dim">{props.detail}</text>
       </column>
@@ -105,23 +108,26 @@ function focusTile(focus: Gary.Focus | undefined): TileProps {
 function LevelSlider({ level, state }: { level: Level; state: Gary.State }) {
   const now = read(state, level);
   if (!now) return null;
+  const { spacing } = state.theme;
   return (
-    <row key={level} gap={10}>
+    <row key={level}>
       <icon symbol={symbol(level, now)} width={20} color="foreground" />
-      <slider value={shown(now)} action={level} width={width - 66} color="foreground" />
+      <slider value={shown(now)} action={level} width={width - 5 * spacing.item - 20} color="foreground" />
     </row>
   );
 }
 
 function tiles(state: Gary.State) {
+  const { spacing } = state.theme;
+  const tile = { width: (width - 6 * spacing.item) / 3, spacing };
   return (
-    <column gap={14}>
-      <grid key="tiles" columns={3} gap={8}>
-        <Tile key="wifi" {...wifiTile(state.wifi)} />
-        <Tile key="bluetooth" {...bluetoothTile(state.bluetooth)} />
-        <Tile key="focus" {...focusTile(state.focus)} />
+    <column key="tiles" gap={spacing.section} padding={spacing.item}>
+      <grid key="tiles" columns={3} gap={spacing.item}>
+        <Tile key="wifi" {...wifiTile(state.wifi)} {...tile} />
+        <Tile key="bluetooth" {...bluetoothTile(state.bluetooth)} {...tile} />
+        <Tile key="focus" {...focusTile(state.focus)} {...tile} />
       </grid>
-      <column key="levels" gap={10} padding={[0, 4]}>
+      <column key="levels">
         <LevelSlider level="volume" state={state} />
         <LevelSlider level="brightness" state={state} />
       </column>
@@ -129,10 +135,10 @@ function tiles(state: Gary.State) {
   );
 }
 
-function Item({ label, detail, checked, pending, action }: { label: string; detail?: Gary.Node; checked: boolean; pending: boolean; action: string }) {
+function Item({ label, detail, checked, pending, action, spacing }: { label: string; detail?: Gary.Node; checked: boolean; pending: boolean; action: string; spacing: Spacing }) {
   return (
-    <row key={action} gap={8} padding={[6, 8]} radius={8} action={action} hovered={{ background: "hover" }} width={width - 28}>
-      <icon symbol={pending ? "arrow.triangle.2.circlepath" : "checkmark"} width={14} opacity={checked || pending ? 1 : 0} loop={pending ? { rotation: [0, 360] } : undefined} />
+    <row key={action} height={rowHeight} padding={[0, spacing.item]} radius={6} action={action} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
+      <icon symbol={pending ? "arrow.triangle.2.circlepath" : "checkmark"} width={checkWidth} opacity={checked || pending ? 1 : 0} loop={pending ? { rotation: [0, 360] } : undefined} />
       <text color={checked ? "bright" : "foreground"}>{label}</text>
       <spacer />
       {detail}
@@ -141,20 +147,22 @@ function Item({ label, detail, checked, pending, action }: { label: string; deta
 }
 
 function wifiList(state: Gary.State) {
-  if (networks === null) return [<text key="scanning" color="dim" padding={8}>Scanning…</text>];
+  const { spacing } = state.theme;
+  if (networks === null) return [<text key="scanning" color="dim" height={rowHeight} padding={[0, spacing.item]}>Scanning…</text>];
   return strongest(state).flatMap((network) => {
     const ssid = network.ssid ?? "";
     const item = (
-      <Item label={ssid} detail={network.secure ? <icon key="lock" symbol="lock.fill" fontSize={10} color="dim" /> : undefined} checked={ssid === state.wifi?.ssid} pending={busy === ssid} action={`join:${ssid}`} />
+      <Item label={ssid} detail={network.secure ? <icon key="lock" symbol="lock.fill" fontSize={10} color="dim" /> : undefined} checked={ssid === state.wifi?.ssid} pending={busy === ssid} action={`join:${ssid}`} spacing={spacing} />
     );
     if (secret !== ssid) return [item];
-    return [item, <input key="password" placeholder={`Password for ${ssid}`} submit="password" padding={[6, 30]} />];
+    return [item, <input key="password" placeholder={`Password for ${ssid}`} submit="password" height={rowHeight} padding={[0, 2 * spacing.item + checkWidth]} />];
   });
 }
 
 function bluetoothList(state: Gary.State) {
+  const { spacing } = state.theme;
   const devices = state.bluetooth?.devices ?? [];
-  if (!devices.length) return [<text key="empty" color="dim" padding={8}>No paired devices</text>];
+  if (!devices.length) return [<text key="empty" color="dim" height={rowHeight} padding={[0, spacing.item]}>No paired devices</text>];
   return devices.map((device) => (
     <Item
       label={device.name ?? device.address}
@@ -162,18 +170,20 @@ function bluetoothList(state: Gary.State) {
       checked={device.connected}
       pending={busy === device.address}
       action={`device:${device.address}`}
+      spacing={spacing}
     />
   ));
 }
 
-function list(title: string, items: Gary.Node[]) {
+function list(title: string, items: Gary.Node[], spacing: Spacing) {
   return (
-    <column gap={8}>
-      <row key="header" gap={6} padding={[2, 4]} action="back" hovered={{ opacity: 0.7 }}>
-        <icon symbol="chevron.left" color="dim" />
-        <text style="title">{title}</text>
+    <column key="list">
+      <row key="header" height={rowHeight} padding={[0, spacing.item]} action="back" hovered={{ opacity: 0.7 }}>
+        <icon symbol="chevron.left" style="dim" />
+        <text style="dim" fontSize={15}>{title}</text>
       </row>
-      <scroll key="items" height={260}>{items}</scroll>
+      <row key="divider" height={1} background="border" />
+      <scroll key="items" height={visibleRows * rowHeight} gap={0}>{items}</scroll>
     </column>
   );
 }
@@ -182,13 +192,14 @@ export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
 
   render(state) {
-    const body = page === "wifi" ? list("Wi‑Fi", wifiList(state))
-      : page === "bluetooth" ? list("Bluetooth", bluetoothList(state))
+    const { spacing } = state.theme;
+    const body = page === "wifi" ? list("Wi‑Fi", wifiList(state), spacing)
+      : page === "bluetooth" ? list("Bluetooth", bluetoothList(state), spacing)
       : tiles(state);
     return (
-      <column width={width} padding={14} gap={10}>
+      <column width={width} padding={spacing.item}>
         {body}
-        {problem ? <text key="problem" style="bad" fontSize={11}>{problem}</text> : null}
+        {problem ? <text key="problem" style="bad" fontSize={11} padding={[0, spacing.item]}>{problem}</text> : null}
       </column>
     );
   },
