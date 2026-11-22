@@ -9,7 +9,7 @@ export default {
   render(state) {
     const bluetooth = state.bluetooth;
     if (!bluetooth || (!bluetooth.available && bluetooth.permission !== "notDetermined")) return null;
-    return <text action="toggle" rightAction="power" fontSize={13} color="foreground">{`${glyph(bluetooth)} `}</text>;
+    return <text action="toggle" rightAction="power" fontSize={13} width={27} align="center" color="foreground">{glyph(bluetooth)}</text>;
   },
 
   onAction(action, _payload, state) {

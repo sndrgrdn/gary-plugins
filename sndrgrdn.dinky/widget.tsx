@@ -19,7 +19,7 @@ function label(workspace: Workspace): Gary.Node {
 export default {
   render(state) {
     const workspaces = state["sndrgrdn.dinky"]?.displays.find((display) => display.uuid === state.display?.id)?.workspaces ?? [];
-    return <row gap={1}>{workspaces.map(label)}</row>;
+    return <row gap={0}>{workspaces.map(label)}</row>;
   },
 
   onAction(action) {

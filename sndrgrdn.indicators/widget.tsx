@@ -38,10 +38,10 @@ export default {
     const indicators = active(state);
     if (!indicators.length) return null;
     return (
-      <row gap={state.theme.spacing.section}>
+      <row gap={0}>
         {indicators.map(({ key, glyph, tooltip, text }) => (
-          <row key={key} gap={0} tooltip={tooltip}>
-            <text key="glyph" fontSize={13} color="foreground">{`${glyph} `}</text>
+          <row key={key} gap={4} tooltip={tooltip}>
+            <text key="glyph" fontSize={13} width={21} align="center" color="foreground">{glyph}</text>
             {text !== undefined && <text key="text" color="foreground">{text}</text>}
           </row>
         ))}

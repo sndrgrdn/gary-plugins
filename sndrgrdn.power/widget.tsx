@@ -16,8 +16,8 @@ export default {
     if (!battery?.present || battery.percent === null) return null;
     const low = battery.source === "battery" && battery.percent <= 20;
     return (
-      <row action="toggle" gap={0}>
-        <text key="glyph" fontSize={13} color={low ? "bad" : "foreground"}>{`${glyph(battery, battery.percent)} `}</text>
+      <row action="toggle" gap={4}>
+        <text key="glyph" fontSize={13} width={27} align="center" color={low ? "bad" : "foreground"}>{glyph(battery, battery.percent)}</text>
         <text key="percent" color={low ? "bad" : "foreground"}>{battery.percent}%</text>
       </row>
     );
