@@ -3,13 +3,15 @@ set -euo pipefail
 
 usage() {
     cat <<'EOF'
-usage: scripts/screenshot.sh [--window] [--keys "<key>..."] [--crop <x>,<width>] <out.png> [<plugin>/<kind> <action>]
+usage: scripts/screenshot.sh [--screen] [--window] [--keys "<key>..."] [--crop <x>,<width>] <out.png> [<plugin>/<kind> <action>]
 
 Captures a README screenshot in the theme named in scripts/screenshot-theme,
 on an empty dinky workspace, then restores the theme and the workspace.
 With an action, it clicks that action with `gary action` and captures the
 surface that opens; without one, it captures the bar. Name a plugin alone,
 with no action, to summon it instead of clicking.
+--screen captures the whole main display, wallpaper and bar included, for
+full-screen surfaces such as the launcher and the theme picker.
 --window opens a Finder window on the empty workspace, so Front App has an app to show.
 --keys presses keys in the opened surface with `gary key` before the capture.
 --crop captures only the bar between x and x+width, in points, which is the
@@ -20,9 +22,11 @@ EOF
 keys=
 crop=
 window=
+screen=
 while [[ ${1:-} == --* ]]; do
     case $1 in
         --keys) keys=${2:?}; shift 2 ;;
+        --screen) screen=1; shift ;;
         --window) window=1; shift ;;
         --crop) crop=${2:?}; shift 2 ;;
         *) usage >&2; exit 2 ;;
@@ -80,7 +84,9 @@ if [[ -n $target ]]; then
     [[ -n $keys ]] && { gary key "${target%%/*}" $keys >/dev/null; sleep 1; }
 fi
 
-if [[ -n $crop ]]; then
+if [[ -n $screen ]]; then
+    screencapture -x -m "$out"
+elif [[ -n $crop ]]; then
     screencapture -x -R"${crop%,*}",0,"${crop#*,}",32 "$out"
 elif [[ -z $target ]]; then
     screencapture -x -R0,0,"$width",32 "$out"

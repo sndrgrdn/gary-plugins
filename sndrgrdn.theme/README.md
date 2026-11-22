@@ -2,7 +2,7 @@
 
 Switches between the [Omarchy](https://github.com/basecamp/omarchy) themes with a picker, and applies the chosen theme to Gary, the wallpaper, and your apps. It is the Gary version of [theme-switcher](https://github.com/sndrgrdn/theme-switcher).
 
-![Theme picker: the Solitude theme's preview in the middle, the other themes as narrow slices on both sides, and its name below](screenshot.png)
+![Theme picker over the Solitude wallpaper: the Solitude preview in the middle, the other themes as narrow slices on both sides, and its name below](screenshot.png)
 
 ## Use
 
