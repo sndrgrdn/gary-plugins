@@ -173,6 +173,7 @@ declare namespace Gary {
     colors: { [name: string]: string };
     palette: { [name: string]: string };
     spacing: { item: number; section: number; edge: number };
+    radius: { control: number; surface: number };
   }
   interface Topics {
     "audio": Audio;
