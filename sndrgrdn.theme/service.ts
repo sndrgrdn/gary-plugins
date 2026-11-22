@@ -484,7 +484,9 @@ const targets: Target[] = [
       });
       if (replaced.size !== Object.keys(colors).length) return yield* new ThemeError({ message: "dinky.toml [borders] lacks active-color or inactive-color" });
       const updated = lines.join("\n");
-      if (updated !== text) yield* write(updated, config);
+      if (updated === text) return;
+      yield* write(updated, config);
+      yield* run("dinky", ["reload-config"]);
     }),
   },
   {
