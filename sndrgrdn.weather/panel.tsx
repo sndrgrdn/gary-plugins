@@ -1,15 +1,16 @@
-const width = 272;
+const width = 300;
 
 export default {
   surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
 
   render(state) {
     const weather = state["sndrgrdn.weather"];
+    const { spacing } = state.theme;
     return (
-      <column padding={14} gap={10} width={width + 28}>
-        <row key="now" gap={12}>
+      <column padding={spacing.section} gap={spacing.section} width={width}>
+        <row key="now">
           <icon key="icon" symbol={weather?.icon ?? "cloud"} fontSize={26} width={34} />
-          <column key="text" gap={2}>
+          <column key="text" gap={0}>
             <text key="temperature" style="title" color={weather ? "bright" : "dim"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
             <text key="condition" style="dim">{weather ? `${weather.condition} · ${weather.place}` : "Loading forecast"}</text>
           </column>
@@ -17,7 +18,7 @@ export default {
         {weather && (
           <chart
             key="chart"
-            width={width}
+            width={width - 2 * spacing.section}
             height={96}
             fontSize={11}
             series={[{ values: weather.hours.map((hour) => hour.temperature), color: "foreground", smooth: true }]}
