@@ -5,6 +5,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 ![The bar with Dinky and Front App on the left, and Weather, Battery and Clock on the right](bar.png)
 
 - [`sndrgrdn.battery`](sndrgrdn.battery) shows the battery level in the bar.
+- [`sndrgrdn.bluetooth`](sndrgrdn.bluetooth) shows Bluetooth in the bar, and opens a panel to turn it on or off and connect your paired devices, like Omarchy's.
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text, images and files you copy, and pastes an earlier entry from a menu on ⌘⇧V.
 - [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar, in its own format or Omarchy's `dddd HH:mm`, and opens a month calendar with today's events from the Calendar app when you click it.
 - [`sndrgrdn.control-center`](sndrgrdn.control-center) opens Wi‑Fi, Bluetooth, Focus, volume and brightness controls from the bar, and shows a pill when you press the volume or brightness keys.
