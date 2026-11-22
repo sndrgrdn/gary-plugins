@@ -29,17 +29,17 @@ export default {
     const track = state.nowplaying?.track;
     if (volume !== null) {
       return (
-        <row action="open" scrollAction="volume">
-          <icon key="icon" symbol={volume === 0 ? "speaker.slash.fill" : "speaker.wave.2.fill"} />
-          <text key="text">{`${Math.round(volume * 100)}%`}</text>
+        <row gap={4} action="open" scrollAction="volume">
+          <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{volume === 0 ? "\u{EEE8}" : "\u{F028}"}</text>
+          <text key="text" color="foreground">{`${Math.round(volume * 100)}%`}</text>
         </row>
       );
     }
     if (!track) return <text>{""}</text>;
     return (
-      <row action="open" scrollAction="volume" color={track.playing ? "foreground" : "dim"}>
-        <icon key="icon" symbol="music.note" />
-        <text key="text">{label(track)}</text>
+      <row gap={4} action="open" scrollAction="volume">
+        <text key="glyph" fontSize={13} width={20} align="center" color={track.playing ? "foreground" : "dim"}>{"\u{F075A}"}</text>
+        <text key="text" color={track.playing ? "foreground" : "dim"}>{label(track)}</text>
       </row>
     );
   },

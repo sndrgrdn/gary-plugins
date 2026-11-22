@@ -22,17 +22,17 @@ function clock(seconds: number) {
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${minutes}:${rest}`;
 }
 
-function Control({ action, symbol, size }: { action: string; symbol: string; size: number }) {
+function Control({ action, symbol, size, fontSize }: { action: string; symbol: string; size: number; fontSize: number }) {
   return (
-    <button key={action} action={action} hover="hover" padding={6} radius={6}>
-      <icon symbol={symbol} fontSize={size} />
+    <button key={action} action={action} hover="hover" width={size} height={size} align="center">
+      <icon symbol={symbol} fontSize={fontSize} />
     </button>
   );
 }
 
-function Artwork({ path }: { path: string | null }) {
-  if (!path) return <icon key="artwork" symbol="music.note" width={artworkSize} height={artworkSize} radius={6} background="control" style="dim" />;
-  return <image key="artwork" path={path} width={artworkSize} height={artworkSize} radius={6} clip fit="fill" />;
+function Artwork({ path, radius }: { path: string | null; radius: number }) {
+  if (!path) return <icon key="artwork" symbol="music.note" width={artworkSize} height={artworkSize} radius={radius} background="control" style="dim" />;
+  return <image key="artwork" path={path} width={artworkSize} height={artworkSize} radius={radius} clip fit="fill" />;
 }
 
 function Seek({ track, width }: { track: Gary.Track; width: number }) {
@@ -57,12 +57,13 @@ function Seek({ track, width }: { track: Gary.Track; width: number }) {
   );
 }
 
-function Player({ track, spacing }: { track: Gary.Track; spacing: Gary.Theme["spacing"] }) {
+function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
+  const { spacing, radius } = theme;
   const detail = [track.artist, track.album].filter(Boolean).join(" · ");
   return (
-    <column style="panel" width={width} padding={spacing.section} gap={spacing.section}>
+    <column width={width} padding={spacing.section} gap={spacing.section}>
       <row key="track">
-        <Artwork path={track.artwork} />
+        <Artwork path={track.artwork} radius={radius.control} />
         <column key="text" gap={0} width={width - 2 * spacing.section - artworkSize - spacing.item}>
           <text key="title" style="title">{track.title}</text>
           {detail ? <text key="detail" style="dim">{detail}</text> : null}
@@ -71,9 +72,9 @@ function Player({ track, spacing }: { track: Gary.Track; spacing: Gary.Theme["sp
       <Seek track={track} width={width - 2 * spacing.section} />
       <row key="controls" gap={spacing.section}>
         <spacer key="start" />
-        <Control action="previous" symbol="backward.fill" size={16} />
-        <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} size={22} />
-        <Control action="next" symbol="forward.fill" size={16} />
+        <Control action="previous" symbol="backward.fill" size={32} fontSize={16} />
+        <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} size={40} fontSize={22} />
+        <Control action="next" symbol="forward.fill" size={32} fontSize={16} />
         <spacer key="end" />
       </row>
     </column>
@@ -81,17 +82,17 @@ function Player({ track, spacing }: { track: Gary.Track; spacing: Gary.Theme["sp
 }
 
 export default {
-  surface: { attach: true, margins: { top: 6 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
 
   effect: Effect.repeat(Effect.sync(() => (now = Date.now())), Schedule.spaced("1 second")),
 
   render(state) {
     const nowplaying = state.nowplaying;
     const { spacing } = state.theme;
-    if (nowplaying?.track) return <Player track={nowplaying.track} spacing={spacing} />;
+    if (nowplaying?.track) return <Player track={nowplaying.track} theme={state.theme} />;
     const message = nowplaying && !nowplaying.available ? nowplaying.reason ?? "Now playing is unavailable" : "Nothing playing";
     return (
-      <column style="panel" width={width} padding={spacing.section}>
+      <column width={width} padding={spacing.section}>
         <text style="dim">{message}</text>
       </column>
     );
