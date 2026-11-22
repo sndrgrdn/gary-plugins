@@ -35,9 +35,11 @@ export default {
   ),
 
   render(state) {
+    const indicators = active(state);
+    if (!indicators.length) return null;
     return (
       <row gap={10}>
-        {active(state).map(({ key, symbol, tooltip, text }) => (
+        {indicators.map(({ key, symbol, tooltip, text }) => (
           <row key={key} gap={5} tooltip={tooltip}>
             <icon symbol={symbol} color="foreground" />
             {text !== undefined && <text color="foreground">{text}</text>}
