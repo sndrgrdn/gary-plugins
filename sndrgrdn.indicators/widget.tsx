@@ -38,7 +38,7 @@ export default {
     const indicators = active(state);
     if (!indicators.length) return null;
     return (
-      <row gap={0}>
+      <row gap={0} padding={[0, 4]}>
         {indicators.map(({ key, glyph, tooltip, text }) => (
           <row key={key} gap={4} tooltip={tooltip}>
             <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
