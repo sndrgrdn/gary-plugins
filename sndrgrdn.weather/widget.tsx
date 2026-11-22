@@ -11,17 +11,26 @@ const conditions: [number[], string, string][] = [
   [[3], "cloud", "Overcast"],
   [[0], "sun.max", "Clear"],
 ];
+const glyphs: [number[], string, string][] = [
+  [[0], "\u{E30D}", "\u{E32B}"],
+  [[1, 2], "\u{E302}", "\u{E32E}"],
+  [[45, 48], "\u{E313}", "\u{E346}"],
+  [[51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82], "\u{E318}", "\u{E318}"],
+  [[71, 73, 75, 77, 85, 86], "\u{E31A}", "\u{E31A}"],
+  [[95, 96, 99], "\u{E31D}", "\u{E31D}"],
+];
 const Forecast = Schema.fromJsonString(
   Schema.Struct({
-    current: Schema.Struct({ temperature_2m: Schema.Number, weather_code: Schema.Number }),
+    current: Schema.Struct({ temperature_2m: Schema.Number, weather_code: Schema.Number, is_day: Schema.Number }),
     hourly: Schema.Struct({ time: Schema.Array(Schema.String), temperature_2m: Schema.Array(Schema.Number) }),
   }),
 );
 const latitude = Number(settings.latitude ?? 53.2);
 const longitude = Number(settings.longitude ?? 5.8);
 const place = String(settings.place ?? (settings.latitude === undefined ? "Leeuwarden" : `${latitude}, ${longitude}`));
-const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&hourly=temperature_2m&forecast_hours=13&timezone=auto`;
+const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&forecast_hours=13&timezone=auto`;
 let weather: Topic | null = null;
+let glyph = "\u{E33D}";
 
 class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", { status: Schema.Number, message: Schema.String }) {}
 
@@ -42,6 +51,8 @@ const refresh = Effect.gen(function* () {
     }),
   );
   const [, icon, condition] = conditions.find(([codes]) => codes.includes(current.weather_code)) ?? [[], "cloud", "Unknown"];
+  const [, day, night] = glyphs.find(([codes]) => codes.includes(current.weather_code)) ?? [[], "\u{E33D}", "\u{E33D}"];
+  glyph = current.is_day ? day : night;
   weather = {
     place,
     temperature: Math.round(current.temperature_2m),
@@ -66,8 +77,8 @@ export default {
 
   render() {
     return (
-      <row gap={8} action="forecast">
-        <image key="icon" path={`icons/${weather?.icon ?? "cloud"}.png`} width={19} height={18} y={-1} />
+      <row gap={0} action="forecast">
+        <text key="glyph" fontSize={13} color="foreground">{`${glyph} `}</text>
         <text key="temperature" color={weather ? "foreground" : "dark_foreground"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
       </row>
     );

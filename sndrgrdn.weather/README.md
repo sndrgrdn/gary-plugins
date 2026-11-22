@@ -4,7 +4,7 @@ Shows the current temperature and conditions in the bar, from [Open-Meteo](https
 
 ![Weather widget showing a partly cloudy icon and 7°C](screenshot.png)
 
-- The icon follows the weather: sun, partly cloudy, cloud, fog, rain, sleet, snow or thunder.
+- The icon is Omarchy's Nerd Font glyph for the weather: sun, partly cloudy, cloud, fog, rain, snow or thunder, with the moon at night. The bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`.
 - It shows `--°C` until the first request succeeds.
 - Clicking it opens a panel below it with the conditions, the place, and the temperature for the next 12 hours.
 - It refreshes every 15 minutes, and 10 seconds after you unlock the Mac.
