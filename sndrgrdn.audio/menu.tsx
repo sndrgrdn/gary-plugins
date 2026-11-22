@@ -7,7 +7,6 @@ type Scope = Gary.AudioScope;
 const width = 320;
 const rowHeight = 32;
 const headphones = /headphone|headset|earbud|earphone|airpod/i;
-const names: [number, string][] = [[100, "Concert hall"], [85, "Party mode"], [70, "Cranked up"], [50, "Steady groove"], [30, "Easy listening"], [15, "Murmur"], [1, "Whisper"]];
 
 let problem: string | null = null;
 
@@ -20,11 +19,9 @@ function level(device: Gary.AudioDeviceState | null | undefined) {
   return device?.muted ? 0 : device?.volume ?? 0;
 }
 
-function mood(output: Gary.AudioDeviceState | null | undefined) {
+function status(output: Gary.AudioDeviceState | null | undefined) {
   if (!output) return "No output";
-  if (output.muted) return "Muted";
-  const percent = Math.round(level(output) * 100);
-  return names.find(([floor]) => percent >= floor)?.[1] ?? "Silenced";
+  return output.muted ? "Muted" : null;
 }
 
 function outputSymbol(output: Gary.AudioDeviceState | null | undefined) {
@@ -97,13 +94,14 @@ export default {
     const { spacing } = state.theme;
     const { output, input } = state.audio ?? {};
     const audible = (output != null && !output.muted) || (input != null && !input.muted);
+    const label = status(output);
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" padding={spacing.item}>
           <icon key="icon" symbol={outputSymbol(output)} fontSize={20} width={28} color={audible ? "bright" : "dim"} />
           <column key="labels" gap={2}>
             <text key="title" style="title">Audio</text>
-            <text key="status" fontSize={11} color="dim">{mood(output).toUpperCase()}</text>
+            {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
           </column>
           <spacer />
           <Switch on={audible} action="mute" tooltip={audible ? "Mute" : "Unmute"} />

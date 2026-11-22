@@ -5,13 +5,8 @@ type Details = { health: number | null; cycles: number | null; toFull: number | 
 
 const width = 320;
 const gigabyte = 1024 ** 3;
-const phrases = {
-  charging: ["Pumping power", "Injecting electrons", "Pouring juice", "Amassing watts", "Hoarding joules", "Sucking volts", "Topping reserves", "Soaking amps", "Inhaling kilowatts"],
-  draining: ["Slurping power", "Spending joules", "Draining watts", "Burning electrons", "Sipping juice", "Spending coulombs", "Bleeding amps", "Guzzling volts", "Munching reserves"],
-};
 
 let details: Details | null = null;
-let phrase = 0;
 
 function field(report: string, key: string) {
   return new RegExp(`"${key}"\\s*=\\s*(\\d+)`).exec(report)?.[1] ?? null;
@@ -58,7 +53,7 @@ function status(battery: Gary.Battery) {
   const now = mode(battery);
   if (now === "full") return "Fully charged";
   if (now === "holding") return "On power, not charging";
-  return phrases[now][phrase % phrases[now].length];
+  return now === "charging" ? "Charging" : "On battery";
 }
 
 function symbol(battery: Gary.Battery) {
@@ -108,10 +103,7 @@ function systemRows(system: Gary.System | undefined): [string, string][] {
 export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
 
-  effect: Effect.all([
-    Effect.repeat(Effect.sync(() => void phrase++), Schedule.spaced("2800 millis")),
-    Effect.repeat(refresh, Schedule.spaced("5 seconds")),
-  ], { concurrency: "unbounded" }),
+  effect: Effect.repeat(refresh, Schedule.spaced("5 seconds")),
 
   render(state) {
     const { spacing } = state.theme;

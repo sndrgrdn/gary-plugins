@@ -1,4 +1,4 @@
-import { Effect, Schedule, host as lifted } from "gary:effect";
+import { Effect, host as lifted } from "gary:effect";
 import type { HostError } from "gary:effect";
 
 type Spacing = Gary.Theme["spacing"];
@@ -6,11 +6,9 @@ type Spacing = Gary.Theme["spacing"];
 const width = 320;
 const rowHeight = 32;
 const visibleRows = 8;
-const phrases = ["Untangling wires", "Streaming vikings", "Pairing mysteries", "Herding headsets", "Taming radios", "Summoning speakers", "Wrangling codecs", "Polishing packets"];
 
 let busy: { address: string; connecting: boolean } | null = null;
 let problem: string | null = null;
-let phrase = 0;
 
 function run(effect: Effect.Effect<unknown, HostError>) {
   problem = null;
@@ -21,7 +19,7 @@ function status(bluetooth: Gary.Bluetooth | undefined) {
   if (bluetooth?.permission === "notDetermined") return "Allow access";
   if (!bluetooth?.available) return "No adapter";
   if (!bluetooth.power) return "Turned off";
-  return phrases[phrase % phrases.length];
+  return null;
 }
 
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
@@ -82,19 +80,18 @@ function devices(bluetooth: Gary.Bluetooth, spacing: Spacing) {
 export default {
   surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 6, right: 8 } },
 
-  effect: Effect.repeat(Effect.sync(() => void phrase++), Schedule.spaced("2800 millis")),
-
   render(state) {
     const { spacing } = state.theme;
     const bluetooth = state.bluetooth;
     const on = bluetooth?.power === true;
+    const label = status(bluetooth);
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" padding={spacing.item}>
           <icon key="icon" symbol="dot.radiowaves.left.and.right" fontSize={20} width={28} color={on ? "bright" : "dim"} />
           <column key="labels" gap={2}>
             <text key="title" style="title">Bluetooth</text>
-            <text key="status" fontSize={11} color="dim">{status(bluetooth).toUpperCase()}</text>
+            {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
           </column>
           <spacer />
           {bluetooth?.available || bluetooth?.permission === "notDetermined" ? <Switch on={on} action="power" tooltip={on ? "Turn Bluetooth off" : "Turn Bluetooth on"} /> : null}

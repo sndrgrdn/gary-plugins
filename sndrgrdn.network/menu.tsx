@@ -1,4 +1,4 @@
-import { Effect, Schedule, Stream, host as lifted, topic } from "gary:effect";
+import { Effect, Stream, host as lifted, topic } from "gary:effect";
 import type { HostError } from "gary:effect";
 
 type Spacing = Gary.Theme["spacing"];
@@ -7,14 +7,12 @@ const width = 320;
 const rowHeight = 32;
 const visibleRows = 8;
 const checkWidth = 18;
-const phrases = ["Wiring bits", "Handling packets", "Sorting frames", "Hauling bytes", "Routing crumbs", "Counting collisions", "Bending light"];
 
 let networks: readonly Gary.WiFiNetwork[] | null = null;
 let address: { ip: string; gateway: string } | null = null;
 let busy: string | null = null;
 let secret: string | null = null;
 let problem: string | null = null;
-let phrase = 0;
 
 function run(effect: Effect.Effect<unknown, HostError>) {
   problem = null;
@@ -60,7 +58,7 @@ function status(wifi: Gary.WiFi | undefined) {
   if (!wifi?.available) return "No adapter";
   if (!wifi.power) return "Turned off";
   if (!wifi.connected) return "Not connected";
-  return phrases[phrase % phrases.length];
+  return null;
 }
 
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
@@ -155,7 +153,6 @@ export default {
 
   effect: Effect.all([
     scan,
-    Effect.repeat(Effect.sync(() => void phrase++), { schedule: Schedule.spaced("2800 millis") }),
     topic("wifi").pipe(
       Stream.map((wifi) => (wifi.connected && wifi.interface ? wifi.interface : null)),
       Stream.changes,
@@ -167,13 +164,14 @@ export default {
     const { spacing } = state.theme;
     const wifi = state.wifi;
     const on = wifi?.power === true;
+    const label = status(wifi);
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" padding={spacing.item}>
           <icon key="icon" symbol={on ? "wifi" : "wifi.slash"} fontSize={20} width={28} color={wifi?.connected ? "bright" : "dim"} />
           <column key="labels" gap={2}>
             <text key="title" style="title">{wifi?.connected && wifi.ssid ? wifi.ssid : "Wi‑Fi"}</text>
-            <text key="status" fontSize={11} color="dim">{status(wifi).toUpperCase()}</text>
+            {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
           </column>
           <spacer />
           {wifi?.available ? <Switch on={on} action="power" tooltip={on ? "Turn Wi‑Fi off" : "Turn Wi‑Fi on"} /> : null}

@@ -5,15 +5,8 @@ type Controlled = Gary.BrightnessDisplay & { brightness: number };
 
 const width = 320;
 const rowHeight = 32;
-const names: [number, string][] = [[95, "Sun blast"], [80, "Solar flare"], [65, "Golden hour"], [45, "Even day"], [30, "Soft glow"], [20, "Lamp light"], [10, "Candlelit"]];
 
 let problem: string | null = null;
-
-function mood(display: Controlled | undefined) {
-  if (!display) return "Fixed brightness";
-  const percent = Math.round(display.brightness * 100);
-  return names.find(([floor]) => percent >= floor)?.[1] ?? "Night owl";
-}
 
 function Display({ display, title, spacing }: { display: Controlled; title: string; spacing: Spacing }) {
   return (
@@ -37,14 +30,13 @@ export default {
     const { spacing } = state.theme;
     const displays = state.brightness?.displays ?? [];
     const controlled = displays.flatMap((display) => (display.brightness === null ? [] : [{ ...display, brightness: display.brightness }]));
-    const main = controlled.find((display) => display.builtin) ?? controlled[0];
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" padding={spacing.item}>
           <icon key="icon" symbol={displays.length > 1 ? "display.2" : "display"} fontSize={20} width={28} color="bright" />
           <column key="labels" gap={2}>
             <text key="title" style="title">Display</text>
-            <text key="status" fontSize={11} color="dim">{mood(main).toUpperCase()}</text>
+            {controlled.length ? null : <text key="status" fontSize={11} color="dim">FIXED BRIGHTNESS</text>}
           </column>
         </row>
         {controlled.length ? <row key="divider" height={1} width={width - 2 * spacing.item} background="border" /> : null}
