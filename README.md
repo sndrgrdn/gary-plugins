@@ -5,7 +5,6 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 ![The bar with Dinky and Front App on the left, and Weather, Battery and Clock on the right](bar.png)
 
 - [`sndrgrdn.audio`](sndrgrdn.audio) shows the volume in the bar, and opens a panel with the output and input volumes and devices, like Omarchy's audio panel.
-- [`sndrgrdn.battery`](sndrgrdn.battery) shows the battery level in the bar.
 - [`sndrgrdn.bluetooth`](sndrgrdn.bluetooth) shows Bluetooth in the bar, and opens a panel to turn it on or off and connect your paired devices, like Omarchy's.
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text, images and files you copy, and pastes an earlier entry from a menu on ⌘⇧V.
 - [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar, in its own format or Omarchy's `dddd HH:mm`, and opens a month calendar with today's events from the Calendar app when you click it.
@@ -19,6 +18,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.network`](sndrgrdn.network) shows the Wi‑Fi signal in the bar, and opens a panel with the network's details and the networks nearby to join, like Omarchy's.
 - [`sndrgrdn.now-playing`](sndrgrdn.now-playing) shows the playing track in the bar, and opens a panel with the artwork, a seek bar and controls when you click it. Scrolling over it changes the volume.
 - [`sndrgrdn.osd`](sndrgrdn.osd) takes over the volume and brightness keys and shows the level in a pill near the bottom of the screen, like Omarchy's on-screen display.
+- [`sndrgrdn.power`](sndrgrdn.power) shows the battery level in the bar, and opens a panel with the battery's health, cycles, time left and charge rate, and CPU and memory use, like Omarchy's power panel.
 - [`sndrgrdn.system-load`](sndrgrdn.system-load) shows CPU use over the last minute as a sparkline in the bar, with the current memory use.
 - [`sndrgrdn.theme`](sndrgrdn.theme) switches between the Omarchy themes of [theme-switcher](https://github.com/sndrgrdn/theme-switcher) from a menu, and applies the theme to Gary, the wallpaper, and several apps.
 - [`sndrgrdn.tray`](sndrgrdn.tray) shows the menu bar icons of other apps in a drawer in the bar, and opens an app's menu when you click its icon.

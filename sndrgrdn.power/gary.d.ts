@@ -172,9 +172,11 @@ declare namespace Gary {
     mode: "light" | "dark";
     colors: { [name: string]: string };
     palette: { [name: string]: string };
+    spacing: { item: number; section: number; edge: number };
   }
   interface Topics {
     "battery": Battery;
+    "system": System;
   }
   interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
@@ -230,10 +232,10 @@ declare namespace Gary {
     surfaces?: { [name: string]: SurfaceExport };
   }
   type SurfaceExport = Surface | null | ((state: State) => Surface | null | undefined);
-  interface Rendered extends Module {
-    render(state: State): Node;
+  interface Rendered<Tree = Node> extends Omit<Module, "render"> {
+    render(state: State): Tree;
   }
-  type BarWidget = Rendered;
+  type BarWidget = Rendered<Node | null>;
   type Bar = Rendered;
   type Panel = Rendered;
   type Overlay = Rendered;
@@ -248,4 +250,49 @@ declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
   type Battery = { present: boolean; percent: number | null; charging: boolean; source: "ac" | "battery" }
+}
+declare namespace Gary {
+  interface Host {
+    exec(argv: string[]): Promise<ExecResult>;
+    spawn(argv: string[], onLine: (line: string) => void): SpawnApi;
+  }
+  type ExecResult = { status: number; stdout: string; stderr: string }
+  interface SpawnApi { exited: Promise<SpawnExit>; stop(): void }
+  type SpawnExit = { status: number; stderr: string }
+}
+declare namespace Gary {
+  type System = {
+    cpu: { user: number; system: number; idle: number };
+    memory: { used: number; total: number; pressure: "normal" | "warning" | "critical" };
+    idleSeconds: number;
+  }
+}
+
+declare namespace Gary {
+  interface Module {
+    effect?: import("effect").Effect.Effect<void, unknown, import("effect").Scope.Scope>;
+  }
+  interface HandlerResults { effect: import("effect").Effect.Effect<unknown, unknown> }
+  interface MethodResults { effect: import("effect").Effect.Effect<Json | void, unknown> }
+}
+
+declare module "gary:effect" {
+  import type { Effect as E, Stream as S } from "effect";
+  export {
+    Cache, Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope,
+    Semaphore, Stream, SubscriptionRef, pipe,
+  } from "effect";
+  export interface HostError {
+    readonly _tag: "HostError";
+    readonly message: string;
+  }
+  type Lift<T> = T extends (...args: infer A) => infer R
+    ? (...args: A) => E.Effect<Awaited<R>, HostError>
+    : { readonly [K in keyof T]: Lift<T[K]> };
+  export const host: {
+    readonly [K in keyof Gary.Host]: K extends "spawn" ? (argv: string[]) => S.Stream<string, HostError> : Lift<Gary.Host[K]>;
+  };
+  export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
+  export const settings: Gary.State["settings"];
+  export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;
 }
