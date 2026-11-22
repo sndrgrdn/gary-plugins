@@ -15,7 +15,6 @@ export default {
     if (session) paths.push({ d: ring, stroke: "foreground", lineWidth: 4, cap: "round", trim: [0, left(session, now) / session.length] });
     return (
       <row
-        gap={6}
         action="open"
         scrollAction="adjust"
         tooltip={session ? `${session.mode === "focus" ? "Focus" : "Break"}, scroll to add or remove 5 minutes` : "Scroll to focus for 5 minutes"}

@@ -20,8 +20,9 @@ export default {
   render(state) {
     const session = state["sndrgrdn.focus-timer"]?.session;
     const remaining = session ? left(session, Date.now()) : 0;
+    const { spacing } = state.theme;
     return (
-      <column style="panel" gap={12}>
+      <column style="panel" padding={spacing.section} gap={spacing.section}>
         <stack key="ring" width={size} height={size}>
           <shape
             key="shape"
@@ -38,7 +39,7 @@ export default {
             {format(remaining)}
           </text>
         </stack>
-        <row key="modes" width={size} align="center" gap={6}>
+        <row key="modes" width={size} align="center">
           {modes.map(([mode, label]) => {
             const active = session?.mode === mode;
             return (
