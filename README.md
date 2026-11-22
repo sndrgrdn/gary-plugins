@@ -1,8 +1,8 @@
 # Gary plugins
 
-These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need a Gary built from `main` at [`1d70d89`](https://github.com/sndrgrdn/gary/commit/1d70d89) or later, which reads surfaces and media keys from the manifest and has the `calendar`, `system` and `tray` topics they use.
+These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need a Gary built from `main` at [`6bba347`](https://github.com/sndrgrdn/gary/commit/6bba347) or later, which gives plugins the theme's spacing and radius scales and sizes text by its glyphs.
 
-![The bar with Dinky and Front App on the left, and Weather, Battery and Clock on the right](bar.png)
+![The bar with the menu snail and Dinky's workspaces on the left, a Do Not Disturb indicator, the clock and the weather beside the notch, and the tray, Bluetooth, Wi‑Fi, audio, display and battery icons on the right](bar.png)
 
 - [`sndrgrdn.audio`](sndrgrdn.audio) shows the volume in the bar, and opens a panel with the output and input volumes and devices, like Omarchy's audio panel.
 - [`sndrgrdn.bluetooth`](sndrgrdn.bluetooth) shows Bluetooth in the bar, and opens a panel to turn it on or off and connect your paired devices, like Omarchy's.
@@ -17,7 +17,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.monitor`](sndrgrdn.monitor) shows a display icon in the bar, and opens a panel with the brightness of each display, like Omarchy's monitor panel.
 - [`sndrgrdn.network`](sndrgrdn.network) shows the Wi‑Fi signal in the bar, and opens a panel with the network's details and the networks nearby to join, like Omarchy's.
 - [`sndrgrdn.now-playing`](sndrgrdn.now-playing) shows the playing track in the bar, and opens a panel with the artwork, a seek bar and controls when you click it. Scrolling over it changes the volume.
-- [`sndrgrdn.osd`](sndrgrdn.osd) takes over the volume and brightness keys and shows the level in a pill near the bottom of the screen, like Omarchy's on-screen display.
+- [`sndrgrdn.osd`](sndrgrdn.osd) takes over the volume and brightness keys and shows the level on a card near the bottom of the screen, like Omarchy's on-screen display.
 - [`sndrgrdn.power`](sndrgrdn.power) shows the battery level in the bar, and opens a panel with the battery's health, cycles, time left and charge rate, and CPU and memory use, like Omarchy's power panel.
 - [`sndrgrdn.system-load`](sndrgrdn.system-load) shows CPU use over the last minute as a sparkline in the bar, with the current memory use.
 - [`sndrgrdn.theme`](sndrgrdn.theme) switches between the Omarchy themes of [theme-switcher](https://github.com/sndrgrdn/theme-switcher) from a menu, and applies the theme to Gary, the wallpaper, and several apps.
