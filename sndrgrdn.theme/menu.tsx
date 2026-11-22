@@ -2,12 +2,14 @@ import type { Item, Topic } from "./topic";
 
 type Frame = { x: number; y: number; width: number; height: number };
 
-const expanded = { width: 768, height: 475 };
+const expanded = { width: 768, height: 480 };
 const slice = { width: 84, height: 440 };
-const gap = 10;
+const gap = 8;
 const step = slice.width + gap;
-const topMargin = 30;
+const topMargin = 32;
 const chromeHeight = 104;
+const captionHeight = 40;
+const dotSize = 8;
 const dots = ["red", "yellow", "green", "cyan", "blue", "magenta"];
 const stripes = ["background", "red", "yellow", "green", "cyan", "blue", "magenta", "foreground"];
 
@@ -122,9 +124,9 @@ function caption(spacing: Gary.Theme["spacing"]): Gary.Node {
   const title: Gary.Node[] = theme
     ? [
       <text key="name" font="picker-title" color="#ffffff">{theme.name}</text>,
-      <row key="dots" gap={5}>
+      <row key="dots" gap={4}>
         {dots.map((name) => (
-          <row key={name} width={9} height={9} radius={4.5} background={theme.colors[name] ?? "#808080"} border={{ color: "alpha(#ffffff, 0.2)", width: 0.5 }} />
+          <row key={name} width={dotSize} height={dotSize} radius={dotSize / 2} background={theme.colors[name] ?? "#808080"} border={{ color: "alpha(#ffffff, 0.2)", width: 0.5 }} />
         ))}
       </row>,
     ]
@@ -141,9 +143,9 @@ function caption(spacing: Gary.Theme["spacing"]): Gary.Node {
   return (
     <row
       key="caption"
-      height={40}
+      height={captionHeight}
       padding={[0, spacing.section]}
-      radius={20}
+      radius={captionHeight / 2}
       material="vibrant"
       colorScheme="dark"
       border={{ color: "alpha(#ffffff, 0.14)", width: 1 }}
@@ -177,7 +179,7 @@ export default {
         <stack key="carousel" width={width} height={expanded.height} animation="smooth" duration={0.35}>
           {cards.map(({ theme, relative }) => card(theme, relative, previewX, radius))}
         </stack>
-        <column key="chrome" width={width} height={chromeHeight} padding={[26, 0, 0, 0]} align="center">
+        <column key="chrome" width={width} height={chromeHeight} padding={[24, 0, 0, 0]} align="center">
           {caption(state.theme.spacing)}
         </column>
       </column>
