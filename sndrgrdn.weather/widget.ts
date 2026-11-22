@@ -33,11 +33,13 @@ function refresh(state?: Gary.State) {
   const latitude = Number(state?.settings.latitude ?? 53.2);
   const longitude = Number(state?.settings.longitude ?? 5.8);
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code`;
-  host.exec(["curl", "-fsS", "--max-time", "20", url], (result) => {
-    const parsed = result.status === 0 ? parse(result.stdout) : null;
-    if (parsed) weather = parsed;
-    else host.log("weather request failed: " + (result.stderr.trim() || result.stdout.trim()));
-  });
+  fetch(url)
+    .then((response) => {
+      const parsed = response.status === 200 ? parse(response.text) : null;
+      if (parsed) weather = parsed;
+      else host.log(`weather request failed with status ${response.status}: ${response.text.trim()}`);
+    })
+    .catch((error) => host.log("weather request failed: " + String(error)));
 }
 
 module.exports = {

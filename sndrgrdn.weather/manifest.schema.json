@@ -11,6 +11,13 @@
     "$schema" : {
       "type" : "string"
     },
+    "bar" : {
+      "enum" : [
+        "left",
+        "center",
+        "right"
+      ]
+    },
     "entryPoints" : {
       "additionalProperties" : {
         "pattern" : "^(?![/~])(?!.*(^|/)\\.{0,2}(/|$))[^\\u0000]*\\.(js|ts)$",

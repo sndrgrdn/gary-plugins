@@ -1,16 +1,19 @@
 declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
-  type Key = "up" | "down" | "enter" | "escape" | "tab";
+  type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
+  interface ScrollEvent {
+    x: number;
+    y: number;
+    precise: boolean;
+    phase: "began" | "changed" | "ended" | "momentum" | "none";
+  }
   type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | (string & {});
   type FontName = "body" | "mono" | "strong" | "title" | (string & {});
   type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
 
-  interface Style {
-    key?: string;
-    style?: StyleName;
-    action?: string;
+  interface StyleProps {
     width?: number;
     height?: number;
     minWidth?: number;
@@ -18,14 +21,32 @@ declare namespace Gary {
     radius?: number;
     fontSize?: number;
     opacity?: number;
+    scale?: number;
+    duration?: number;
     padding?: number | [number, number] | [number, number, number, number];
     offset?: number;
+    x?: number;
+    y?: number;
+    zIndex?: number;
     align?: "leading" | "center" | "trailing";
     animation?: "smooth" | "spring" | "none";
     material?: "vibrant" | "glass" | "none";
+    colorScheme?: "dark" | "light";
+    transition?: "opacity" | "scale" | "none";
+    fit?: "fit" | "fill";
+    clip?: boolean;
+    shadow?: { color: Color; radius?: number; y?: number };
+    border?: { color: Color; width?: number };
     background?: Color;
     color?: Color;
     font?: FontName;
+  }
+  interface Style extends StyleProps {
+    key?: string;
+    style?: StyleName;
+    action?: string;
+    hovered?: StyleProps;
+    pressed?: StyleProps;
   }
   interface Row extends Style {
     type: "row";
@@ -33,6 +54,10 @@ declare namespace Gary {
   }
   interface Column extends Style {
     type: "column";
+    children?: Node[];
+  }
+  interface Stack extends Style {
+    type: "stack";
     children?: Node[];
   }
   interface Scroll extends Style {
@@ -75,7 +100,7 @@ declare namespace Gary {
   interface Spacer extends Style {
     type: "spacer";
   }
-  type Node = Row | Column | Scroll | Button | Text | Icon | Image | Slider | Progress | Input | Spacer;
+  type Node = Row | Column | Stack | Scroll | Button | Text | Icon | Image | Slider | Progress | Input | Spacer;
 
   interface Display {
     id: string;
@@ -109,7 +134,7 @@ declare namespace Gary {
     exclusionMode?: "normal" | "ignore";
     clickThrough?: boolean;
     focusable?: boolean;
-    background?: "solid" | "none";
+    background?: "solid" | "none" | "backdrop";
   }
 
   type ActionPayload = null | number | string;
@@ -124,15 +149,17 @@ declare namespace Gary {
     show(): void;
     hide(): void;
     toggle(): void;
+    call(method: string, ...args: string[]): Promise<Json | undefined>;
   }
 
   interface Module {
     render?(state: State): Node;
     onAction?(action: string, payload: ActionPayload, state: State): void;
-    onKey?(key: Key, state: State): void;
+    onKey?(key: Key, state: State): boolean | void;
+    onScroll?(event: ScrollEvent, state: State): void;
     onHotkey?(id: string, state: State): void;
     onTopic?(topic: string, value: Json, state: State): void;
-    methods?: { [name: string]: (...args: string[]) => Json | void };
+    methods?: { [name: string]: (...args: string[]) => Json | void | Promise<Json | void> };
     surface?: Surface | null | ((state: State) => Surface | null | undefined);
   }
   interface Rendered extends Module {
@@ -158,9 +185,9 @@ declare namespace Gary {
   interface Clock { epoch: number }
 }
 declare namespace Gary {
-  interface Host { exec(argv: string[], callback: (result: ExecResult) => void): void }
-  interface ExecResult { status: number; stdout: string; stderr: string }
+  interface FetchResponse { status: number; text: string }
 }
+declare function fetch(url: string): Promise<Gary.FetchResponse>;
 declare namespace Gary {
   interface State { session?: Session }
   interface Session { locked: boolean }

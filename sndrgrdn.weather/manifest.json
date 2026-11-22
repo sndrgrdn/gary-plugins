@@ -7,5 +7,5 @@
   "kinds": ["bar-widget"],
   "entryPoints": { "bar-widget": "widget.ts" },
   "subscribes": ["clock", "session"],
-  "uses": ["exec"]
+  "uses": ["network"]
 }
