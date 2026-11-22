@@ -21,6 +21,7 @@ export default {
             key="chart"
             width={width - 2 * spacing.section}
             height={96}
+            padding={[0, spacing.item]}
             fontSize={11}
             series={[{ values: weather.hours.map((hour) => hour.temperature), color: "foreground", smooth: true }]}
             labels={weather.hours.map((hour, index) => (index % 3 === 0 ? `${Math.round(hour.temperature)}°\n${hour.hour}` : ""))}
