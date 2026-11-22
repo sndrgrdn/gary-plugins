@@ -1,4 +1,5 @@
 import { Effect, Option, Schedule, Schema, fetch, host as lifted } from "gary:effect";
+import { calculate, type Answer } from "./calculate";
 import * as Calculator from "./oma-cast/Calculator";
 import * as Frecency from "./oma-cast/Frecency";
 import * as Ranker from "./oma-cast/Ranker";
@@ -36,7 +37,7 @@ let rates = Option.getOrNull(Schema.decodeUnknownOption(StoredRates)(host.storag
 let zones: { at: number; offsets: { [zone: string]: number } } = { at: 0, offsets: {} };
 let query = "";
 let results: readonly Candidate[] = [];
-let calculation: Calculator.Calculation | null = null;
+let calculation: Answer | null = null;
 let selected = 0;
 
 function candidate(app: App, nowMs: number): Candidate {
@@ -58,12 +59,12 @@ function offset(zone: string, at: number) {
   return sign ? (sign === "-" ? -1 : 1) * (Number(hours) * 60 + Number(minutes)) : 0;
 }
 
-function calculate(nowMs: number) {
+function answer(nowMs: number) {
   if (nowMs - zones.at > zonesMaxAge) {
     zones = { at: nowMs, offsets: Object.fromEntries(zoneNames.map((zone) => [zone, offset(zone, nowMs)])) };
   }
   try {
-    return Calculator.evaluate(query, { nowMs, localOffset: -new Date(nowMs).getTimezoneOffset(), hour12, rates, zones: zones.offsets });
+    return calculate(query, { nowMs, localOffset: -new Date(nowMs).getTimezoneOffset(), hour12, rates, zones: zones.offsets });
   } catch (error) {
     host.log(`calculating “${query}” failed: ${error}`);
     return null;
@@ -75,7 +76,7 @@ function search() {
   results = Ranker.rank(apps.map((app) => candidate(app, nowMs)), query, { nowMs })
     .slice(0, maxRows)
     .map((ranked) => ranked.candidate);
-  calculation = calculate(nowMs);
+  calculation = answer(nowMs);
   selected = Math.max(0, Math.min(selected, rowCount() - 1));
 }
 
@@ -275,6 +276,7 @@ export default {
       apps: apps.length,
       query,
       calculation: calculation?.result ?? null,
+      rules: calculation?.rules ?? [],
       selected: calculation && selected === 0 ? calculation.result : results[selected - shift()]?.title ?? null,
       results: results.slice(0, 10).map((app) => app.title),
     }),
