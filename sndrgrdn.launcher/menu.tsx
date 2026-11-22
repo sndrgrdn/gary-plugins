@@ -97,6 +97,10 @@ function Row({ app, chosen, theme }: { app: App; chosen: boolean; theme: Theme }
   );
 }
 
+function shownRows() {
+  return Math.min(Math.max(results.length, 1), visibleRows);
+}
+
 function list(theme: Theme): Gary.Node {
   const { spacing } = theme;
   if (!results.length) {
@@ -104,7 +108,7 @@ function list(theme: Theme): Gary.Node {
     return <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
   }
   return (
-    <scroll key="results" height={visibleRows * rowHeight} gap={0} reveal={results[selected]?.path}>
+    <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={results[selected]?.path}>
       {results.map((app, at) => <Row app={app} chosen={at === selected} theme={theme} />)}
     </scroll>
   );
@@ -119,16 +123,16 @@ export default {
     const width = state.display?.width ?? 1728;
     const height = state.display?.height ?? 1117;
     const { spacing } = state.theme;
-    const cardHeight = 3 * spacing.item + headerHeight + visibleRows * rowHeight;
+    const cardHeight = (rows: number) => 3 * spacing.item + headerHeight + rows * rowHeight;
     return (
       <stack key="backdrop" width={width} height={height}>
         <row key="dim" width={width} height={height} background="alpha(background, 0.55)" action="close" />
         <column
           key="card"
           x={(width - cardWidth) / 2}
-          y={(height - cardHeight) / 2}
+          y={(height - cardHeight(visibleRows)) / 2}
           width={cardWidth}
-          height={cardHeight}
+          height={cardHeight(shownRows())}
           gap={0}
           padding={spacing.item}
           style="surface"
@@ -141,7 +145,7 @@ export default {
           <row key="divider" height={0}>
             <row key="line" height={1} width={cardWidth - 2 * spacing.item} background="border" />
           </row>
-          <column key="list" height={visibleRows * rowHeight + spacing.item} padding={[spacing.item, 0, 0, 0]}>
+          <column key="list" height={shownRows() * rowHeight + spacing.item} padding={[spacing.item, 0, 0, 0]}>
             {list(state.theme)}
           </column>
         </column>
