@@ -5,9 +5,9 @@ Shows the menu bar icons of other apps, such as 1Password and Tailscale, in the 
 ![Tray widget showing the icons of Hex, Amp, Rex, OrbStack, dinky, 1Password, Tailscale and CleanShot X](screenshot.png)
 
 - Each icon is drawn in the theme's foreground color, whatever colors the app uses.
-- Clicking an icon opens that app's own menu. Gary briefly reveals the macOS menu bar to open it.
+- Clicking an icon opens that app's own menu, and right-clicking it opens the menu the app shows on a right click. Gary briefly reveals the macOS menu bar to open it.
 - Resting the pointer on an icon shows the app's description of it, or the app's name.
-- It refreshes every 5 seconds.
+- It follows Gary's `tray` topic, which refreshes every 2 seconds.
 - It hides Apple's own items, such as Control Center and the clock, by default.
 
 ## Permissions
@@ -22,7 +22,7 @@ It uses Gary's `tray` capability, which needs Accessibility to list and press th
 { "settings": { "sndrgrdn.tray": { "hide": ["com.apple.", "com.brnbw.dinky"] } } }
 ```
 
-`gary call sndrgrdn.tray state` lists the ids of the items it shows.
+`gary call sndrgrdn.tray state` prints the items it shows, with their ids.
 
 ## Install
 
