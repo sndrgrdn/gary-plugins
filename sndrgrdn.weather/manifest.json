@@ -3,9 +3,9 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.weather",
   "name": "Weather",
-  "version": "0.1.0",
-  "kinds": ["bar-widget"],
-  "entryPoints": { "bar-widget": "widget.tsx" },
-  "subscribes": ["session"],
+  "version": "0.2.0",
+  "kinds": ["bar-widget", "panel"],
+  "entryPoints": { "bar-widget": "widget.tsx", "panel": "panel.tsx" },
+  "subscribes": ["session", "sndrgrdn.weather"],
   "uses": ["network"]
 }

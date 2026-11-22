@@ -6,16 +6,19 @@ Shows the current temperature and conditions in the bar, from [Open-Meteo](https
 
 - The icon follows the weather: sun, partly cloudy, cloud, fog, rain, sleet, snow or thunder.
 - It shows `--°C` until the first request succeeds.
+- Clicking it opens a panel below it with the conditions, the place, and the temperature for the next 12 hours.
 - It refreshes every 15 minutes, and 10 seconds after you unlock the Mac.
 - It uses Gary's `network` capability. It needs no API key and no permissions.
 
 ## Settings
 
-It shows Leeuwarden by default. To show another place, set its coordinates in `~/.config/gary/shell.json`:
+It shows Leeuwarden by default. To show another place, set its coordinates and name in `~/.config/gary/shell.json`:
 
 ```json
-{ "settings": { "sndrgrdn.weather": { "latitude": 52.37, "longitude": 4.9 } } }
+{ "settings": { "sndrgrdn.weather": { "latitude": 52.37, "longitude": 4.9, "place": "Amsterdam" } } }
 ```
+
+Without `place`, the panel names the place by its coordinates.
 
 ## Install
 
