@@ -29,9 +29,9 @@ export default {
     const pattern = state.settings.format;
     if (typeof pattern === "string") return <text action="toggle" color="foreground">{format(pattern, now)}</text>;
     return (
-      <row gap={0} action="toggle">
+      <row gap={state.theme.spacing.section} action="toggle">
         <text key="date" color="foreground">{format("ddd dd MMM", now)}</text>
-        <text key="time" color="bright_foreground" width={51} padding={[0, 0, 0, 16]}>{format("HH:mm", now)}</text>
+        <text key="time" color="bright_foreground">{format("HH:mm", now)}</text>
       </row>
     );
   },

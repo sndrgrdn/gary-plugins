@@ -54,9 +54,9 @@ function agenda(): Gary.Node | null {
   if (!events) return null;
   if (events.length === 0) return <text key="none" style="dim">No events today</text>;
   return (
-    <column key="events" gap={4} width={width}>
+    <column key="events" width={width}>
       {events.map((event) => (
-        <row key={`${event.id}@${event.start}`} gap={10}>
+        <row key={`${event.id}@${event.start}`}>
           <text font="mono" color="dim" width={52}>{time(event)}</text>
           <text>{event.title}</text>
         </row>
@@ -78,8 +78,9 @@ export default {
     const first = new Date(today.getFullYear(), today.getMonth() + offset, 1);
     const start = 1 - ((first.getDay() + 6) % 7);
     const dates = Array.from({ length: 42 }, (_, index) => new Date(first.getFullYear(), first.getMonth(), start + index));
+    const { spacing } = state.theme;
     return (
-      <column style="panel" gap={10}>
+      <column style="panel" padding={spacing.section} gap={spacing.section}>
         <row key="header" width={width}>
           <text key="month" style="title" action="today">{months[first.getMonth()]} {first.getFullYear()}</text>
           <spacer />

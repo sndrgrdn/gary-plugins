@@ -172,6 +172,7 @@ declare namespace Gary {
     mode: "light" | "dark";
     colors: { [name: string]: string };
     palette: { [name: string]: string };
+    spacing: { item: number; section: number; edge: number };
   }
   interface Topics {
     "clock": Clock;
@@ -231,10 +232,10 @@ declare namespace Gary {
     surfaces?: { [name: string]: SurfaceExport };
   }
   type SurfaceExport = Surface | null | ((state: State) => Surface | null | undefined);
-  interface Rendered extends Module {
-    render(state: State): Node;
+  interface Rendered<Tree = Node> extends Omit<Module, "render"> {
+    render(state: State): Tree;
   }
-  type BarWidget = Rendered;
+  type BarWidget = Rendered<Node | null>;
   type Bar = Rendered;
   type Panel = Rendered;
   type Overlay = Rendered;
