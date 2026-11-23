@@ -34,7 +34,7 @@ export default {
     return (
       <row gap={spacing.section} padding={[0, spacing.item]} action="toggle">
         <text key="date" color="foreground">{format("ddd dd MMM", now)}</text>
-        <text key="time" color="bright_foreground">{format(state.clock?.hour12 ? "h:mm a" : "HH:mm", now)}</text>
+        <text key="time" color="foreground">{format(state.clock?.hour12 ? "h:mm a" : "HH:mm", now)}</text>
       </row>
     );
   },

@@ -34,7 +34,7 @@ The format takes Omarchy's date tokens:
 | `mm` | The minutes |
 | `a` | `AM` or `PM` |
 
-Any other character shows as itself. Put text in single quotes to keep its letters from being read as tokens, such as `ddd d MMM 'at' HH:mm` for `Sun 22 Nov at 19:18`. Without `format`, the clock shows `Sun 22 Nov  13:45`, with the time brighter than the date.
+Any other character shows as itself. Put text in single quotes to keep its letters from being read as tokens, such as `ddd d MMM 'at' HH:mm` for `Sun 22 Nov at 19:18`. Without `format`, the clock shows `Sun 22 Nov  13:45`.
 
 ## Install
 
