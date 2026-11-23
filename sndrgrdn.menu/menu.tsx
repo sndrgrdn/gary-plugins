@@ -125,19 +125,21 @@ function Item({ row, index, chosen, theme }: { row: Row; index: number; chosen: 
       height={rowHeight}
       padding={[0, spacing.item]}
       radius={Math.max(0, radius.surface - spacing.item)}
-      style={chosen ? "selected" : undefined}
-      hovered={chosen ? undefined : { background: "hover" }}
+      style={chosen ? "highlight" : undefined}
       action={`row:${index}`}
+      hoverAction={`hover:${index}`}
     >
-      <icon symbol={row.icon} width={18} style={chosen ? "bright" : "dim"} />
-      <text style={chosen ? "bright" : undefined}>{row.label}</text>
+      <icon symbol={row.icon} width={18} color={chosen ? "accent" : "foreground"} />
+      <text color={chosen ? "accent" : "foreground"}>{row.label}</text>
       <spacer />
       {"rows" in row && <icon symbol="chevron.right" fontSize={11} style="dim" />}
     </row>
   );
 }
 
-function Choice({ label, action, chosen, color, width, radius }: { label: string; action: string; chosen: boolean; color: Gary.Color; width: number; radius: number }) {
+function Choice({ label, action, chosen, destructive, width, radius }: { label: string; action: string; chosen: boolean; destructive: boolean; width: number; radius: number }) {
+  const color = destructive ? "bad" : "accent";
+  const idle = destructive ? "alpha(bad, 0.56)" : "alpha(foreground, 0.38)";
   return (
     <row
       key={action}
@@ -145,12 +147,12 @@ function Choice({ label, action, chosen, color, width, radius }: { label: string
       height={rowHeight}
       radius={radius}
       align="center"
-      border={{ color: chosen ? color : "border" }}
-      background={chosen ? `alpha(${color}, 0.25)` : undefined}
-      hovered={{ background: "hover" }}
+      border={{ color: chosen ? color : idle }}
+      background={chosen ? (destructive ? "alpha(bad, 0.22)" : "hover") : undefined}
       action={action}
+      hoverAction={`hover:${action}`}
     >
-      <text color={chosen ? "bright" : "foreground"} font={chosen ? "strong" : undefined}>{label}</text>
+      <text color={chosen ? color : "foreground"}>{label}</text>
     </row>
   );
 }
@@ -163,8 +165,8 @@ function body(state: Gary.State): Gary.Node {
       <column key="confirm" gap={spacing.item} padding={[0, spacing.item, spacing.item, spacing.item]}>
         <text key="message" height={rowHeight}>{confirming.leaf.confirm ?? ""}</text>
         <row key="choices">
-          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} color="accent" width={choice} radius={radius.control} />
-          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} color="bad" width={choice} radius={radius.control} />
+          <Choice label="Cancel" action="cancel" chosen={!confirming.confirm} destructive={false} width={choice} radius={radius.control} />
+          <Choice label={confirming.leaf.label} action="confirm" chosen={confirming.confirm} destructive width={choice} radius={radius.control} />
         </row>
       </column>
     );
@@ -178,22 +180,26 @@ function body(state: Gary.State): Gary.Node {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, left: true }, margins: { top: 8, left: 20 } },
+  surface: { anchors: { top: true, bottom: true, left: true, right: true }, exclusionMode: "ignore", background: "backdrop" },
 
   render(state) {
     const title = confirming ? confirming.leaf.label : level().branch.label;
     const { spacing } = state.theme;
+    const screen = { width: state.display?.width ?? 1728, height: state.display?.height ?? 1117 };
     return (
-      <column key="menu" width={width} padding={spacing.item}>
-        <row key="header" height={rowHeight} padding={[0, spacing.item]}>
-          {(trail.length > 1 || confirming) && <icon key="back" symbol="chevron.left" style="dim" action="back" />}
-          <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
-        </row>
-        <row key="divider" height={0}>
-          <row key="line" height={1} width={width - 2 * spacing.item} background="border" />
-        </row>
-        {body(state)}
-      </column>
+      <stack key="backdrop" width={screen.width} height={screen.height}>
+        <row key="scrim" width={screen.width} height={screen.height} background="scrim" action="close" />
+        <column key="menu" x={(screen.width - width) / 2} y={Math.round(screen.height / 4)} width={width} padding={spacing.item} style="picker">
+          <row key="header" height={rowHeight} padding={[0, spacing.item]}>
+            {(trail.length > 1 || confirming) && <icon key="back" symbol="chevron.left" style="dim" action="back" />}
+            <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
+          </row>
+          <row key="divider" height={0}>
+            <row key="line" height={1} width={width - 2 * spacing.item} background="border" />
+          </row>
+          {body(state)}
+        </column>
+      </stack>
     );
   },
 
@@ -216,7 +222,14 @@ export default {
     return true;
   },
 
-  onAction(action, _payload, state) {
+  onAction(action, payload, state) {
+    if (action === "close") return host.hide();
+    if (action.startsWith("hover:") && payload === true) {
+      const target = action.slice("hover:".length);
+      if (confirming) confirming.confirm = target === "confirm";
+      else level().at = Number(target);
+      return;
+    }
     if (action === "back") {
       if (confirming) confirming = null;
       else back();

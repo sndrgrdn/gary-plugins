@@ -165,7 +165,7 @@ function Row({ row, chosen, theme }: { row: Row; chosen: boolean; theme: Theme }
       height={rowHeight}
       padding={[0, spacing.item]}
       radius={Math.max(0, radius.surface - spacing.item)}
-      background={chosen ? "alpha(foreground, 0.08)" : undefined}
+      style={chosen ? "highlight" : undefined}
       action={`open:${rowKey(row)}`}
       hoverAction={`hover:${rowKey(row)}`}
     >
@@ -174,14 +174,14 @@ function Row({ row, chosen, theme }: { row: Row; chosen: boolean; theme: Theme }
           <icon symbol="equal" color={chosen ? "accent" : "foreground"} fontSize={16} width={iconSize} />
           <text color={chosen ? "accent" : "foreground"} font="title">{row.answer.result}</text>
           <spacer />
-          <text color="alpha(foreground, 0.52)">{row.answer.input}</text>
+          <text color="dim">{row.answer.input}</text>
         </>
       ) : (
         <>
           <image path={row.kind === "app" ? row.path : settingsApp} width={iconSize} height={iconSize} />
           <text color={chosen ? "accent" : "foreground"}>{row.title}</text>
           <spacer />
-          {row.kind === "pane" && <text color="alpha(foreground, 0.52)">System Settings</text>}
+          {row.kind === "pane" && <text color="dim">System Settings</text>}
         </>
       )}
       <text key="enter" color="accent" opacity={chosen ? 0.36 : 0}>↵</text>
@@ -197,7 +197,7 @@ function list(theme: Theme): Gary.Node {
   const { spacing } = theme;
   if (!rows.length) {
     const message = apps.length ? `No apps or settings match “${query.trim()}”` : "Looking for apps…";
-    return <text key="empty" color="alpha(foreground, 0.52)" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
+    return <text key="empty" color="dim" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
   }
   return (
     <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={rows[selected] && rowKey(rows[selected])}>
@@ -226,7 +226,7 @@ export default {
     const cardHeight = (rows: number) => 3 * spacing.item + headerHeight + rows * rowHeight;
     return (
       <stack key="backdrop" width={width} height={height}>
-        <row key="dim" width={width} height={height} background="alpha(background, 0.5)" action="close" />
+        <row key="dim" width={width} height={height} background="scrim" action="close" />
         <column
           key="card"
           x={(width - cardWidth) / 2}
@@ -235,12 +235,10 @@ export default {
           height={listed() ? cardHeight(shownRows()) : 2 * spacing.item + headerHeight}
           gap={0}
           padding={spacing.item}
-          radius={state.theme.radius.surface}
-          background="background"
-          border={{ color: "foreground", width: 2 }}
+          style="picker"
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
-            <icon symbol="magnifyingglass" color="alpha(foreground, 0.58)" fontSize={16} width={iconSize} />
+            <icon symbol="magnifyingglass" color="dim" fontSize={16} width={iconSize} />
             <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} />
           </row>
           {listed() && (

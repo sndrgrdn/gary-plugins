@@ -16,7 +16,7 @@ A keyboard-driven main menu, like the Omarchy menu, opened from a snail in the b
 - For Region or Window, drag a region, click a window, or click the desktop for the whole display.
 - Display captures and records the main display.
 
-The plugin has three parts. The bar widget opens the menu below the snail, and the menu runs each row through the service. The service does the work, keeps the recording and Stay Awake running while the menu is closed, and publishes them as the `sndrgrdn.menu` topic: `{ recording, awake }`. `gary call sndrgrdn.menu run <command>` runs a row from a script, such as `run record-stop`, and `gary call sndrgrdn.menu state` prints the topic.
+The plugin has three parts. The bar widget opens the menu a quarter of the way down the display, over a dimmed screen like the launcher, and the menu runs each row through the service. The service does the work, keeps the recording and Stay Awake running while the menu is closed, and publishes them as the `sndrgrdn.menu` topic: `{ recording, awake }`. `gary call sndrgrdn.menu run <command>` runs a row from a script, such as `run record-stop`, and `gary call sndrgrdn.menu state` prints the topic.
 
 ## Setup
 
