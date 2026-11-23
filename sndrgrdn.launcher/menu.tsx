@@ -6,6 +6,7 @@ import * as Frecency from "./oma-cast/Frecency";
 import * as Ranker from "./oma-cast/Ranker";
 
 type Entry = { kind: "app"; id: string; title: string; path: string } | { kind: "pane"; id: string; title: string };
+type Row = { kind: "answer"; answer: Answer } | Entry;
 type Candidate = Entry & { type: "application" | "preference"; frecency: number; openedAt: number | null; searchTerms: Frecency.SearchTerm[] };
 type Theme = Gary.Theme;
 
@@ -44,8 +45,7 @@ let visits: { [id: string]: Frecency.Visits } = Option.getOrElse(Schema.decodeUn
 let rates = Option.getOrNull(Schema.decodeUnknownOption(StoredRates)(host.storage.get("rates")));
 let zones: { at: number; offsets: { [zone: string]: number } } = { at: 0, offsets: {} };
 let query = "";
-let results: readonly Candidate[] = [];
-let calculation: Answer | null = null;
+let rows: readonly Row[] = [];
 let selected = 0;
 
 function candidate(entry: Entry, nowMs: number): Candidate {
@@ -85,21 +85,14 @@ function listed() {
 
 function search() {
   const nowMs = Date.now();
-  calculation = answer(nowMs);
-  results = listed()
+  const found = answer(nowMs);
+  const entries: readonly Entry[] = listed()
     ? Ranker.rank([...apps, ...panes].map((entry) => candidate(entry, nowMs)), query, { nowMs })
-        .slice(0, kept - shift())
+        .slice(0, kept)
         .map((ranked) => ranked.candidate)
     : [];
-  selected = Math.max(0, Math.min(selected, rowCount() - 1));
-}
-
-function shift() {
-  return calculation ? 1 : 0;
-}
-
-function rowCount() {
-  return shift() + results.length;
+  rows = found ? [{ kind: "answer", answer: found }, ...entries] : entries;
+  selected = Math.max(0, Math.min(selected, rows.length - 1));
 }
 
 const refresh = Effect.fn("Launcher.refresh")(function* () {
@@ -149,87 +142,66 @@ function open() {
   Effect.runFork(refresh());
 }
 
-function pick(entry: Entry | undefined) {
-  if (!entry) return;
+function choose(row: Row | undefined) {
+  if (!row) return;
   host.hide();
-  Effect.runFork(launch(entry, query));
-}
-
-function copy(answer: Calculator.Calculation) {
-  host.clipboard.writeText(answer.copy);
-  host.hide();
-}
-
-function submit() {
-  if (calculation && selected === 0) copy(calculation);
-  else pick(results[selected - shift()]);
+  if (row.kind === "answer") host.clipboard.writeText(row.answer.copy);
+  else Effect.runFork(launch(row, query));
 }
 
 function move(step: number) {
-  selected = Math.max(0, Math.min(selected + step, rowCount() - 1));
+  selected = Math.max(0, Math.min(selected + step, rows.length - 1));
 }
 
-function CalculationRow({ answer, chosen, theme }: { answer: Calculator.Calculation; chosen: boolean; theme: Theme }) {
+function rowKey(row: Row) {
+  return row.kind === "answer" ? "calculation" : row.kind === "app" ? row.path : row.id;
+}
+
+function Row({ row, chosen, theme }: { row: Row; chosen: boolean; theme: Theme }) {
   const { radius, spacing } = theme;
   return (
     <row
-      key="calculation"
+      key={rowKey(row)}
       height={rowHeight}
       padding={[0, spacing.item]}
       radius={Math.max(0, radius.surface - spacing.item)}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
-      action="copy"
+      action={`open:${rowKey(row)}`}
     >
-      <icon symbol="equal" style="dim" fontSize={16} width={iconSize} />
-      <text style={chosen ? "active" : "title"} font="title">{answer.result}</text>
-      <spacer />
-      <text style="dim">{answer.input}</text>
-      <text key="enter" style="dim" opacity={chosen ? 1 : 0}>↵</text>
-    </row>
-  );
-}
-
-function key(entry: Entry) {
-  return entry.kind === "app" ? entry.path : entry.id;
-}
-
-function Row({ entry, chosen, theme }: { entry: Entry; chosen: boolean; theme: Theme }) {
-  const { radius, spacing } = theme;
-  return (
-    <row
-      key={key(entry)}
-      height={rowHeight}
-      padding={[0, spacing.item]}
-      radius={Math.max(0, radius.surface - spacing.item)}
-      style={chosen ? "selected" : undefined}
-      hovered={chosen ? undefined : { background: "hover" }}
-      action={`open:${key(entry)}`}
-    >
-      <image path={entry.kind === "app" ? entry.path : settingsApp} width={iconSize} height={iconSize} />
-      <text style={chosen ? "active" : undefined}>{entry.title}</text>
-      <spacer />
-      {entry.kind === "pane" && <text style="dim">System Settings</text>}
+      {row.kind === "answer" ? (
+        <>
+          <icon symbol="equal" style="dim" fontSize={16} width={iconSize} />
+          <text style={chosen ? "active" : "title"} font="title">{row.answer.result}</text>
+          <spacer />
+          <text style="dim">{row.answer.input}</text>
+        </>
+      ) : (
+        <>
+          <image path={row.kind === "app" ? row.path : settingsApp} width={iconSize} height={iconSize} />
+          <text style={chosen ? "active" : undefined}>{row.title}</text>
+          <spacer />
+          {row.kind === "pane" && <text style="dim">System Settings</text>}
+        </>
+      )}
       <text key="enter" style="dim" opacity={chosen ? 1 : 0}>↵</text>
     </row>
   );
 }
 
 function shownRows() {
-  return Math.min(Math.max(rowCount(), 1), layout.rows);
+  return Math.min(Math.max(rows.length, 1), layout.rows);
 }
 
 function list(theme: Theme): Gary.Node {
   const { spacing } = theme;
-  if (!rowCount()) {
+  if (!rows.length) {
     const message = apps.length ? `No apps or settings match “${query.trim()}”` : "Looking for apps…";
     return <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
   }
-  const chosen = results[selected - shift()];
   return (
-    <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={calculation && selected === 0 ? "calculation" : chosen && key(chosen)}>
-      {calculation && <CalculationRow answer={calculation} chosen={selected === 0} theme={theme} />}
-      {results.map((entry, at) => <Row entry={entry} chosen={at + shift() === selected} theme={theme} />)}
+    <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={rows[selected] && rowKey(rows[selected])}>
+      {rows.map((row, at) => <Row row={row} chosen={at === selected} theme={theme} />)}
     </scroll>
   );
 }
@@ -292,7 +264,7 @@ export default {
   onKey(key) {
     if (key === "down" || key === "tab") move(1);
     else if (key === "up" || key === "shift+tab") move(-1);
-    else if (key === "enter") submit();
+    else if (key === "enter") choose(rows[selected]);
     else return false;
     return true;
   },
@@ -303,26 +275,28 @@ export default {
       selected = 0;
       search();
     } else if (action === "submit") {
-      submit();
-    } else if (action === "copy" && calculation) {
-      copy(calculation);
+      choose(rows[selected]);
     } else if (action === "close") {
       host.hide();
     } else if (action.startsWith("open:")) {
-      pick(results.find((entry) => key(entry) === action.slice(5)));
+      choose(rows.find((row) => rowKey(row) === action.slice(5)));
     }
   },
 
   methods: {
     open,
-    state: () => ({
-      apps: apps.length,
-      panes: panes.length,
-      query,
-      calculation: calculation?.result ?? null,
-      rules: calculation?.rules ?? [],
-      selected: calculation && selected === 0 ? calculation.result : results[selected - shift()]?.title ?? null,
-      results: results.slice(0, 10).map((entry) => entry.title),
-    }),
+    state: () => {
+      const label = (row: Row) => (row.kind === "answer" ? row.answer.result : row.title);
+      const answered = rows[0]?.kind === "answer" ? rows[0].answer : null;
+      return {
+        apps: apps.length,
+        panes: panes.length,
+        query,
+        calculation: answered?.result ?? null,
+        rules: answered?.rules ?? [],
+        selected: rows[selected] ? label(rows[selected]) : null,
+        results: rows.filter((row) => row.kind !== "answer").slice(0, 10).map(label),
+      };
+    },
   },
 } satisfies Gary.Menu;
