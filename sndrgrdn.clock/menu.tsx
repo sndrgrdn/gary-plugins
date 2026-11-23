@@ -35,6 +35,7 @@ function time(event: Gary.CalendarEvent) {
 
 function day(date: Date, month: number, today: Date, radius: number): Gary.Node {
   const current = date.toDateString() === today.toDateString();
+  const weekend = date.getDay() === 0 || date.getDay() === 6;
   return (
     <text
       key={`${date.getMonth()}-${date.getDate()}`}
@@ -42,8 +43,8 @@ function day(date: Date, month: number, today: Date, radius: number): Gary.Node 
       height={cell}
       align="center"
       radius={radius}
-      color={current ? "bright" : date.getMonth() === month ? "foreground" : "dim"}
-      background={current ? "control" : undefined}
+      color={date.getMonth() !== month ? "alpha(dim, 0.5)" : weekend ? "dim" : "foreground"}
+      border={current ? { color: "alpha(foreground, 0.4)" } : undefined}
       font={current ? "strong" : undefined}
     >
       {date.getDate()}
@@ -86,8 +87,8 @@ export default {
         <row key="header" width={width} gap={cellGap}>
           <text key="month" style="title" action="today">{months[first.getMonth()]} {first.getFullYear()}</text>
           <spacer />
-          <icon key="previous" symbol="chevron.left" style="dim" action="previous" width={cell} height={cell} hovered={{ color: "bright" }} />
-          <icon key="next" symbol="chevron.right" style="dim" action="next" width={cell} height={cell} hovered={{ color: "bright" }} />
+          <icon key="previous" symbol="chevron.left" style="dim" action="previous" width={cell} height={cell} radius={radius.control} hovered={{ color: "foreground", background: "hover" }} />
+          <icon key="next" symbol="chevron.right" style="dim" action="next" width={cell} height={cell} radius={radius.control} hovered={{ color: "foreground", background: "hover" }} />
         </row>
         <grid key="grid" columns={7} gap={cellGap} align="center">
           {weekdays.map((name, index) => <text key={`w${index}`} style="dim" width={cell} height={16} align="center">{name}</text>)}
