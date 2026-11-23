@@ -230,6 +230,8 @@
           "dock",
           "exec",
           "files",
+          "hotkeys",
+          "hyperkey",
           "menubar",
           "network",
           "notifications",

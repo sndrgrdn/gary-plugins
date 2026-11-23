@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "highlight" | "hover" | "mono" | "panel" | "picker" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
   type FontName = "body" | "mono" | "strong" | "title" | (string & {});
-  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
+  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "scrim" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 

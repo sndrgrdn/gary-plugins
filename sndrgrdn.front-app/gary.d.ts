@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = (string & {});
-  type FontName = (string & {});
-  type ColorName = (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "highlight" | "hover" | "mono" | "panel" | "picker" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
+  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
+  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "scrim" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -55,6 +55,7 @@ declare namespace Gary {
     rightAction?: string;
     middleAction?: string;
     scrollAction?: string;
+    hoverAction?: string;
     tooltip?: string;
     hovered?: StyleProps;
     pressed?: StyleProps;
@@ -201,7 +202,7 @@ declare namespace Gary {
     attach?: boolean;
   }
 
-  type ActionPayload = null | number | string;
+  type ActionPayload = null | boolean | number | string;
   interface Storage {
     get(key: string): Json | undefined;
     set(key: string, value: Json | undefined): void;
