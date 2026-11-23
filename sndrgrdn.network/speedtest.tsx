@@ -25,7 +25,6 @@ const directions: Record<Direction, { label: string; flag: string; pattern: RegE
   upload: { label: "UPLOAD", flag: "-d", pattern: /Uplink(?: capacity)?: ([\d.]+) Mbps/ },
 };
 
-const relay = `$| = 1; $/ = "\\r"; my $pid = open(my $out, "-|", "script", "-q", "/dev/null", @ARGV) or die "$!\\n"; $SIG{TERM} = sub { kill "TERM", $pid; exit 143 }; while (<$out>) { chomp; print "$_\\n" } close $out; exit $? >> 8;`;
 
 let speeds: Record<Direction, number> = { download: 0, upload: 0 };
 let live: Direction | null = "download";
@@ -68,7 +67,7 @@ function record(direction: Direction, line: string) {
 const measure = (direction: Direction) =>
   Effect.suspend(() => {
     live = direction;
-    return host.spawn(["perl", "-e", relay, "networkQuality", directions[direction].flag, "-M", "10"]).pipe(
+    return host.spawn(["script", "-q", "/dev/null", "networkQuality", directions[direction].flag, "-M", "10"]).pipe(
       Stream.runForEach((line) => Effect.sync(() => record(direction, line))),
       Effect.timeout("20 seconds"),
     );
