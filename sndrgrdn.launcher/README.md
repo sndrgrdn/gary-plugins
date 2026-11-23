@@ -2,7 +2,7 @@
 
 Opens apps and System Settings panes, and works out calculations, from a picker, like [Walker](https://github.com/abenz1267/walker) in [Omarchy](https://github.com/basecamp/omarchy).
 
-![Launcher over the Solitude wallpaper: a search field with "saf" typed, and Safari selected below it](screenshot.png)
+![Launcher over the Solitude wallpaper: a search field with "mu" typed, Music selected, and the Mouse and Menu Bar settings panes and Audio MIDI Setup below it](screenshot.png)
 
 ## Use
 
@@ -20,6 +20,8 @@ The picker also lists the System Settings panes, such as Keyboard, Displays, and
 The picker learns from the apps and panes you open. Each one you open moves up the list, and the empty picker lists the ones you open most and most recently first. It also remembers what you typed to open an app, so after you open HyperKey with "h", "h" puts HyperKey first. A visit counts for less as it ages, halving every 10 days, and a remembered query counts until 17 days after you last open the app. The picker keeps these visits in Gary's storage for the plugin.
 
 ## Calculator
+
+![Launcher over the Solitude wallpaper: a search field with "10 usd to eur" typed, and the answer €9.10 selected below it](calculator.png)
 
 The calculator works out arithmetic, percentages, units, currencies, dates, time zones, and number bases. It shows an answer only when the query is clearly a calculation, so "42" or "firefox" shows apps only, and Return still opens the app.
 
