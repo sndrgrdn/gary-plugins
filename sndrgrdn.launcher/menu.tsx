@@ -101,7 +101,7 @@ const refresh = Effect.fn("Launcher.refresh")(function* () {
   search();
 }, Effect.catchTag("HostError", (error) => lifted.log(`listing apps failed: ${error.message}`)));
 
-const refreshPanes = Effect.gen(function* () {
+const refreshPanes = Effect.fn("Launcher.refreshPanes")(function* () {
   const scan = yield* lifted.exec(scanPanes);
   if (scan.status !== 0) return yield* lifted.log(`listing settings panes failed with status ${scan.status}: ${scan.stderr}`);
   const rows = scan.stdout.split("\n").filter((line) => line).map((line) => {
@@ -112,7 +112,7 @@ const refreshPanes = Effect.gen(function* () {
   panes = scanned.map((pane) => ({ kind: "pane", ...pane }));
   search();
   yield* lifted.storage.set("panes", scanned);
-}).pipe(Effect.catch((error) => lifted.log(`listing settings panes failed: ${error.message}`)));
+}, Effect.catch((error) => lifted.log(`listing settings panes failed: ${error.message}`)));
 
 const launch = Effect.fn("Launcher.launch")(function* (entry: Entry, term: string) {
   if (entry.kind === "app") {
@@ -125,29 +125,29 @@ const launch = Effect.fn("Launcher.launch")(function* (entry: Entry, term: strin
   yield* lifted.storage.set("visits", visits);
 }, (effect, entry) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`open ${entry.title} failed: ${error.message}`)));
 
-const refreshRates = Effect.gen(function* () {
+const refreshRates = Effect.fn("Launcher.refreshRates")(function* () {
   if (rates && Date.now() - rates.fetchedAt < ratesMaxAge) return;
   const response = yield* fetch(ratesUrl);
   if (response.status !== 200) return yield* lifted.log(`exchange rates request failed with status ${response.status}`);
   const latest = yield* Schema.decodeUnknownEffect(Schema.fromJsonString(Rates))(response.text);
   rates = { ...latest, fetchedAt: Date.now() };
   yield* lifted.storage.set("rates", rates);
-}).pipe(Effect.catch((error) => lifted.log(`exchange rates request failed: ${error.message}`)));
+}, Effect.catch((error) => lifted.log(`exchange rates request failed: ${error.message}`)));
 
-function open() {
+const open = Effect.fn("Launcher.open")(function* () {
   query = "";
   selected = 0;
   search();
-  host.show();
-  Effect.runFork(refresh());
-}
+  yield* lifted.show();
+  yield* refresh();
+});
 
-function choose(row: Row | undefined) {
+const choose = Effect.fn("Launcher.choose")(function* (row: Row | undefined) {
   if (!row) return;
-  host.hide();
-  if (row.kind === "answer") host.clipboard.writeText(row.answer.copy);
-  else Effect.runFork(launch(row, query));
-}
+  yield* lifted.hide();
+  if (row.kind === "answer") yield* lifted.clipboard.writeText(row.answer.copy);
+  else yield* launch(row, query);
+});
 
 function move(step: number) {
   selected = Math.max(0, Math.min(selected + step, rows.length - 1));
@@ -210,8 +210,8 @@ export default {
   surface: { anchors: { top: true, bottom: true, left: true, right: true }, exclusionMode: "ignore", background: "backdrop" },
 
   effect: Effect.gen(function* () {
-    yield* Effect.forkScoped(Effect.repeat(refreshRates, Schedule.spaced("1 hour")));
-    yield* Effect.forkScoped(refreshPanes);
+    yield* Effect.forkScoped(Effect.repeat(refreshRates(), Schedule.spaced("1 hour")));
+    yield* Effect.forkScoped(refreshPanes());
     yield* refresh();
   }),
 
@@ -258,13 +258,13 @@ export default {
   },
 
   onHotkey(id) {
-    if (id === "open") open();
+    if (id === "open") return open();
   },
 
   onKey(key) {
     if (key === "down" || key === "tab") move(1);
     else if (key === "up" || key === "shift+tab") move(-1);
-    else if (key === "enter") choose(rows[selected]);
+    else if (key === "enter") return choose(rows[selected]);
     else return false;
     return true;
   },
@@ -275,11 +275,11 @@ export default {
       selected = 0;
       search();
     } else if (action === "submit") {
-      choose(rows[selected]);
+      return choose(rows[selected]);
     } else if (action === "close") {
-      host.hide();
+      return lifted.hide();
     } else if (action.startsWith("open:")) {
-      choose(rows.find((row) => rowKey(row) === action.slice(5)));
+      return choose(rows.find((row) => rowKey(row) === action.slice(5)));
     }
   },
 
