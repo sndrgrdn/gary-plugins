@@ -4,7 +4,9 @@
   "id": "sndrgrdn.agents",
   "name": "Agents",
   "version": "0.1.0",
-  "kinds": ["service"],
-  "entryPoints": { "service": "service.ts" },
-  "uses": ["exec", "files", "network"]
+  "kinds": ["service", "bar-widget", "menu"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "menu": "menu.tsx" },
+  "subscribes": { "bar-widget": ["sndrgrdn.agents"], "menu": ["sndrgrdn.agents"] },
+  "uses": ["exec", "files", "network"],
+  "bar": "right"
 }

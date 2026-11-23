@@ -177,7 +177,7 @@ declare namespace Gary {
     radius: { control: number; surface: number };
   }
   interface Topics {
-
+    "sndrgrdn.agents": import("./topic").Topic;
   }
   interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
