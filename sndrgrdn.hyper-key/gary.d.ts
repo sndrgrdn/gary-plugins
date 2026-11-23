@@ -249,7 +249,7 @@ declare function setInterval(callback: (...args: any[]) => void, ms?: number, ..
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
 declare namespace Gary {
-  interface Host { hyperkey(options?: { shift?: boolean }): HyperKeyApi }
+  interface Host { hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): HyperKeyApi }
   interface HyperKeyApi { stop(): void }
 }
 
@@ -277,7 +277,7 @@ declare module "gary:effect" {
   interface Scoped {
     spawn(argv: string[]): S.Stream<string, HostError>;
     hotkeys(keys: string[]): S.Stream<string, HostError>;
-    hyperkey(options?: { shift?: boolean }): E.Effect<void, HostError, Sc.Scope>;
+    hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
   }
   export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
