@@ -1,11 +1,12 @@
 import { Effect, Option, Schedule, Schema, fetch, host as lifted } from "gary:effect";
 import { calculate, type Answer } from "./calculate";
+import { paneTitles, scanPanes } from "./panes";
 import * as Calculator from "./oma-cast/Calculator";
 import * as Frecency from "./oma-cast/Frecency";
 import * as Ranker from "./oma-cast/Ranker";
 
-type App = { id: string; title: string; path: string };
-type Candidate = App & { type: "application"; frecency: number; openedAt: number | null; searchTerms: Frecency.SearchTerm[] };
+type Entry = { kind: "app"; id: string; title: string; path: string } | { kind: "pane"; id: string; title: string };
+type Candidate = Entry & { type: "application" | "preference"; frecency: number; openedAt: number | null; searchTerms: Frecency.SearchTerm[] };
 type Theme = Gary.Theme;
 
 const Visits = Schema.Record(
@@ -18,6 +19,7 @@ const Visits = Schema.Record(
 );
 const Rates = Schema.Struct({ base: Schema.String, date: Schema.String, rates: Schema.Record(Schema.String, Schema.Number) });
 const StoredRates = Schema.Struct({ ...Rates.fields, fetchedAt: Schema.Finite });
+const Panes = Schema.Array(Schema.Struct({ id: Schema.NonEmptyString, title: Schema.NonEmptyString }));
 
 const cardWidth = 600;
 const rowHeight = 40;
@@ -29,9 +31,12 @@ const ratesUrl = "https://api.frankfurter.dev/v1/latest";
 const ratesMaxAge = 12 * 3_600_000;
 const zonesMaxAge = 10 * 60_000;
 const zoneNames = Calculator.zoneList();
+const rankType = { app: "application", pane: "preference" } as const;
+const settingsApp = "/System/Applications/System Settings.app";
 let hour12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12;
 
-let apps: readonly App[] = [];
+let apps: readonly Entry[] = [];
+let panes: readonly Entry[] = Option.getOrElse(Schema.decodeUnknownOption(Panes)(host.storage.get("panes")), () => []).map((pane) => ({ kind: "pane", ...pane }));
 let visits: { [id: string]: Frecency.Visits } = Option.getOrElse(Schema.decodeUnknownOption(Visits)(host.storage.get("visits")), () => ({}));
 let rates = Option.getOrNull(Schema.decodeUnknownOption(StoredRates)(host.storage.get("rates")));
 let zones: { at: number; offsets: { [zone: string]: number } } = { at: 0, offsets: {} };
@@ -40,11 +45,11 @@ let results: readonly Candidate[] = [];
 let calculation: Answer | null = null;
 let selected = 0;
 
-function candidate(app: App, nowMs: number): Candidate {
-  const seen = visits[app.id];
+function candidate(entry: Entry, nowMs: number): Candidate {
+  const seen = visits[entry.id];
   return {
-    ...app,
-    type: "application",
+    ...entry,
+    type: rankType[entry.kind],
     frecency: seen ? Frecency.score(seen.anchor, nowMs / 1000) : 1,
     openedAt: seen?.openedAt ?? null,
     searchTerms: seen?.searchTerms ?? [],
@@ -73,7 +78,7 @@ function answer(nowMs: number) {
 
 function search() {
   const nowMs = Date.now();
-  results = Ranker.rank(apps.map((app) => candidate(app, nowMs)), query, { nowMs })
+  results = Ranker.rank([...apps, ...panes].map((entry) => candidate(entry, nowMs)), query, { nowMs })
     .slice(0, maxRows)
     .map((ranked) => ranked.candidate);
   calculation = answer(nowMs);
@@ -90,15 +95,33 @@ function rowCount() {
 
 const refresh = Effect.fn("Launcher.refresh")(function* () {
   const installed = yield* lifted.apps.installed();
-  apps = installed.map(({ name, path, app }) => ({ id: app ?? path, title: name, path }));
+  apps = installed.map(({ name, path, app }) => ({ kind: "app", id: app ?? path, title: name, path }));
   search();
 }, Effect.catchTag("HostError", (error) => lifted.log(`listing apps failed: ${error.message}`)));
 
-const launch = Effect.fn("Launcher.launch")(function* (app: App, term: string) {
-  yield* lifted.apps.launch(app.path);
-  visits = { ...visits, [app.id]: Frecency.recordVisit(visits[app.id], Date.now(), term) };
+const refreshPanes = Effect.gen(function* () {
+  const scan = yield* lifted.exec(scanPanes);
+  if (scan.status !== 0) return yield* lifted.log(`listing settings panes failed with status ${scan.status}: ${scan.stderr}`);
+  const rows = scan.stdout.split("\n").filter((line) => line).map((line) => {
+    const [id, title] = line.split("\t");
+    return { id, title };
+  });
+  const scanned = (yield* Schema.decodeUnknownEffect(Panes)(rows)).map(({ id, title }) => ({ id, title: paneTitles[id] ?? title }));
+  panes = scanned.map((pane) => ({ kind: "pane", ...pane }));
+  search();
+  yield* lifted.storage.set("panes", scanned);
+}).pipe(Effect.catch((error) => lifted.log(`listing settings panes failed: ${error.message}`)));
+
+const launch = Effect.fn("Launcher.launch")(function* (entry: Entry, term: string) {
+  if (entry.kind === "app") {
+    yield* lifted.apps.launch(entry.path);
+  } else {
+    const { status, stderr } = yield* lifted.exec(["/usr/bin/open", `x-apple.systempreferences:${entry.id}`]);
+    if (status !== 0) return yield* lifted.log(`open ${entry.title} failed with status ${status}: ${stderr}`);
+  }
+  visits = { ...visits, [entry.id]: Frecency.recordVisit(visits[entry.id], Date.now(), term) };
   yield* lifted.storage.set("visits", visits);
-}, (effect, app) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`launch ${app.path} failed: ${error.message}`)));
+}, (effect, entry) => Effect.catchTag(effect, "HostError", (error) => lifted.log(`open ${entry.title} failed: ${error.message}`)));
 
 const refreshRates = Effect.gen(function* () {
   if (rates && Date.now() - rates.fetchedAt < ratesMaxAge) return;
@@ -117,10 +140,10 @@ function open() {
   Effect.runFork(refresh());
 }
 
-function pick(app: App | undefined) {
-  if (!app) return;
+function pick(entry: Entry | undefined) {
+  if (!entry) return;
   host.hide();
-  Effect.runFork(launch(app, query));
+  Effect.runFork(launch(entry, query));
 }
 
 function copy(answer: Calculator.Calculation) {
@@ -158,21 +181,26 @@ function CalculationRow({ answer, chosen, theme }: { answer: Calculator.Calculat
   );
 }
 
-function Row({ app, chosen, theme }: { app: App; chosen: boolean; theme: Theme }) {
+function key(entry: Entry) {
+  return entry.kind === "app" ? entry.path : entry.id;
+}
+
+function Row({ entry, chosen, theme }: { entry: Entry; chosen: boolean; theme: Theme }) {
   const { radius, spacing } = theme;
   return (
     <row
-      key={app.path}
+      key={key(entry)}
       height={rowHeight}
       padding={[0, spacing.item]}
       radius={Math.max(0, radius.surface - spacing.item)}
       style={chosen ? "selected" : undefined}
       hovered={chosen ? undefined : { background: "hover" }}
-      action={`open:${app.path}`}
+      action={`open:${key(entry)}`}
     >
-      <image path={app.path} width={iconSize} height={iconSize} />
-      <text style={chosen ? "active" : undefined}>{app.title}</text>
+      <image path={entry.kind === "app" ? entry.path : settingsApp} width={iconSize} height={iconSize} />
+      <text style={chosen ? "active" : undefined}>{entry.title}</text>
       <spacer />
+      {entry.kind === "pane" && <text style="dim">System Settings</text>}
       {chosen && <text style="dim">↵</text>}
     </row>
   );
@@ -185,13 +213,14 @@ function shownRows() {
 function list(theme: Theme): Gary.Node {
   const { spacing } = theme;
   if (!rowCount()) {
-    const message = apps.length ? `No apps match “${query.trim()}”` : "Looking for apps…";
+    const message = apps.length ? `No apps or settings match “${query.trim()}”` : "Looking for apps…";
     return <text key="empty" style="dim" height={rowHeight} padding={[0, spacing.item]}>{message}</text>;
   }
+  const chosen = results[selected - shift()];
   return (
-    <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={calculation && selected === 0 ? "calculation" : results[selected - shift()]?.path}>
+    <scroll key="results" height={shownRows() * rowHeight} gap={0} reveal={calculation && selected === 0 ? "calculation" : chosen && key(chosen)}>
       {calculation && <CalculationRow answer={calculation} chosen={selected === 0} theme={theme} />}
-      {results.map((app, at) => <Row app={app} chosen={at + shift() === selected} theme={theme} />)}
+      {results.map((entry, at) => <Row entry={entry} chosen={at + shift() === selected} theme={theme} />)}
     </scroll>
   );
 }
@@ -201,6 +230,7 @@ export default {
 
   effect: Effect.gen(function* () {
     yield* Effect.forkScoped(Effect.repeat(refreshRates, Schedule.spaced("1 hour")));
+    yield* Effect.forkScoped(refreshPanes);
     yield* refresh();
   }),
 
@@ -229,7 +259,7 @@ export default {
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
             <icon symbol="magnifyingglass" style="dim" fontSize={16} width={iconSize} />
-            <input key="query" value={query} placeholder="Search apps" change="filter" submit="submit" fontSize={18} />
+            <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} />
           </row>
           <row key="divider" height={0}>
             <row key="line" height={1} width={cardWidth - 2 * spacing.item} background="border" />
@@ -266,7 +296,7 @@ export default {
     } else if (action === "close") {
       host.hide();
     } else if (action.startsWith("open:")) {
-      pick(results.find((app) => app.path === action.slice(5)));
+      pick(results.find((entry) => key(entry) === action.slice(5)));
     }
   },
 
@@ -274,11 +304,12 @@ export default {
     open,
     state: () => ({
       apps: apps.length,
+      panes: panes.length,
       query,
       calculation: calculation?.result ?? null,
       rules: calculation?.rules ?? [],
       selected: calculation && selected === 0 ? calculation.result : results[selected - shift()]?.title ?? null,
-      results: results.slice(0, 10).map((app) => app.title),
+      results: results.slice(0, 10).map((entry) => entry.title),
     }),
   },
 } satisfies Gary.Menu;

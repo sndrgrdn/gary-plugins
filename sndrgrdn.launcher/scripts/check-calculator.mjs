@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { registerHooks, stripTypeScriptTypes } from "node:module";
-import { homedir, tmpdir } from "node:os";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,7 @@ registerHooks({
 const plugin = fileURLToPath(new URL("..", import.meta.url));
 const Calculator = await import(join(plugin, "oma-cast/Calculator.js"));
 const { calculate } = await import(join(plugin, "calculate.ts"));
+const { installedApps, settingsPanes } = await import(join(plugin, "scripts/installed.mjs"));
 
 const env = {
   nowMs: Date.UTC(2026, 10, 20, 7, 43),
@@ -54,21 +55,9 @@ const commonWords = ["safari", "mail", "x", "1password", "notes", "a", "to", "in
   "it", "at", "as", "pi", "how", "how many", "convert", "half", "tip", "the", "and", "music", "maps", "photos", "terminal", "finder", "messages", "calendar",
   "settings", "system settings", "app store", "preview", "zoom", "slack", "spotify", "chrome", "firefox", "ghostty", "xcode", "figma", "discord", "1", "2", "42"];
 
-function appNames() {
-  const roots = ["/Applications", "/System/Applications", join(homedir(), "Applications")].filter(existsSync);
-  const list = (folder) => readdirSync(folder, { withFileTypes: true });
-  return roots.flatMap((root) =>
-    list(root).flatMap((entry) =>
-      entry.name.endsWith(".app")
-        ? [entry.name.slice(0, -4)]
-        : entry.isDirectory()
-          ? list(join(root, entry.name)).filter((inner) => inner.name.endsWith(".app")).map((inner) => inner.name.slice(0, -4))
-          : [],
-    ),
-  );
-}
-
-const names = [...new Set(appNames())];
+const apps = [...new Set(installedApps().map((app) => app.title))];
+const panes = settingsPanes().map((pane) => pane.title);
+const names = [...new Set([...apps, ...panes])];
 const prefixes = [...new Set(names.flatMap((name) => [...name].flatMap((_, at) => [name.slice(0, at + 1), name.slice(0, at + 1).toLowerCase()])))];
 const quiet = [...new Set([...prefixes, ...commonWords])];
 const show = (answer) => answer?.result ?? null;
@@ -145,7 +134,7 @@ if (jsc) corpus.forEach((query, at) => jsc.results[at] !== node.results[at] && f
 
 console.log(`(a) baseline kept: ${kept.length - count("baseline")}/${kept.length} answers of ${probe.length} probe inputs`);
 console.log(`    added cases: ${added.length - count("expected")}/${added.length} pass`);
-console.log(`(b) quiet inputs: ${quiet.length} (${names.length} apps, ${prefixes.length} prefixes, ${commonWords.length} common words), false triggers: ${count("false")}`);
+console.log(`(b) quiet inputs: ${quiet.length} (${apps.length} apps, ${panes.length} settings panes, ${prefixes.length} prefixes, ${commonWords.length} common words), false triggers: ${count("false")}`);
 console.log(`(c) ${corpus.length} queries`);
 console.log(`    node ${summary(node)}`);
 console.log(`    jsc  ${jsc ? summary(jsc) : "not found"}`);

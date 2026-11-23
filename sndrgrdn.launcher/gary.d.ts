@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = (string & {});
-  type FontName = (string & {});
-  type ColorName = (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "hover" | "mono" | "panel" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
+  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
+  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -273,6 +273,15 @@ declare namespace Gary {
 }
 declare namespace Gary {
   type Clock = { epoch: number; hour12: boolean }
+}
+declare namespace Gary {
+  interface Host {
+    exec(argv: string[]): Promise<ExecResult>;
+    spawn(argv: string[], onLine: (line: string) => void): SpawnApi;
+  }
+  type ExecResult = { status: number; stdout: string; stderr: string }
+  interface SpawnApi { exited: Promise<SpawnExit>; stop(): void }
+  type SpawnExit = { status: number; stderr: string }
 }
 declare namespace Gary {
   type FetchResponse = { status: number; text: string }

@@ -7,7 +7,7 @@
   "kinds": ["menu"],
   "entryPoints": { "menu": "menu.tsx" },
   "subscribes": ["clock"],
-  "uses": ["apps", "clipboard", "network"],
+  "uses": ["apps", "clipboard", "exec", "network"],
   "keepLoaded": true,
   "hotkeys": [{ "id": "open", "keys": "alt+space" }]
 }

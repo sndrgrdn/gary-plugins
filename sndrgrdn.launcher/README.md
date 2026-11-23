@@ -1,21 +1,23 @@
 # Launcher
 
-Opens apps and works out calculations from a picker, like [Walker](https://github.com/abenz1267/walker) in [Omarchy](https://github.com/basecamp/omarchy).
+Opens apps and System Settings panes, and works out calculations, from a picker, like [Walker](https://github.com/abenz1267/walker) in [Omarchy](https://github.com/basecamp/omarchy).
 
 ![Launcher over the Solitude wallpaper: a search field with "saf" typed, and Safari selected below it](screenshot.png)
 
 ## Use
 
 - **alt+space** opens the picker in the middle of the display under the pointer.
-  - Type to fuzzy-match app names. "ghd" finds GitHub Desktop.
+  - Type to fuzzy-match app and settings pane names. "ghd" finds GitHub Desktop, and "keyb" finds the Keyboard pane.
   - Type a calculation, such as `20% of 50`, `5 ft to cm`, `10 usd to eur`, or `3pm london to new york`, and its answer shows above the apps.
   - Up and down, or tab, move the selection.
-  - Return opens the selected app, and so does a click. On the answer, Return copies it and closes the picker.
+  - Return opens the selected app or pane, and so does a click. On the answer, Return copies it and closes the picker.
   - Escape, or a click outside the picker, closes it.
 
 The picker lists the apps that Gary finds in `/Applications`, `/System/Applications`, `~/Applications`, and the folders directly inside them, such as `Utilities`. It reads them when Gary loads it and again each time it opens, so typing never waits for the disk.
 
-The picker learns from the apps you open. Each app you open moves up the list, and the empty picker lists the apps you open most and most recently first. It also remembers what you typed to open an app, so after you open HyperKey with "h", "h" puts HyperKey first. A visit counts for less as it ages, halving every 10 days, and a remembered query counts until 17 days after you last open the app. The picker keeps these visits in Gary's storage for the plugin.
+The picker also lists the System Settings panes, such as Keyboard, Displays, and Privacy & Security, with the System Settings icon and a dim "System Settings" label. It finds them in `/System/Library/ExtensionKit/Extensions` when Gary loads it, keeps the list in Gary's storage, and shows the stored list until the new one is ready. It lists only the panes that System Settings opens by link, and opens one with `open x-apple.systempreferences:<pane id>`. When an app and a pane match equally well, the app comes first.
+
+The picker learns from the apps and panes you open. Each one you open moves up the list, and the empty picker lists the ones you open most and most recently first. It also remembers what you typed to open an app, so after you open HyperKey with "h", "h" puts HyperKey first. A visit counts for less as it ages, halving every 10 days, and a remembered query counts until 17 days after you last open the app. The picker keeps these visits in Gary's storage for the plugin.
 
 ## Calculator
 
@@ -35,7 +37,7 @@ Currency conversions use the European Central Bank's reference rates from [Frank
 
 ```sh
 gary call sndrgrdn.launcher open    # open the picker
-gary call sndrgrdn.launcher state   # the app count, the query, the answer, the rules that rewrote the query, and the first results
+gary call sndrgrdn.launcher state   # the app and pane counts, the query, the answer, the rules that rewrote the query, and the first results
 ```
 
 ## Install
@@ -55,5 +57,6 @@ The calculator, the fuzzy ranking, and the visit scores come from [omacast](http
 ## Develop
 
 Gary reloads the plugin each time you save a file in its folder. Type-check it with `npx tsc -p .`.
-Check the calculator with `node scripts/check-calculator.mjs`, which needs Node 24 or later. The script checks that omacast's own answers stay the same and that each added form gives its expected answer. It also checks that no installed app's name, and no prefix of one, shows an answer, and it times every query in Node and in JavaScriptCore.
+Check the calculator with `node scripts/check-calculator.mjs`, which needs Node 24 or later. The script checks that omacast's own answers stay the same and that each added form gives its expected answer. It also checks that no installed app's or settings pane's name, and no prefix of one, shows an answer, and it times every query in Node and in JavaScriptCore.
+Check the settings panes with `node scripts/check-panes.mjs`. The script lists the panes it finds, fails on a name that reads like an internal one, such as `PowerPreferences`, and checks that typing a pane's name, such as "keyboard" or "wifi", puts that pane first. It times the scan and the ranking of every app and pane for each prefix of their names, in Node and in JavaScriptCore.
 After you change `uses` or `subscribes` in `manifest.json`, run `gary plugin types .` to refresh `gary.d.ts`.
