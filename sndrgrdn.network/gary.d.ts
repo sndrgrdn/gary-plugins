@@ -1,7 +1,7 @@
 declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
-  type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
+  type Key = "left" | "right" | "down" | "up" | "enter" | "escape" | "tab" | "backspace" | "delete" | "home" | "end" | "pageup" | "pagedown" | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8" | "f9" | "f10" | "f11" | "f12" | "f13" | "f14" | "f15" | "f16" | "f17" | "f18" | "f19" | "f20" | (string & {});
   type ScrollEvent = {
     x: number;
     y: number;
@@ -309,6 +309,7 @@ declare module "gary:effect" {
     spawn(argv: string[]): S.Stream<string, HostError>;
     hotkeys(keys: string[]): S.Stream<string, HostError>;
     hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
+    watchFile(path: string): S.Stream<string | null, HostError>;
   }
   export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;

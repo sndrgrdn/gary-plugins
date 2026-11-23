@@ -3,9 +3,10 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.network",
   "name": "Network",
-  "version": "0.1.0",
-  "kinds": ["bar-widget", "menu"],
-  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx" },
+  "version": "0.2.0",
+  "kinds": ["bar-widget", "menu", "overlay"],
+  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx", "overlay": "speedtest.tsx" },
+  "surfaces": { "overlay": ["speedtest"] },
   "bar": "right",
   "subscribes": ["wifi"],
   "uses": ["wifi", "exec"]
