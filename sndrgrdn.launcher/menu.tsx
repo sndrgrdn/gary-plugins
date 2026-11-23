@@ -185,7 +185,7 @@ function CalculationRow({ answer, chosen, theme }: { answer: Calculator.Calculat
       <text style={chosen ? "active" : "title"} font="title">{answer.result}</text>
       <spacer />
       <text style="dim">{answer.input}</text>
-      {chosen && <text style="dim">↵</text>}
+      <text key="enter" style="dim" opacity={chosen ? 1 : 0}>↵</text>
     </row>
   );
 }
@@ -210,7 +210,7 @@ function Row({ entry, chosen, theme }: { entry: Entry; chosen: boolean; theme: T
       <text style={chosen ? "active" : undefined}>{entry.title}</text>
       <spacer />
       {entry.kind === "pane" && <text style="dim">System Settings</text>}
-      {chosen && <text style="dim">↵</text>}
+      <text key="enter" style="dim" opacity={chosen ? 1 : 0}>↵</text>
     </row>
   );
 }
