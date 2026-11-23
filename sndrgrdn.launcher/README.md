@@ -9,7 +9,7 @@ Opens apps and System Settings panes, and works out calculations, from a picker,
 - **alt+space**, or the `key` setting, opens the picker a quarter of the way down the display under the pointer.
   - Type to fuzzy-match app and settings pane names. "ghd" finds GitHub Desktop, and "keyb" finds the Keyboard pane.
   - Type a calculation, such as `20% of 50`, `5 ft to cm`, `10 usd to eur`, or `3pm london to new york`, and its answer shows above the apps.
-  - Up and down, or tab, move the selection.
+  - Up and down, or tab, move the selection, and so does pointing at a row.
   - Return opens the selected app or pane, and so does a click. On the answer, Return copies it and closes the picker.
   - Escape, or a click outside the picker, closes it.
 
