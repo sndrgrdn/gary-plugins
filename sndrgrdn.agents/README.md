@@ -20,6 +20,7 @@ The plugin has three parts. A service checks the three agents at once and publis
 
 ## Setup
 
+- Use a Gary newer than 0.4.0, whose `fetch` sends headers. Gary 0.4.0 sends none, so Claude and Grok show "Sign-in required".
 - Sign in to Claude Code with `claude auth login`, to Codex with `codex login`, and to grok with `grok login`. An expired Claude or Grok token renews the next time you use that CLI.
 - Use a Nerd Font for the bar, such as `JetBrainsMono Nerd Font`, so the glyph shows.
 
