@@ -78,7 +78,7 @@ export default {
   render(state) {
     const { spacing } = state.theme;
     const screen = { width: state.display?.width ?? 1728, height: state.display?.height ?? 1117 };
-    const listHeight = entries.length ? visibleRows * rowHeight : rowHeight;
+    const listHeight = Math.min(Math.max(entries.length, 1), visibleRows) * rowHeight;
     const height = 3 * spacing.item + rowHeight + listHeight;
     return (
       <stack key="backdrop" width={screen.width} height={screen.height}>
