@@ -19,8 +19,8 @@ export default {
     const app = state["sndrgrdn.dinky"]?.app;
     if (!app) return <row />;
     return (
-      <row gap={4} padding={[0, 0, 0, state.theme.spacing.item]}>
-        <text key="icon" font="app-icon" color="accent" width={20} align="center">{icon(app)}</text>
+      <row gap={4} padding={[0, 0, 0, state.theme.spacing.item]} opacity={0.85}>
+        <text key="icon" font="app-icon" color="foreground" width={20} align="center">{icon(app)}</text>
         <text key="name" color="foreground">{app}</text>
       </row>
     );

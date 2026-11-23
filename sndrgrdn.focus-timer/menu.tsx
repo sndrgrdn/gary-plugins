@@ -35,7 +35,7 @@ export default {
               { d: ring, stroke: "foreground", lineWidth: 1.5, cap: "round", trim: [0, session ? remaining / session.length : 0] },
             ]}
           />
-          <text key="left" width={size} height={size} align="center" font="mono" fontSize={18} style={session ? "bright" : "dim"}>
+          <text key="left" width={size} height={size} align="center" font="mono" fontSize={18} color={session ? "foreground" : "dim"}>
             {format(remaining)}
           </text>
         </stack>
@@ -43,8 +43,8 @@ export default {
           {modes.map(([mode, label]) => {
             const active = session?.mode === mode;
             return (
-              <button key={mode} action={mode} style="button" hover={active ? undefined : "button-hover"} background={active ? "foreground" : undefined}>
-                <text color={active ? "background" : "foreground"}>{label}</text>
+              <button key={mode} action={mode} style="button" hover={active ? undefined : "button-hover"} background={active ? "selected" : undefined}>
+                <text color="foreground" font={active ? "strong" : undefined}>{label}</text>
               </button>
             );
           })}
