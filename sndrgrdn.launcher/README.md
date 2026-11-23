@@ -13,7 +13,7 @@ Opens apps and System Settings panes, and works out calculations, from a picker,
   - Return opens the selected app or pane, and so does a click. On the answer, Return copies it and closes the picker.
   - Escape, or a click outside the picker, closes it.
 
-The picker lists Finder and the apps that Gary finds in `/Applications`, `/System/Applications`, `/System/Library/CoreServices/Applications`, `~/Applications`, and the folders directly inside them, such as `Utilities`. It also looks two folders into `~/Applications`, where CrossOver puts the apps and games of each bottle, and in Steam's own game folder. It reads them when Gary loads it and again each time it opens, so typing never waits for the disk.
+The picker lists Finder and the apps that Gary finds in `/Applications`, `/System/Applications`, `/System/Library/CoreServices/Applications`, `~/Applications`, and the folders directly inside them, such as `Utilities`. It reads them when Gary loads it and again each time it opens, so typing never waits for the disk.
 
 The picker also lists the System Settings panes, such as Keyboard, Displays, and Privacy & Security, with the System Settings icon and a dim "System Settings" label. It finds them in `/System/Library/ExtensionKit/Extensions` when Gary loads it, keeps the list in Gary's storage, and shows the stored list until the new one is ready. It lists only the panes that System Settings opens by link, and opens one with `open x-apple.systempreferences:<pane id>`. When an app and a pane match equally well, the app comes first.
 
