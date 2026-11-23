@@ -9,6 +9,7 @@ const rowHeight = 32;
 const headerHeight = 24;
 const visibleRows = 8;
 const checkWidth = 18;
+const buttonSize = 28;
 
 let address: { ip: string; gateway: string } | null = null;
 let busy: string | null = null;
@@ -220,7 +221,14 @@ export default {
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
           </column>
           <spacer />
-          {wifi?.available ? <Switch on={on} action="power" tooltip={on ? "Turn Wi‑Fi off" : "Turn Wi‑Fi on"} /> : null}
+          <row key="actions" gap={spacing.item}>
+            {wifi?.connected ? (
+              <row key="speedtest" action="speedtest" tooltip="Run a speed test" width={buttonSize} height={buttonSize} radius={theme.radius.control} hovered={{ background: "hover" }}>
+                <text key="glyph" width={buttonSize} align="center" fontSize={20} color="foreground">{"\u{F04C5}"}</text>
+              </row>
+            ) : null}
+            {wifi?.available ? <Switch on={on} action="power" tooltip={on ? "Turn Wi‑Fi off" : "Turn Wi‑Fi on"} /> : null}
+          </row>
         </row>
         {wifi?.connected ? details(wifi, spacing) : null}
         <Divider name="divider" theme={theme} />
@@ -231,6 +239,7 @@ export default {
   },
 
   onAction(action, payload, state) {
+    if (action === "speedtest") return lifted.show("speedtest").pipe(Effect.andThen(lifted.hide()));
     if (action === "power") return run(lifted.wifi.setPower(state.wifi?.power !== true)).pipe(Effect.andThen(Effect.delay(scan, "2 seconds")));
     if (action === "location") return run(lifted.wifi.requestLocation());
     if (action.startsWith("options:")) return void (forgetting = forgetting === action.slice(8) ? null : action.slice(8));
