@@ -1,0 +1,10 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.hyper-key",
+  "name": "Hyper Key",
+  "version": "0.1.0",
+  "kinds": ["service"],
+  "entryPoints": { "service": "service.ts" },
+  "uses": ["hyperkey"]
+}

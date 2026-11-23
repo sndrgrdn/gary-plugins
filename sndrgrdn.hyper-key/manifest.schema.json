@@ -1,0 +1,267 @@
+{
+  "$defs" : {
+    "id" : {
+      "maxLength" : 128,
+      "pattern" : "^[a-z0-9][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*)+$",
+      "type" : "string"
+    }
+  },
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "properties" : {
+    "$schema" : {
+      "type" : "string"
+    },
+    "bar" : {
+      "enum" : [
+        "left",
+        "center",
+        "right",
+        "notchLeft"
+      ]
+    },
+    "entryPoints" : {
+      "additionalProperties" : {
+        "pattern" : "\\.(ts|tsx|js)$",
+        "type" : "string"
+      },
+      "propertyNames" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "type" : "object"
+    },
+    "hotkeys" : {
+      "items" : {
+        "properties" : {
+          "id" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "keys" : {
+            "pattern" : "^(([A-Za-z]+\\+)+[^+]+|[Ff]([1-9]|1[0-2]))$",
+            "type" : "string"
+          }
+        },
+        "required" : [
+          "id",
+          "keys"
+        ],
+        "type" : "object"
+      },
+      "type" : "array"
+    },
+    "id" : {
+      "allOf" : [
+        {
+          "$ref" : "#/$defs/id"
+        },
+        {
+          "not" : {
+            "pattern" : "^gary\\.",
+            "type" : "string"
+          }
+        }
+      ]
+    },
+    "keepLoaded" : {
+      "type" : "boolean"
+    },
+    "kinds" : {
+      "items" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "minItems" : 1,
+      "type" : "array",
+      "uniqueItems" : true
+    },
+    "mediakeys" : {
+      "additionalProperties" : {
+        "items" : {
+          "enum" : [
+            "volume-up",
+            "volume-down",
+            "mute",
+            "brightness-up",
+            "brightness-down",
+            "play",
+            "next",
+            "previous"
+          ]
+        },
+        "type" : "array"
+      },
+      "propertyNames" : {
+        "enum" : [
+          "bar-widget",
+          "bar",
+          "panel",
+          "overlay",
+          "menu",
+          "service"
+        ]
+      },
+      "type" : "object"
+    },
+    "name" : {
+      "type" : "string"
+    },
+    "schemaVersion" : {
+      "const" : 1
+    },
+    "subscribes" : {
+      "anyOf" : [
+        {
+          "items" : {
+            "anyOf" : [
+              {
+                "enum" : [
+                  "apps",
+                  "audio",
+                  "battery",
+                  "bluetooth",
+                  "brightness",
+                  "calendar",
+                  "clipboard",
+                  "clock",
+                  "focus",
+                  "notifications",
+                  "nowplaying",
+                  "permissions",
+                  "session",
+                  "system",
+                  "tray",
+                  "wifi"
+                ]
+              },
+              {
+                "$ref" : "#/$defs/id"
+              }
+            ]
+          },
+          "type" : "array"
+        },
+        {
+          "additionalProperties" : {
+            "items" : {
+              "anyOf" : [
+                {
+                  "enum" : [
+                    "apps",
+                    "audio",
+                    "battery",
+                    "bluetooth",
+                    "brightness",
+                    "calendar",
+                    "clipboard",
+                    "clock",
+                    "focus",
+                    "notifications",
+                    "nowplaying",
+                    "permissions",
+                    "session",
+                    "system",
+                    "tray",
+                    "wifi"
+                  ]
+                },
+                {
+                  "$ref" : "#/$defs/id"
+                }
+              ]
+            },
+            "type" : "array"
+          },
+          "propertyNames" : {
+            "enum" : [
+              "bar-widget",
+              "bar",
+              "panel",
+              "overlay",
+              "menu",
+              "service"
+            ]
+          },
+          "type" : "object"
+        }
+      ]
+    },
+    "surfaces" : {
+      "additionalProperties" : {
+        "items" : {
+          "pattern" : "^[a-z0-9-]+$",
+          "type" : "string"
+        },
+        "minItems" : 1,
+        "type" : "array",
+        "uniqueItems" : true
+      },
+      "propertyNames" : {
+        "enum" : [
+          "panel",
+          "overlay",
+          "menu"
+        ]
+      },
+      "type" : "object"
+    },
+    "uses" : {
+      "items" : {
+        "enum" : [
+          "apps",
+          "audio",
+          "bluetooth",
+          "brightness",
+          "calendar",
+          "clipboard",
+          "colorpicker",
+          "dock",
+          "exec",
+          "files",
+          "hotkeys",
+          "hyperkey",
+          "menubar",
+          "network",
+          "notifications",
+          "notify",
+          "nowplaying",
+          "paste",
+          "permissions",
+          "power",
+          "screen",
+          "toast",
+          "tray",
+          "vision",
+          "wallpaper",
+          "wifi"
+        ]
+      },
+      "type" : "array"
+    },
+    "version" : {
+      "type" : "string"
+    }
+  },
+  "required" : [
+    "schemaVersion",
+    "id",
+    "name",
+    "version",
+    "kinds",
+    "entryPoints"
+  ],
+  "title" : "Gary plugin manifest",
+  "type" : "object"
+}
