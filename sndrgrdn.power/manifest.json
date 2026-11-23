@@ -3,10 +3,10 @@
   "schemaVersion": 1,
   "id": "sndrgrdn.power",
   "name": "Power",
-  "version": "0.2.0",
-  "kinds": ["bar-widget", "menu"],
-  "entryPoints": { "bar-widget": "widget.tsx", "menu": "menu.tsx" },
+  "version": "0.3.0",
+  "kinds": ["service", "bar-widget", "menu"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "menu": "menu.tsx" },
   "bar": "right",
-  "subscribes": { "bar-widget": ["battery"], "menu": ["battery", "system"] },
-  "uses": ["exec"]
+  "subscribes": { "service": ["battery"], "bar-widget": ["battery"], "menu": ["battery", "system"] },
+  "uses": ["exec", "notify"]
 }

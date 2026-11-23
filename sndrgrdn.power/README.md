@@ -8,9 +8,10 @@ Shows the battery in the bar with Omarchy's battery icon, and opens Omarchy's po
 - The panel shows the battery's health, charge cycles, the time to empty or to full, and the rate it charges or drains at, from `ioreg`.
 - Below them it shows CPU and memory use and memory pressure, from Gary's `system` topic.
 - Changing Low Power Mode needs administrator rights, which Gary has no way to ask for, so the panel has no power profiles.
+- At 10% or less on battery it posts Omarchy's notification, "Time to recharge!", with a sound, once. It warns again only after the Mac has charged, run on power, or climbed above 10%, and it remembers the warning across reloads.
 - On a Mac without a battery the widget shows nothing.
 
-The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. It needs no permissions.
+The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. The low battery warning needs Notifications for Gary.
 
 ## Settings
 
