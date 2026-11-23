@@ -25,7 +25,11 @@ const cardWidth = 600;
 const rowHeight = 40;
 const iconSize = 24;
 const headerHeight = 48;
-const layout = settings.minimal === true ? { rows: 3, kept: 3, listsEmptyQuery: false } : { rows: 9, kept: 150, listsEmptyQuery: true };
+const layout = {
+  rows: typeof settings.rows === "number" && settings.rows >= 1 ? Math.floor(settings.rows) : 9,
+  listsEmptyQuery: settings.minimal !== true,
+};
+const kept = 150;
 const ratesUrl = "https://api.frankfurter.dev/v1/latest";
 const ratesMaxAge = 12 * 3_600_000;
 const zonesMaxAge = 10 * 60_000;
@@ -84,7 +88,7 @@ function search() {
   calculation = answer(nowMs);
   results = listed()
     ? Ranker.rank([...apps, ...panes].map((entry) => candidate(entry, nowMs)), query, { nowMs })
-        .slice(0, layout.kept - shift())
+        .slice(0, kept - shift())
         .map((ranked) => ranked.candidate)
     : [];
   selected = Math.max(0, Math.min(selected, rowCount() - 1));
@@ -254,7 +258,7 @@ export default {
         <column
           key="card"
           x={(width - cardWidth) / 2}
-          y={(height - cardHeight(layout.rows)) / 2}
+          y={Math.round(height / 4)}
           width={cardWidth}
           height={listed() ? cardHeight(shownRows()) : 2 * spacing.item + headerHeight}
           gap={0}
