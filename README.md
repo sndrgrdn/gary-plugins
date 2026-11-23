@@ -4,6 +4,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 
 ![The bar with the menu snail and Dinky's workspaces on the left, a Do Not Disturb indicator, the clock and the weather beside the notch, and the tray, Bluetooth, Wi‑Fi, audio, display and battery icons on the right](bar.png)
 
+- [`sndrgrdn.app-shortcuts`](sndrgrdn.app-shortcuts) opens an app with a global shortcut that you set in `shell.json`, such as Hyper+Shift+M for Music.
 - [`sndrgrdn.audio`](sndrgrdn.audio) shows the volume in the bar, and opens a panel with the output and input volumes and devices, like Omarchy's audio panel.
 - [`sndrgrdn.bluetooth`](sndrgrdn.bluetooth) shows Bluetooth in the bar, and opens a panel to turn it on or off and connect your paired devices, like Omarchy's.
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text, images and files you copy, and pastes an earlier entry from a menu on ⌘⇧V.

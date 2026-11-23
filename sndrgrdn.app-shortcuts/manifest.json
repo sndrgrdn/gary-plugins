@@ -1,0 +1,10 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.app-shortcuts",
+  "name": "App Shortcuts",
+  "version": "0.1.0",
+  "kinds": ["service"],
+  "entryPoints": { "service": "service.ts" },
+  "uses": ["hotkeys", "apps"]
+}
