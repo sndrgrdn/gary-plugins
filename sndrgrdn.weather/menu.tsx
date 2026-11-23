@@ -10,9 +10,9 @@ export default {
     return (
       <column padding={spacing.section} gap={spacing.section} width={width}>
         <row key="now" height={heroHeight}>
-          <icon key="icon" symbol={weather?.icon ?? "cloud"} fontSize={20} width={28} color={weather ? "bright" : "dim"} />
+          <icon key="icon" symbol={weather?.icon ?? "cloud"} fontSize={20} width={28} color="foreground" opacity={weather ? 1 : 0.5} />
           <column key="text" gap={0}>
-            <text key="temperature" style="title" color={weather ? "bright" : "dim"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
+            <text key="temperature" style="title" color={weather ? "foreground" : "dim"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
             <text key="condition" fontSize={11} color="dim">{(weather ? `${weather.condition} · ${weather.place}` : "Loading forecast").toUpperCase()}</text>
           </column>
         </row>

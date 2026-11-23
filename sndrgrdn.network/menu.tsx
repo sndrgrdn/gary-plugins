@@ -73,8 +73,19 @@ function Divider({ name, theme }: { name: string; theme: Theme }) {
 
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
   return (
-    <row key="switch" width={36} height={20} radius={10} padding={2} background={on ? "foreground" : "control"} action={action} tooltip={tooltip} animation="smooth">
-      <row key="knob" width={16} height={16} radius={8} background={on ? "background" : "foreground"} x={on ? 16 : 0} />
+    <row
+      key="switch"
+      width={36}
+      height={20}
+      radius={10}
+      padding={2}
+      background={on ? "selected" : "control"}
+      border={{ color: on ? "selected" : "alpha(foreground, 0.4)" }}
+      action={action}
+      tooltip={tooltip}
+      animation="smooth"
+    >
+      <row key="knob" width={16} height={16} radius={8} background={on ? "foreground" : "dim"} x={on ? 16 : 0} />
     </row>
   );
 }
@@ -88,7 +99,7 @@ function Detail({ label, value, width }: { label: string; value: string; width: 
     <row key={label} width={width} height={rowHeight}>
       <column key="text" gap={0}>
         <text key="label" fontSize={11} color="dim">{label}</text>
-        <text key="value" color="bright">{value}</text>
+        <text key="value" color="foreground">{value}</text>
       </column>
     </row>
   );
@@ -125,17 +136,18 @@ function Network({ network, state }: { network: Gary.WiFiNetwork; state: Gary.St
       action={`join:${ssid}`}
       rightAction={network.known ? `options:${ssid}` : undefined}
       tooltip={network.known ? "Right-click to forget" : undefined}
-      hovered={{ background: "hover" }}
+      background={current ? "selected" : undefined}
+      hovered={current ? undefined : { background: "hover" }}
       width={width - 2 * spacing.item}
     >
       <icon
         key="icon"
         symbol={pending ? "arrow.triangle.2.circlepath" : "wifi"}
         width={checkWidth}
-        color={current ? "bright" : "dim"}
+        color="foreground"
         loop={pending ? { rotation: [0, 360] } : undefined}
       />
-      <text key="name" color={current ? "bright" : "foreground"}>{ssid}</text>
+      <text key="name" color="foreground" font={current ? "strong" : undefined}>{ssid}</text>
       <spacer />
       {pending ? <text key="status" color="dim">{busy === forgetting ? "Forgetting…" : "Connecting…"}</text> : current ? <text key="status" color="dim">Connected</text> : null}
       {network.secure ? <icon key="lock" symbol="lock.fill" fontSize={10} color="dim" /> : null}
@@ -202,7 +214,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={on ? "wifi" : "wifi.slash"} fontSize={20} width={28} color={wifi?.connected ? "bright" : "dim"} />
+          <icon key="icon" symbol={on ? "wifi" : "wifi.slash"} fontSize={20} width={28} color="foreground" opacity={wifi?.connected ? 1 : 0.5} />
           <column key="labels" gap={0}>
             <text key="title" style="title">{wifi?.connected && wifi.ssid ? wifi.ssid : "Wi‑Fi"}</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}

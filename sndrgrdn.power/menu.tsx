@@ -78,7 +78,7 @@ function Detail({ label, value, width }: { label: string; value: string; width: 
     <row key={label} width={width} height={rowHeight}>
       <column key="text" gap={0}>
         <text key="label" fontSize={11} color="dim">{label}</text>
-        <text key="value" color="bright">{value}</text>
+        <text key="value" color="foreground">{value}</text>
       </column>
     </row>
   );
@@ -128,7 +128,7 @@ export default {
     return (
       <column width={width} padding={[spacing.item, spacing.item, spacing.section, spacing.item]} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={symbol(battery)} fontSize={20} width={28} color="bright" />
+          <icon key="icon" symbol={symbol(battery)} fontSize={20} width={28} color="foreground" />
           <column key="labels" gap={0}>
             <text key="title" style="title">Battery</text>
             <text key="status" fontSize={11} color="dim">{status(battery).toUpperCase()}</text>

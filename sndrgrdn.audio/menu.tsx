@@ -57,8 +57,19 @@ function Divider({ name, theme }: { name: string; theme: Theme }) {
 
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
   return (
-    <row key="switch" width={36} height={20} radius={10} padding={2} background={on ? "foreground" : "control"} action={action} tooltip={tooltip} animation="smooth">
-      <row key="knob" width={16} height={16} radius={8} background={on ? "background" : "foreground"} x={on ? 16 : 0} />
+    <row
+      key="switch"
+      width={36}
+      height={20}
+      radius={10}
+      padding={2}
+      background={on ? "selected" : "control"}
+      border={{ color: on ? "selected" : "alpha(foreground, 0.4)" }}
+      action={action}
+      tooltip={tooltip}
+      animation="smooth"
+    >
+      <row key="knob" width={16} height={16} radius={8} background={on ? "foreground" : "dim"} x={on ? 16 : 0} />
     </row>
   );
 }
@@ -74,10 +85,10 @@ function Choice({ id, symbol, name, action, current, theme }: { id: string; symb
       width={width - 2 * spacing.item}
       action={action}
       background={current ? "selected" : undefined}
-      hovered={{ background: "hover" }}
+      hovered={current ? undefined : { background: "hover" }}
     >
-      <icon key="icon" symbol={symbol} width={18} color={current ? "bright" : "dim"} />
-      <text key="name" color={current ? "bright" : "foreground"}>{name}</text>
+      <icon key="icon" symbol={symbol} width={18} color="foreground" />
+      <text key="name" color="foreground" font={current ? "strong" : undefined}>{name}</text>
     </row>
   );
 }
@@ -150,7 +161,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={outputSymbol(output)} fontSize={20} width={28} color={audible ? "bright" : "dim"} />
+          <icon key="icon" symbol={outputSymbol(output)} fontSize={20} width={28} color="foreground" opacity={audible ? 1 : 0.5} />
           <column key="labels" gap={0}>
             <text key="title" style="title">Audio</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}

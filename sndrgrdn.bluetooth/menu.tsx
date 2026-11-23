@@ -38,8 +38,19 @@ function Divider({ name, theme }: { name: string; theme: Theme }) {
 
 function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip: string }) {
   return (
-    <row key="switch" width={36} height={20} radius={10} padding={2} background={on ? "foreground" : "control"} action={action} tooltip={tooltip} animation="smooth">
-      <row key="knob" width={16} height={16} radius={8} background={on ? "background" : "foreground"} x={on ? 16 : 0} />
+    <row
+      key="switch"
+      width={36}
+      height={20}
+      radius={10}
+      padding={2}
+      background={on ? "selected" : "control"}
+      border={{ color: on ? "selected" : "alpha(foreground, 0.4)" }}
+      action={action}
+      tooltip={tooltip}
+      animation="smooth"
+    >
+      <row key="knob" width={16} height={16} radius={8} background={on ? "foreground" : "dim"} x={on ? 16 : 0} />
     </row>
   );
 }
@@ -62,17 +73,18 @@ function Device({ device, theme }: { device: Gary.BluetoothDevice | Gary.Bluetoo
       radius={rowRadius(theme)}
       width={width - 2 * spacing.item}
       action={`${paired ? "device" : "pair"}:${device.address}`}
-      hovered={{ background: "hover" }}
+      background={connected ? "selected" : undefined}
+      hovered={connected ? undefined : { background: "hover" }}
       tooltip={paired ? (connected ? "Disconnect" : "Connect") : "Pair"}
     >
       <icon
         key="icon"
         symbol={pending ? "arrow.triangle.2.circlepath" : "dot.radiowaves.left.and.right"}
         width={18}
-        color={connected ? "bright" : "dim"}
+        color="foreground"
         loop={pending ? { rotation: [0, 360] } : undefined}
       />
-      <text key="name" color={connected ? "bright" : "foreground"}>{device.name ?? device.address}</text>
+      <text key="name" color="foreground" font={connected ? "strong" : undefined}>{device.name ?? device.address}</text>
       <spacer />
       <text key="detail" color="dim">{detail}</text>
     </row>
@@ -113,7 +125,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol="dot.radiowaves.left.and.right" fontSize={20} width={28} color={on ? "bright" : "dim"} />
+          <icon key="icon" symbol="dot.radiowaves.left.and.right" fontSize={20} width={28} color="foreground" opacity={on ? 1 : 0.5} />
           <column key="labels" gap={0}>
             <text key="title" style="title">Bluetooth</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}
