@@ -257,9 +257,6 @@ export default {
     );
   },
 
-  onHotkey(id) {
-    if (id === "open") return open();
-  },
 
   onKey(key) {
     if (key === "down" || key === "tab") move(1);

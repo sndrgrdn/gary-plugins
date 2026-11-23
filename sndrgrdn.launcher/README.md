@@ -6,7 +6,7 @@ Opens apps and System Settings panes, and works out calculations, from a picker,
 
 ## Use
 
-- **alt+space** opens the picker a quarter of the way down the display under the pointer.
+- **alt+space**, or the `key` setting, opens the picker a quarter of the way down the display under the pointer.
   - Type to fuzzy-match app and settings pane names. "ghd" finds GitHub Desktop, and "keyb" finds the Keyboard pane.
   - Type a calculation, such as `20% of 50`, `5 ft to cm`, `10 usd to eur`, or `3pm london to new york`, and its answer shows above the apps.
   - Up and down, or tab, move the selection.
@@ -37,11 +37,12 @@ Currency conversions use the European Central Bank's reference rates from [Frank
 
 Set these in `~/.config/gary/shell.json`:
 
+- `key`: the shortcut that opens the picker, written like `cmd+space` or `hyper+space`. It is `alt+space` by default. Quit any app that holds the same shortcut, such as Spotlight or another launcher, or Gary logs it as taken and leaves it unregistered.
 - `minimal`: `true` opens the picker as the search field alone, and shows the list once you type. It is `false` by default.
 - `rows`: how many rows the list shows before it scrolls, counting the calculator's answer as one. It is `9` by default.
 
 ```json
-{ "settings": { "sndrgrdn.launcher": { "minimal": true, "rows": 5 } } }
+{ "settings": { "sndrgrdn.launcher": { "key": "cmd+space", "minimal": true, "rows": 5 } } }
 ```
 
 ## Commands

@@ -284,6 +284,10 @@ declare namespace Gary {
   type SpawnExit = { status: number; stderr: string }
 }
 declare namespace Gary {
+  interface Host { hotkeys(keys: string[], onPress: (keys: string) => void): HotkeysApi }
+  interface HotkeysApi { stop(): void }
+}
+declare namespace Gary {
   type FetchResponse = { status: number; text: string }
 }
 declare function fetch(url: string): Promise<Gary.FetchResponse>;
@@ -297,7 +301,7 @@ declare namespace Gary {
 }
 
 declare module "gary:effect" {
-  import type { Effect as E, Stream as S } from "effect";
+  import type { Effect as E, Scope as Sc, Stream as S } from "effect";
   export {
     Cache, Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope,
     Semaphore, Stream, SubscriptionRef, pipe,
@@ -309,9 +313,12 @@ declare module "gary:effect" {
   type Lift<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => E.Effect<Awaited<R>, HostError>
     : { readonly [K in keyof T]: Lift<T[K]> };
-  export const host: {
-    readonly [K in keyof Gary.Host]: K extends "spawn" ? (argv: string[]) => S.Stream<string, HostError> : Lift<Gary.Host[K]>;
-  };
+  interface Scoped {
+    spawn(argv: string[]): S.Stream<string, HostError>;
+    hotkeys(keys: string[]): S.Stream<string, HostError>;
+    hyperkey(options?: { shift?: boolean }): E.Effect<void, HostError, Sc.Scope>;
+  }
+  export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
   export const settings: Gary.State["settings"];
   export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;

@@ -4,10 +4,9 @@
   "id": "sndrgrdn.launcher",
   "name": "Launcher",
   "version": "0.1.0",
-  "kinds": ["menu"],
-  "entryPoints": { "menu": "menu.tsx" },
-  "subscribes": ["clock"],
-  "uses": ["apps", "clipboard", "exec", "network"],
-  "keepLoaded": true,
-  "hotkeys": [{ "id": "open", "keys": "alt+space" }]
+  "kinds": ["service", "menu"],
+  "entryPoints": { "service": "service.ts", "menu": "menu.tsx" },
+  "subscribes": { "menu": ["clock"] },
+  "uses": ["apps", "clipboard", "exec", "hotkeys", "network"],
+  "keepLoaded": true
 }
