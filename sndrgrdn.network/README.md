@@ -7,7 +7,7 @@ Shows Wi‑Fi in the bar with Omarchy's signal icon, and opens Omarchy's network
 - The icon shows the signal in five steps, or Wi‑Fi off when it is off or not connected.
 - The panel shows the signal, rate, channel and noise of the network you are on, with this Mac's IP address and the gateway.
 - The switch turns Wi‑Fi on or off, and the gauge button next to it closes the panel and opens Omarchy's speed test.
-- The speed test dims the screen and shows a download and an upload dial in Mbps, titled with the network's name. It measures the download, then the upload, with macOS's `networkQuality`, and the dials share a scale that steps up from 100 Mbps as the speed climbs. Run Again, or Return, measures again. Escape or a click outside the dials closes it and stops the test.
+- The speed test dims the screen and shows a download and an upload dial in Mbps, titled with the network's name. It measures the download, then the upload, with macOS's `networkQuality`, and the dials share a scale that steps up from 100 Mbps as the speed climbs. Run Again, or Return, measures again. Escape or a click outside the dials closes it and stops the test. The live dials need a Gary newer than 0.4.0, whose `host.spawn` splits `networkQuality`'s progress line at each carriage return.
 - Known networks come first, then other networks, each with a lock when it needs a password. Click one to join it. If it needs a password you haven't saved, a password field opens below it.
 - Right-click a known network for Forget This Network.
 - Gary cannot disconnect from a network, pick the band or the DNS servers, or tell Ethernet or a captive portal apart, so the panel leaves those out.
