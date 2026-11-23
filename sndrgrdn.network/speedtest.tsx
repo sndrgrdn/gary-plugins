@@ -125,7 +125,7 @@ function Dial({ direction }: { direction: Direction }) {
           background={{ gradient: "linear", colors: ["accent", "accent", "alpha(accent, 0)"], angle: 90 }}
         />
       </stack>
-      <column key="readout" y={center + 8} width={diameter} gap={0}>
+      <column key="readout" y={center + 8} width={diameter} gap={0} animation="none">
         <text key="value" width={diameter} height={32} align="center" fontSize={24} font="strong" color="foreground">{reading(value)}</text>
         <text key="unit" width={diameter} height={captionHeight} align="center" fontSize={10} color="dim">Mbps</text>
       </column>
