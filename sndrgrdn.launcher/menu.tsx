@@ -1,4 +1,4 @@
-import { Effect, Option, Schedule, Schema, fetch, host as lifted } from "gary:effect";
+import { Effect, Option, Schedule, Schema, fetch, host as lifted, settings } from "gary:effect";
 import { calculate, type Answer } from "./calculate";
 import { paneTitles, scanPanes } from "./panes";
 import * as Calculator from "./oma-cast/Calculator";
@@ -24,9 +24,8 @@ const Panes = Schema.Array(Schema.Struct({ id: Schema.NonEmptyString, title: Sch
 const cardWidth = 600;
 const rowHeight = 40;
 const iconSize = 24;
-const visibleRows = 9;
 const headerHeight = 48;
-const maxRows = 150;
+const layout = settings.minimal === true ? { rows: 3, kept: 3, listsEmptyQuery: false } : { rows: 9, kept: 150, listsEmptyQuery: true };
 const ratesUrl = "https://api.frankfurter.dev/v1/latest";
 const ratesMaxAge = 12 * 3_600_000;
 const zonesMaxAge = 10 * 60_000;
@@ -76,12 +75,18 @@ function answer(nowMs: number) {
   }
 }
 
+function listed() {
+  return layout.listsEmptyQuery || query.trim() !== "";
+}
+
 function search() {
   const nowMs = Date.now();
-  results = Ranker.rank([...apps, ...panes].map((entry) => candidate(entry, nowMs)), query, { nowMs })
-    .slice(0, maxRows)
-    .map((ranked) => ranked.candidate);
   calculation = answer(nowMs);
+  results = listed()
+    ? Ranker.rank([...apps, ...panes].map((entry) => candidate(entry, nowMs)), query, { nowMs })
+        .slice(0, layout.kept - shift())
+        .map((ranked) => ranked.candidate)
+    : [];
   selected = Math.max(0, Math.min(selected, rowCount() - 1));
 }
 
@@ -207,7 +212,7 @@ function Row({ entry, chosen, theme }: { entry: Entry; chosen: boolean; theme: T
 }
 
 function shownRows() {
-  return Math.min(Math.max(rowCount(), 1), visibleRows);
+  return Math.min(Math.max(rowCount(), 1), layout.rows);
 }
 
 function list(theme: Theme): Gary.Node {
@@ -249,9 +254,9 @@ export default {
         <column
           key="card"
           x={(width - cardWidth) / 2}
-          y={(height - cardHeight(visibleRows)) / 2}
+          y={(height - cardHeight(layout.rows)) / 2}
           width={cardWidth}
-          height={cardHeight(shownRows())}
+          height={listed() ? cardHeight(shownRows()) : 2 * spacing.item + headerHeight}
           gap={0}
           padding={spacing.item}
           style="surface"
@@ -261,12 +266,16 @@ export default {
             <icon symbol="magnifyingglass" style="dim" fontSize={16} width={iconSize} />
             <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} />
           </row>
-          <row key="divider" height={0}>
-            <row key="line" height={1} width={cardWidth - 2 * spacing.item} background="border" />
-          </row>
-          <column key="list" height={shownRows() * rowHeight + spacing.item} padding={[spacing.item, 0, 0, 0]}>
-            {list(state.theme)}
-          </column>
+          {listed() && (
+            <>
+              <row key="divider" height={0}>
+                <row key="line" height={1} width={cardWidth - 2 * spacing.item} background="border" />
+              </row>
+              <column key="list" height={shownRows() * rowHeight + spacing.item} padding={[spacing.item, 0, 0, 0]}>
+                {list(state.theme)}
+              </column>
+            </>
+          )}
         </column>
       </stack>
     );

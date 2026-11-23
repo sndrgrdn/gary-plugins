@@ -33,6 +33,14 @@ Beyond what omacast reads on its own, the calculator understands these forms:
 
 Currency conversions use the European Central Bank's reference rates from [Frankfurter](https://frankfurter.dev). The plugin fetches them from `api.frankfurter.dev` when Gary loads it, and again once they are more than 12 hours old. It keeps them in Gary's storage, so conversions work offline with the last rates. This request is the plugin's only network use.
 
+## Settings
+
+Set `minimal` to `true` in `~/.config/gary/shell.json` for a smaller picker. It opens as the search field alone, and while you type it shows at most 3 rows below the field, counting the calculator's answer as one. The search field stays in the same place as the list grows and shrinks. It is `false` by default:
+
+```json
+{ "settings": { "sndrgrdn.launcher": { "minimal": true } } }
+```
+
 ## Commands
 
 ```sh
