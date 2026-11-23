@@ -1,6 +1,6 @@
 # Gary plugins
 
-These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need a Gary built from `main` at [`9a78af4`](https://github.com/sndrgrdn/gary/commit/9a78af4) or later, whose theme colours panels, menus and pickers the way Omarchy 4.5 does and names the `scrim`, `picker` and `highlight` that the menu, clipboard and launcher use.
+These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS shell that you extend with TypeScript plugins. They need a Gary built from `main` at [`053b84a`](https://github.com/sndrgrdn/gary/commit/053b84a) or later, whose theme colours panels, menus and pickers the way Omarchy 4.5 does and names the `scrim`, `picker` and `highlight` that the menu, clipboard and launcher use.
 
 ![The bar with the menu snail and Dinky's workspaces on the left, a Do Not Disturb indicator, the clock and the weather beside the notch, and the tray, Bluetooth, Wi‑Fi, audio, display and battery icons on the right](bar.png)
 
