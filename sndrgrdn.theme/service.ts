@@ -23,7 +23,7 @@ const parseState = Schema.decodeUnknownOption(Schema.fromJsonString(StateFile));
 const parseObject = Schema.decodeUnknownOption(Schema.fromJsonString(JsonObject));
 const parseRegistry = Schema.decodeUnknownOption(Schema.fromJsonString(Schema.Array(JsonObject)));
 
-const { exec, log, mkdir, readFile, remove, wallpaper, watchFile, writeFile } = lifted;
+const { exec, log, mkdir, readFile, remove, wallpaper, writeFile } = lifted;
 const lock = Semaphore.makeUnsafe(1);
 const lifetime = Effect.runSync(Scope.make());
 
@@ -927,10 +927,12 @@ const start = Effect.gen(function* () {
   yield* initialize(printenv.stdout.trim());
   if (!themes.length) yield* detach(update());
   syncPalette(read(paths.state));
-  yield* watchFile(paths.state, (text) => {
-    syncPalette(text);
-    publish();
-  });
+  yield* Effect.sync(() =>
+    host.watchFile(paths.state, (text) => {
+      syncPalette(text);
+      publish();
+    }),
+  );
   yield* detach(warmPreviews());
   yield* topic("sndrgrdn.dinky").pipe(
     Stream.map((value) => value.displays.map((display) => display.workspaces.find((each) => each.focused)?.number ?? "").join(",")),
