@@ -55,6 +55,7 @@ declare namespace Gary {
     rightAction?: string;
     middleAction?: string;
     scrollAction?: string;
+    hoverAction?: string;
     tooltip?: string;
     hovered?: StyleProps;
     pressed?: StyleProps;
@@ -201,7 +202,7 @@ declare namespace Gary {
     attach?: boolean;
   }
 
-  type ActionPayload = null | number | string;
+  type ActionPayload = null | boolean | number | string;
   interface Storage {
     get(key: string): Json | undefined;
     set(key: string, value: Json | undefined): void;
@@ -316,7 +317,7 @@ declare module "gary:effect" {
   interface Scoped {
     spawn(argv: string[]): S.Stream<string, HostError>;
     hotkeys(keys: string[]): S.Stream<string, HostError>;
-    hyperkey(options?: { shift?: boolean }): E.Effect<void, HostError, Sc.Scope>;
+    hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
   }
   export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;

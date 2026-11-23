@@ -166,8 +166,8 @@ function Row({ row, chosen, theme }: { row: Row; chosen: boolean; theme: Theme }
       padding={[0, spacing.item]}
       radius={Math.max(0, radius.surface - spacing.item)}
       background={chosen ? "alpha(foreground, 0.08)" : undefined}
-      hovered={{ background: "alpha(foreground, 0.08)" }}
       action={`open:${rowKey(row)}`}
+      hoverAction={`hover:${rowKey(row)}`}
     >
       {row.kind === "answer" ? (
         <>
@@ -276,6 +276,8 @@ export default {
       return choose(rows[selected]);
     } else if (action === "close") {
       return lifted.hide();
+    } else if (action.startsWith("hover:") && payload === true) {
+      selected = Math.max(0, rows.findIndex((row) => rowKey(row) === action.slice(6)));
     } else if (action.startsWith("open:")) {
       return choose(rows.find((row) => rowKey(row) === action.slice(5)));
     }
