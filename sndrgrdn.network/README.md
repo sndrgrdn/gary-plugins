@@ -12,6 +12,8 @@ Shows Wi‑Fi in the bar with Omarchy's signal icon, and opens Omarchy's network
 - Right-click a known network for Forget This Network.
 - Gary cannot disconnect from a network, pick the band or the DNS servers, or tell Ethernet or a captive portal apart, so the panel leaves those out.
 
+![Speed test over the Solitude wallpaper, with a finished download and upload dial in Mbps, titled with the network name, and a Run Again button](speedtest.png)
+
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. Network names need Location. Until you allow it, the panel offers to ask for it.
 
 ## Install

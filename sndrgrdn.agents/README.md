@@ -2,6 +2,8 @@
 
 Shows how much of your Claude, Codex and Grok subscription limits you have used, in a panel like Omarchy's agents panel.
 
+![Agents panel with the Claude, Codex and Grok plans, and a meter and reset time for each limit](screenshot.png)
+
 - The bar shows a robot glyph. It turns red when a limit is at 90% or more.
 - Click it to open the panel. Each agent has its plan and one row per limit: a meter of how much you have used and the time until it resets. Rest the pointer on a row for the exact percentage.
 - Claude's model limits, such as the weekly limit for one model, show as a tick on the meter of the limit they belong to.
