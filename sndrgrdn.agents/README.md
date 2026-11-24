@@ -6,11 +6,15 @@ Shows how much of your Claude, Codex and Grok subscription limits you have used,
 
 - The bar shows a robot glyph. It turns red when a limit is at 90% or more.
 - Click it to open the panel. Each agent has its plan and one row per limit: a meter of how much you have used and the time until it resets. Rest the pointer on a row for the exact percentage.
-- Claude's model limits, such as the weekly limit for one model, show as a tick on the meter of the limit they belong to.
+- Claude's model limits, such as Fable's weekly limit, have rows of their own.
+- A dim tick on each meter marks an even pace: how much of the limit you would have used by now if you spread it evenly until it resets. A fill past the tick means you are over pace. The row's tooltip gives the difference and, when you would run out before the reset, when that happens.
 - The panel refreshes every 5 minutes, when you open it, and when you click its refresh button.
 - When an agent cannot be checked, the panel says why and keeps its last numbers. A red "Sign-in required" means you have to sign in again.
 
-The plugin only reads. It never signs in, refreshes a token, or writes credentials, and it keeps tokens out of the log, its topic and command lines.
+When a Claude or Grok token has expired, the plugin refreshes it and saves the new one where that CLI keeps it, so the CLI goes on working with it. It never signs in, and it keeps tokens out of the log and its topic.
+
+- **Claude**: the plugin refreshes only while it holds Claude Code's own refresh lock, `~/.claude/.oauth_refresh.lock`, so it never races Claude Code. It saves the new token with `security -i`, which reads it from a file in that lock folder rather than from the command line. When Claude Code's credentials are too large for `security -i`, it passes them on the command line instead, as Claude Code does.
+- **Grok**: the plugin refreshes through the issuer in `~/.grok/auth.json` and writes the new token back to that file, which grok picks up on its next request.
 
 ## Where the numbers come from
 
@@ -23,7 +27,7 @@ The plugin has three parts. A service checks the three agents at once and publis
 ## Setup
 
 - Use a Gary newer than 0.4.0, whose `fetch` sends headers. Gary 0.4.0 sends none, so Claude and Grok show "Sign-in required".
-- Sign in to Claude Code with `claude auth login`, to Codex with `codex login`, and to grok with `grok login`. An expired Claude or Grok token renews the next time you use that CLI.
+- Sign in to Claude Code with `claude auth login`, to Codex with `codex login`, and to grok with `grok login`. You sign in again only when a CLI's sign-in itself expires.
 - Use a Nerd Font for the bar, such as `JetBrainsMono Nerd Font`, so the glyph shows.
 
 ## Credits

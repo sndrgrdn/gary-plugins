@@ -5,8 +5,22 @@ const Text = Schema.optional(Schema.NullOr(Schema.String));
 const Count = Schema.optional(Schema.NullOr(Schema.Number));
 
 export const ClaudeCredentials = Schema.fromJsonString(
-  Schema.Struct({ claudeAiOauth: Schema.Struct({ accessToken: Schema.String, expiresAt: Schema.Number, subscriptionType: Text }) }),
+  Schema.Struct({
+    claudeAiOauth: Schema.Struct({
+      accessToken: Schema.String,
+      refreshToken: Text,
+      expiresAt: Schema.Number,
+      scopes: Schema.optional(Schema.NullOr(Schema.Array(Schema.String))),
+      subscriptionType: Text,
+    }),
+  }),
 );
+
+export const OAuthToken = Schema.fromJsonString(
+  Schema.Struct({ access_token: Schema.String, refresh_token: Text, expires_in: Schema.Number, refresh_token_expires_in: Count }),
+);
+
+export const OpenIdConfiguration = Schema.fromJsonString(Schema.Struct({ token_endpoint: Schema.String }));
 
 const ClaudeLimit = Schema.Struct({
   kind: Schema.String,
@@ -31,14 +45,24 @@ const CodexReply = Schema.fromJsonString(
 export type CodexReply = typeof CodexReply.Type;
 
 export const GrokAuth = Schema.fromJsonString(
-  Schema.Record(Schema.String, Schema.Struct({ auth_mode: Text, key: Text, expires_at: Text })),
+  Schema.Record(
+    Schema.String,
+    Schema.Struct({ auth_mode: Text, key: Text, expires_at: Text, refresh_token: Text, oidc_issuer: Text, oidc_client_id: Text }),
+  ),
 );
 export const GrokBilling = Schema.fromJsonString(
   Schema.Struct({
-    config: Schema.Struct({ currentPeriod: Schema.Struct({ type: Schema.String, end: Text }), creditUsagePercent: Schema.Number }),
+    config: Schema.Struct({ currentPeriod: Schema.Struct({ type: Schema.String, start: Text, end: Text }), creditUsagePercent: Schema.Number }),
   }),
 );
 
+const hour = 3_600_000;
+const day = 24 * hour;
+const claudeKinds = [
+  { prefix: "five_hour", label: "Session", period: 5 * hour },
+  { prefix: "weekly", label: "Weekly", period: 7 * day },
+  { prefix: "seven_day", label: "Weekly", period: 7 * day },
+];
 const durations: Record<number, string> = { 300: "Session", 10080: "Weekly", 43200: "Monthly" };
 const periods: Record<string, string> = { DAILY: "Daily", WEEKLY: "Weekly", MONTHLY: "Monthly" };
 
@@ -52,25 +76,18 @@ export function time(text: string | null | undefined) {
   return Number.isNaN(value) ? null : value;
 }
 
-function claudeLabel(kind: string) {
-  if (kind.startsWith("five_hour")) return "Session";
-  if (kind.startsWith("weekly") || kind.startsWith("seven_day")) return "Weekly";
-  return capitalize(kind.replaceAll("_", " "));
-}
-
 export function claudeWindows(limits: typeof ClaudeUsage.Type["limits"]): Window[] {
-  const windows: Window[] = limits
-    .filter((limit) => !limit.scope?.model?.display_name)
-    .map((limit) => ({ label: claudeLabel(limit.kind), percent: limit.percent, resetsAt: time(limit.resets_at), scoped: [] }));
-  for (const limit of limits) {
+  return limits.map((limit) => {
+    const kind = claudeKinds.find((each) => limit.kind.startsWith(each.prefix));
+    const label = kind?.label ?? capitalize(limit.kind.replaceAll("_", " "));
     const model = limit.scope?.model?.display_name;
-    if (!model) continue;
-    const base = claudeLabel(limit.kind);
-    const parent = windows.find((window) => window.label === base);
-    if (parent) parent.scoped.push({ label: model, percent: limit.percent });
-    else windows.push({ label: `${model} ${base.toLowerCase()}`, percent: limit.percent, resetsAt: time(limit.resets_at), scoped: [] });
-  }
-  return windows;
+    return {
+      label: model ? `${model} ${label.toLowerCase()}` : label,
+      percent: limit.percent,
+      resetsAt: time(limit.resets_at),
+      period: kind?.period ?? null,
+    };
+  });
 }
 
 export function codexReply(line: string): CodexReply | null {
@@ -85,7 +102,14 @@ function durationLabel(minutes: number | null | undefined) {
 export function codexWindows(limits: NonNullable<NonNullable<CodexReply["result"]>["rateLimits"]>): Window[] {
   return [limits.primary, limits.secondary].flatMap((window) =>
     window
-      ? [{ label: durationLabel(window.windowDurationMins), percent: window.usedPercent, resetsAt: window.resetsAt ? window.resetsAt * 1000 : null, scoped: [] }]
+      ? [
+          {
+            label: durationLabel(window.windowDurationMins),
+            percent: window.usedPercent,
+            resetsAt: window.resetsAt ? window.resetsAt * 1000 : null,
+            period: window.windowDurationMins ? window.windowDurationMins * 60_000 : null,
+          },
+        ]
       : [],
   );
 }
@@ -108,6 +132,15 @@ export function duration(milliseconds: number) {
 export function clock(milliseconds: number) {
   const date = new Date(milliseconds);
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+export function pace(window: Window, now: number) {
+  if (window.resetsAt === null || window.period === null) return null;
+  const elapsed = window.period - (window.resetsAt - now);
+  if (!(elapsed > 0 && elapsed <= window.period)) return null;
+  const expected = (100 * elapsed) / window.period;
+  const runsOutIn = window.percent > 0 ? ((100 - window.percent) * elapsed) / window.percent : Infinity;
+  return { expected, runsOutIn: runsOutIn < window.resetsAt - now ? runsOutIn : null };
 }
 
 export function alarming(percent: number) {

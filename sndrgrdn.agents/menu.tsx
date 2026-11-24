@@ -1,6 +1,6 @@
 import { Effect, Stream, host } from "gary:effect";
 import type { Provider, Window } from "./topic";
-import { alarming, clock, duration } from "./usage";
+import { alarming, clock, duration, pace } from "./usage";
 
 type Theme = Gary.Theme;
 
@@ -31,8 +31,13 @@ function caption(providers: readonly Provider[]) {
 function tooltip(window: Window, provider: Provider, now: number) {
   const left = window.resetsAt === null ? 0 : window.resetsAt - now;
   const lines = [left > 0 ? `${window.label}: ${percent(window.percent)}% used · resets in ${duration(left)}` : `${window.label}: ${percent(window.percent)}% used`];
+  const paced = pace(window, now);
+  if (paced) {
+    const difference = Math.round(window.percent - paced.expected);
+    const verdict = difference > 0 ? `${difference}% over pace` : difference < 0 ? `${-difference}% under pace` : "On pace";
+    lines.push(paced.runsOutIn === null ? `${verdict} · lasts until reset` : `${verdict} · runs out in ${duration(paced.runsOutIn)}`);
+  }
   if (provider.problem && provider.fetchedAt) lines.push(`Last updated ${clock(provider.fetchedAt)}`);
-  for (const scoped of window.scoped) lines.push(`${scoped.label}: ${percent(scoped.percent)}% of its ${window.label.toLowerCase()} allowance`);
   return lines.join("\n");
 }
 
@@ -44,23 +49,24 @@ function Divider({ name, theme }: { name: string; theme: Theme }) {
   );
 }
 
-function Meter({ window, length }: { window: Window; length: number }) {
+function Meter({ window, length, now }: { window: Window; length: number; now: number }) {
   const color = alarming(window.percent) ? "bad" : "foreground";
   const top = (tickHeight - thickness) / 2;
+  const paced = pace(window, now);
   return (
     <stack key="meter" width={length} height={tickHeight}>
       <row key="track" y={top} width={length} height={thickness} radius={thickness / 2} background="selected" />
       <row key="fill" y={top} width={(length * percent(window.percent)) / 100} height={thickness} radius={thickness / 2} background={color} />
-      {window.scoped.map((scoped) => (
+      {paced && (
         <row
-          key={`tick-${scoped.label}`}
-          x={Math.min(length - tickWidth, Math.max(0, (length * percent(scoped.percent)) / 100 - tickWidth / 2))}
+          key="pace"
+          x={Math.min(length - tickWidth, Math.max(0, (length * paced.expected) / 100 - tickWidth / 2))}
           width={tickWidth}
           height={tickHeight}
           radius={tickWidth / 2}
-          background={color}
+          background="dim"
         />
-      ))}
+      )}
     </stack>
   );
 }
@@ -72,7 +78,7 @@ function WindowRow({ window, provider, spacing, now }: { window: Window; provide
   return (
     <row key={window.label} height={rowHeight} gap={0} padding={[0, spacing.item]} tooltip={tooltip(window, provider, now)}>
       <text key="title" width={title} fontSize={12} color="foreground" truncate="tail">{window.label}</text>
-      <Meter window={window} length={inner - title - meterGap - valueWidth} />
+      <Meter window={window} length={inner - title - meterGap - valueWidth} now={now} />
       <text key="value" width={meterGap + valueWidth} align="trailing" fontSize={12} color="dim">{duration(left)}</text>
     </row>
   );
