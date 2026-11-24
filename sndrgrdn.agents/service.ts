@@ -24,11 +24,14 @@ const unavailable = (message: string): Problem => ({ kind: "unavailable", messag
 const claudeSignIn = "Run `claude auth login`";
 const claudeKeychainItem = "Claude Code-credentials";
 const claudeClientId = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
-const claudeLock = ".claude/.oauth_refresh.lock";
+const claudeFolder = "~/.claude";
+const claudeLockName = ".oauth_refresh.lock";
+const claudeLock = `${claudeFolder}/${claudeLockName}`;
+const claudeLockStale = 60_000;
 const keychainCommandLimit = 4032;
-const claudeLockedCommand = 'security -i < "$HOME/$1/keychain"; status=$?; rm -f "$HOME/$1/keychain"; exit $status';
 const grokSignIn = "Run `grok login`";
 const grokAuthFile = "~/.grok/auth.json";
+const grokLock = "~/.grok/auth.json.lock";
 const expiryMargin = 60_000;
 const codexMessages = [
   { id: 1, method: "initialize", params: { clientInfo: { name: "gary-agents", version: "1" } } },
@@ -46,8 +49,7 @@ const request = Effect.fn("Agents.request")(function* (url: string, options: Gar
   return response.text;
 });
 
-const exec = (argv: string[]) => host.exec(argv).pipe(Effect.mapError((error) => unavailable(error.message)));
-const shell = (script: string, ...args: string[]) => exec(["/bin/sh", "-c", script, "sh", ...args]);
+const exec = (argv: string[], options?: Gary.ExecOptions) => host.exec(argv, options).pipe(Effect.mapError((error) => unavailable(error.message)));
 
 const renew = Effect.fn("Agents.renew")(function* (url: string, options: Gary.FetchOptions, signIn: string) {
   const body = yield* request(url, { ...options, method: "POST" }, signIn);
@@ -55,7 +57,7 @@ const renew = Effect.fn("Agents.renew")(function* (url: string, options: Gary.Fe
 });
 
 const hex = (text: string) =>
-  Array.from(unescape(encodeURIComponent(text)), (byte) => byte.charCodeAt(0).toString(16).padStart(2, "0")).join("");
+  Array.from(new TextEncoder().encode(text), (byte) => byte.toString(16).padStart(2, "0")).join("");
 
 const readClaude = Effect.gen(function* () {
   const result = yield* exec(["security", "find-generic-password", "-s", claudeKeychainItem, "-w"]);
@@ -75,10 +77,7 @@ const writeClaude = Effect.fn("Agents.writeClaude")(function* (text: string) {
   const result =
     command.length > keychainCommandLimit
       ? yield* exec(["security", "add-generic-password", "-U", "-a", account, "-s", claudeKeychainItem, "-X", password])
-      : yield* host.writeFile(`~/${claudeLock}/keychain`, command).pipe(
-          Effect.mapError((error) => unavailable(error.message)),
-          Effect.andThen(shell(claudeLockedCommand, claudeLock)),
-        );
+      : yield* exec(["security", "-i"], { stdin: command });
   const saved = yield* readClaude;
   if (result.status !== 0 || saved.text.trim() !== text) return yield* Effect.fail(unavailable("Saving Claude Code's new token failed"));
 });
@@ -113,13 +112,21 @@ const refreshClaude = Effect.gen(function* () {
   return { ...credentials, accessToken: token.access_token };
 });
 
+const lockClaude = Effect.gen(function* () {
+  if (yield* host.mkdir(claudeLock)) return true;
+  const lock = (yield* host.list(claudeFolder)).find((entry) => entry.name === claudeLockName);
+  if (!lock || lock.modified > Date.now() - claudeLockStale) return false;
+  yield* host.remove(claudeLock);
+  return yield* host.mkdir(claudeLock);
+}).pipe(Effect.mapError((error) => unavailable(error.message)));
+
 const claudeToken = Effect.gen(function* () {
   const { credentials } = yield* readClaude;
   if (!expired(credentials.expiresAt)) return credentials;
   return yield* Effect.acquireUseRelease(
-    shell('find "$HOME/$1" -maxdepth 0 -mmin +1 -exec rm -rf {} + 2>/dev/null; mkdir -m 700 "$HOME/$1"', claudeLock),
-    (locked) => (locked.status === 0 ? refreshClaude : Effect.fail(unavailable("Claude Code is refreshing its token"))),
-    (locked) => (locked.status === 0 ? Effect.ignore(shell('rm -rf "$HOME/$1"', claudeLock)) : Effect.void),
+    lockClaude,
+    (locked) => (locked ? refreshClaude : Effect.fail(unavailable("Claude Code is refreshing its token"))),
+    (locked) => (locked ? Effect.ignore(host.remove(claudeLock)) : Effect.void),
   );
 });
 
@@ -177,7 +184,7 @@ const refreshGrok = Effect.fn("Agents.refreshGrok")(function* (text: string, id:
   return token.access_token;
 });
 
-const grok = Effect.gen(function* () {
+const readGrok = Effect.gen(function* () {
   const text = yield* host.readFile(grokAuthFile).pipe(Effect.mapError(() => signedOut(grokSignIn)));
   const entries = Object.entries(
     yield* Schema.decodeUnknownEffect(GrokAuth)(text).pipe(Effect.mapError(() => unavailable("grok's credentials are unreadable"))),
@@ -185,7 +192,27 @@ const grok = Effect.gen(function* () {
   const [id, entry] = entries.find(([, each]) => each.auth_mode === "oidc") ?? entries[0] ?? [];
   if (!id || !entry?.key) return yield* Effect.fail(signedOut(grokSignIn));
   const expires = time(entry.expires_at);
-  const key = expires !== null && expired(expires) ? yield* refreshGrok(text, id, entry) : entry.key;
+  return { text, id, entry, key: entry.key, expired: expires !== null && expired(expires) };
+});
+
+const grokKey = Effect.gen(function* () {
+  const read = yield* readGrok;
+  if (!read.expired) return read.key;
+  return yield* Effect.scoped(
+    Effect.gen(function* () {
+      yield* host.lockFile(grokLock).pipe(
+        Effect.mapError((error) =>
+          unavailable(error.message.endsWith("is locked by another process") ? "grok is refreshing its token" : error.message),
+        ),
+      );
+      const { text, id, entry, key, expired } = yield* readGrok;
+      return expired ? yield* refreshGrok(text, id, entry) : key;
+    }),
+  );
+});
+
+const grok = Effect.gen(function* () {
+  const key = yield* grokKey;
   const body = yield* request(
     "https://cli-chat-proxy.grok.com/v1/billing?format=credits",
     { headers: { Authorization: `Bearer ${key}`, Accept: "application/json" } },

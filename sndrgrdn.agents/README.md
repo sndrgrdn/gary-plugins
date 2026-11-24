@@ -13,8 +13,8 @@ Shows how much of your Claude, Codex and Grok subscription limits you have used,
 
 When a Claude or Grok token has expired, the plugin refreshes it and saves the new one where that CLI keeps it, so the CLI goes on working with it. It never signs in, and it keeps tokens out of the log and its topic.
 
-- **Claude**: the plugin refreshes only while it holds Claude Code's own refresh lock, `~/.claude/.oauth_refresh.lock`, so it never races Claude Code. It saves the new token with `security -i`, which reads it from a file in that lock folder rather than from the command line. When Claude Code's credentials are too large for `security -i`, it passes them on the command line instead, as Claude Code does.
-- **Grok**: the plugin refreshes through the issuer in `~/.grok/auth.json` and writes the new token back to that file, which grok picks up on its next request.
+- **Claude**: the plugin refreshes only while it holds Claude Code's own refresh lock, `~/.claude/.oauth_refresh.lock`, so it never races Claude Code. It saves the new token with `security -i`, which reads it from its stdin rather than from the command line. When Claude Code's credentials are too large for `security -i`, it passes them on the command line instead, as Claude Code does.
+- **Grok**: the plugin refreshes only while it holds grok's own lock, `~/.grok/auth.json.lock`, so it never races grok. It waits up to 10 seconds for grok to let go, and uses grok's token when grok refreshed it meanwhile. Otherwise it refreshes through the issuer in `~/.grok/auth.json` and writes the new token back to that file, which grok picks up on its next request.
 
 ## Where the numbers come from
 
@@ -26,7 +26,7 @@ The plugin has three parts. A service checks the three agents at once and publis
 
 ## Setup
 
-- Use a Gary newer than 0.4.0, whose `fetch` sends headers. Gary 0.4.0 sends none, so Claude and Grok show "Sign-in required".
+- Use a Gary whose `fetch` sends headers, whose `host.exec` takes `stdin`, and which has `host.lockFile`. Gary 0.4.0's `fetch` sends no headers, so Claude and Grok show "Sign-in required".
 - Sign in to Claude Code with `claude auth login`, to Codex with `codex login`, and to grok with `grok login`. You sign in again only when a CLI's sign-in itself expires.
 - Use a Nerd Font for the bar, such as `JetBrainsMono Nerd Font`, so the glyph shows.
 

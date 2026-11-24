@@ -249,11 +249,22 @@ declare function setTimeout(callback: (...args: any[]) => void, ms?: number, ...
 declare function setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): number;
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
+declare class TextEncoder {
+  readonly encoding: "utf-8";
+  encode(input?: string): Uint8Array;
+}
+declare class TextDecoder {
+  constructor(label?: "utf-8", options?: { fatal?: boolean });
+  readonly encoding: "utf-8";
+  readonly fatal: boolean;
+  decode(input?: ArrayBuffer | ArrayBufferView): string;
+}
 declare namespace Gary {
   interface Host {
-    exec(argv: string[]): Promise<ExecResult>;
+    exec(argv: string[], options?: ExecOptions): Promise<ExecResult>;
     spawn(argv: string[], onLine: (line: string) => void): SpawnApi;
   }
+  type ExecOptions = { stdin?: string }
   type ExecResult = { status: number; stdout: string; stderr: string }
   interface SpawnApi { exited: Promise<SpawnExit>; stop(): void }
   type SpawnExit = { status: number; stderr: string }
@@ -262,13 +273,15 @@ declare namespace Gary {
   interface Host {
     readFile(path: string): string;
     writeFile(path: string, text: string): null;
-    mkdir(path: string): null;
+    mkdir(path: string): boolean;
     remove(path: string): boolean;
     list(path: string): FileEntry[];
     watchFile(path: string, callback: (text: string | null) => void): WatchFileApi;
+    lockFile(path: string): Promise<LockFileApi>;
   }
   interface WatchFileApi { stop(): void }
-  type FileEntry = { name: string; type: "file" | "directory" | "link" | "other"; size: number }
+  interface LockFileApi { release(): void }
+  type FileEntry = { name: string; type: "file" | "directory" | "link" | "other"; size: number; modified: number }
 }
 declare namespace Gary {
   type FetchOptions = { method?: string; headers?: { [name: string]: string }; body?: string }
@@ -302,6 +315,7 @@ declare module "gary:effect" {
     hotkeys(keys: string[]): S.Stream<string, HostError>;
     hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
     watchFile(path: string): S.Stream<string | null, HostError>;
+    lockFile(path: string): E.Effect<void, HostError, Sc.Scope>;
   }
   export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
