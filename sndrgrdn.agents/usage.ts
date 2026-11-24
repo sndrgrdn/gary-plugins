@@ -73,12 +73,8 @@ export function claudeWindows(limits: typeof ClaudeUsage.Type["limits"]): Window
   return windows;
 }
 
-export function codexReply(stdout: string): CodexReply | null {
-  for (const line of stdout.split("\n")) {
-    const reply = Schema.decodeUnknownOption(CodexReply)(line);
-    if (Option.isSome(reply)) return reply.value;
-  }
-  return null;
+export function codexReply(line: string): CodexReply | null {
+  return Option.getOrNull(Schema.decodeUnknownOption(CodexReply)(line));
 }
 
 function durationLabel(minutes: number | null | undefined) {

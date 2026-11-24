@@ -13,7 +13,7 @@ The plugin only reads. It never signs in, refreshes a token, or writes credentia
 ## Where the numbers come from
 
 - **Claude**: the Claude Code token from the `Claude Code-credentials` keychain item, read with `security`, sent to Anthropic's `api/oauth/usage` endpoint.
-- **Codex**: `codex app-server`, asked for `account/rateLimits/read` over JSON-RPC. Each check takes about 5 seconds.
+- **Codex**: `codex app-server`, asked for `account/rateLimits/read` over JSON-RPC. Each check takes about half a second.
 - **Grok**: the token in `~/.grok/auth.json`, sent to grok's `v1/billing` endpoint.
 
 The plugin has three parts. A service checks the three agents at once and publishes them as the `sndrgrdn.agents` topic. The bar widget and the panel draw that topic, and the panel asks the service to refresh. `gary call sndrgrdn.agents state` prints what the service knows, and `gary call sndrgrdn.agents refresh` checks again.

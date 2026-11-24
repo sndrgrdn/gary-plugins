@@ -1,4 +1,4 @@
-import { Effect, Schedule, Schema, fetch, host } from "gary:effect";
+import { Effect, Option, Schedule, Schema, Stream, fetch, host } from "gary:effect";
 import type { Problem, Provider, ProviderId, Window } from "./topic";
 import {
   ClaudeCredentials,
@@ -26,7 +26,7 @@ const codexMessages = [
   { method: "initialized", params: {} },
   { id: 2, method: "account/rateLimits/read", params: {} },
 ];
-const codexScript = `{ printf '%s\\n' ${codexMessages.map((message) => `'${JSON.stringify(message)}'`).join(" ")}; sleep 5; } | codex -s read-only -a on-request app-server 2>/dev/null`;
+const codexScript = `command -v codex >/dev/null || exit 127; { printf '%s\\n' ${codexMessages.map((message) => `'${JSON.stringify(message)}'`).join(" ")}; exec tail -f /dev/null; } | codex -s read-only -a on-request app-server 2>/dev/null`;
 
 const request = Effect.fn("Agents.request")(function* (url: string, headers: Record<string, string>, signIn: string) {
   const response = yield* fetch(url, { headers }).pipe(Effect.mapError((error) => unavailable(error.message)));
@@ -54,9 +54,14 @@ const claude = Effect.gen(function* () {
 });
 
 const codex = Effect.gen(function* () {
-  const result = yield* host.exec(["/bin/sh", "-c", codexScript]).pipe(Effect.mapError((error) => unavailable(error.message)));
-  if (result.status === 127) return yield* Effect.fail(signedOut("Install the codex CLI"));
-  const reply = codexReply(result.stdout);
+  const found = yield* host.spawn(["/bin/sh", "-c", codexScript]).pipe(
+    Stream.map(codexReply),
+    Stream.filter((reply) => reply !== null),
+    Stream.runHead,
+    Effect.timeoutOption("10 seconds"),
+    Effect.mapError((error) => (error.message.endsWith("status 127") ? signedOut("Install the codex CLI") : unavailable(error.message))),
+  );
+  const reply = Option.getOrNull(Option.flatten(found));
   if (!reply) return yield* Effect.fail(unavailable("Codex did not report its limits"));
   if (reply.error) return yield* Effect.fail(unavailable(reply.error.message));
   const limits = reply.result?.rateLimits;
