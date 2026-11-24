@@ -49,20 +49,20 @@ const mainDisplay: Gary.ScreenArea = { display: null };
 const screenshot = Effect.fn("Menu.screenshot")(function* (area: Gary.ScreenArea | null) {
   if (!area) return;
   const path = yield* host.screen.capture(area, { path: desktop("Screenshot", "png"), clipboard: true });
-  yield* toast({ title: "Screenshot copied", body: "Saved to the Desktop", icon: "camera.viewfinder" }, open(path));
+  yield* toast({ title: "Screenshot copied", body: "Saved to the Desktop", glyph: "\u{F0E51}", font: "icon" }, open(path));
 });
 
 const record = Effect.fn("Menu.record")(function* (area: Gary.ScreenArea | null, audio: boolean) {
   if (!area) return;
   yield* host.screen.record(area, desktop("Screen Recording", "mov"), { audio });
   yield* publish({ recording: true });
-  yield* toast({ title: "Recording", body: "Stop it from the menu", icon: "record.circle" });
+  yield* toast({ title: "Recording", body: "Stop it from the menu", glyph: "\u{F0EC3}", font: "icon" });
 });
 
 const stopRecording = Effect.gen(function* () {
   const path = yield* host.screen.stopRecording();
   yield* publish({ recording: false });
-  if (path) yield* toast({ title: "Recording saved", body: "Saved to the Desktop", icon: "film" }, open(path));
+  if (path) yield* toast({ title: "Recording saved", body: "Saved to the Desktop", glyph: "\u{F0231}", font: "icon" }, open(path));
 });
 
 const pickColor = Effect.gen(function* () {
@@ -70,25 +70,25 @@ const pickColor = Effect.gen(function* () {
   const color = yield* host.colorpicker.pick();
   if (!color) return;
   yield* host.clipboard.writeText(color);
-  yield* toast({ title: "Color copied", body: color, icon: "eyedropper" });
+  yield* toast({ title: "Color copied", body: color, glyph: "\u{F020A}", font: "icon" });
 });
 
 const readText = Effect.gen(function* () {
   const area = yield* select;
   if (!area) return;
   const text = (yield* host.vision.readText(area)).trim();
-  if (!text) return yield* toast({ title: "No text found", icon: "text.viewfinder" });
+  if (!text) return yield* toast({ title: "No text found", glyph: "\u{F113D}", font: "icon" });
   yield* host.clipboard.writeText(text);
-  yield* toast({ title: "Text copied", body: preview(text), icon: "text.viewfinder" });
+  yield* toast({ title: "Text copied", body: preview(text), glyph: "\u{F113D}", font: "icon" });
 });
 
 const readCode = Effect.gen(function* () {
   const area = yield* select;
   if (!area) return;
   const payloads = (yield* host.vision.readCodes(area)).flatMap((code) => (code.symbology === "qr" && code.payload ? [code.payload] : []));
-  if (!payloads.length) return yield* toast({ title: "No QR code found", icon: "qrcode.viewfinder" });
+  if (!payloads.length) return yield* toast({ title: "No QR code found", glyph: "\u{F0433}", font: "icon" });
   yield* host.clipboard.writeText(payloads.join("\n"), true);
-  yield* toast({ title: "QR code copied", icon: "qrcode.viewfinder" });
+  yield* toast({ title: "QR code copied", glyph: "\u{F0433}", font: "icon" });
 });
 
 const theme = Effect.fn("Menu.theme")(function* (...args: string[]) {
@@ -105,8 +105,8 @@ const toggleAwake = Effect.gen(function* () {
   yield* host.power.stayAwake(awake ? "display" : "off");
   yield* publish({ awake });
   yield* toast(awake
-    ? { title: "Staying awake", body: "The Mac and its display won't sleep", icon: "cup.and.saucer.fill" }
-    : { title: "Sleep allowed", icon: "cup.and.saucer" });
+    ? { title: "Staying awake", body: "The Mac and its display won't sleep", glyph: "\u{F0176}", font: "icon" }
+    : { title: "Sleep allowed", glyph: "\u{F06CA}", font: "icon" });
 });
 
 const commands = {
@@ -141,7 +141,7 @@ function perform(name: Command) {
   return command.pipe(
     Effect.catch((error) => Effect.andThen(
       host.log(`${name} failed: ${error.message}`),
-      toast({ title: "Menu action failed", body: error.message, icon: "exclamationmark.triangle" }),
+      toast({ title: "Menu action failed", body: error.message, glyph: "\u{F002A}", font: "icon" }),
     )),
   );
 }

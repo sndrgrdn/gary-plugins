@@ -1,7 +1,7 @@
 declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
-  type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
+  type Key = "left" | "right" | "down" | "up" | "enter" | "escape" | "tab" | "backspace" | "delete" | "home" | "end" | "pageup" | "pagedown" | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8" | "f9" | "f10" | "f11" | "f12" | "f13" | "f14" | "f15" | "f16" | "f17" | "f18" | "f19" | "f20" | (string & {});
   type ScrollEvent = {
     x: number;
     y: number;
@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "highlight" | "hover" | "mono" | "panel" | "picker" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
-  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
-  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "scrim" | "secondary" | "selected" | (string & {});
+  type StyleName = (string & {});
+  type FontName = (string & {});
+  type ColorName = (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -249,6 +249,16 @@ declare function setTimeout(callback: (...args: any[]) => void, ms?: number, ...
 declare function setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): number;
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
+declare class TextEncoder {
+  readonly encoding: "utf-8";
+  encode(input?: string): Uint8Array;
+}
+declare class TextDecoder {
+  constructor(label?: "utf-8", options?: { fatal?: boolean });
+  readonly encoding: "utf-8";
+  readonly fatal: boolean;
+  decode(input?: ArrayBuffer | ArrayBufferView): string;
+}
 declare namespace Gary {
   type ClipboardChange = { count: number; types: string[]; access: "default" | "ask" | "always" | "never" }
   type ClipboardContents = { count: number; text: string | null; image: string | null; files: string[] }
@@ -265,9 +275,10 @@ declare namespace Gary {
 }
 declare namespace Gary {
   interface Host {
-    exec(argv: string[]): Promise<ExecResult>;
+    exec(argv: string[], options?: ExecOptions): Promise<ExecResult>;
     spawn(argv: string[], onLine: (line: string) => void): SpawnApi;
   }
+  type ExecOptions = { stdin?: string }
   type ExecResult = { status: number; stdout: string; stderr: string }
   interface SpawnApi { exited: Promise<SpawnExit>; stop(): void }
   type SpawnExit = { status: number; stderr: string }
@@ -294,7 +305,8 @@ declare namespace Gary {
   }
 }
 declare namespace Gary {
-  type Toast = { title: string; body?: string; icon?: string; timeout?: number }
+  type Toast = { title: string; body?: string; timeout?: number }
+    & ({ icon?: string; glyph?: null; font?: null } | { icon?: null; glyph: string; font?: FontName })
   interface Host { toast(toast: Toast): Promise<"clicked" | "expired"> }
 }
 declare namespace Gary {
@@ -330,6 +342,8 @@ declare module "gary:effect" {
     spawn(argv: string[]): S.Stream<string, HostError>;
     hotkeys(keys: string[]): S.Stream<string, HostError>;
     hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
+    watchFile(path: string): S.Stream<string | null, HostError>;
+    lockFile(path: string): E.Effect<void, HostError, Sc.Scope>;
   }
   export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
