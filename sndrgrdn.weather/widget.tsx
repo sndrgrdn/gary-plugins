@@ -1,4 +1,4 @@
-import { Effect, Schedule, Schema, Stream, fetch, host, settings, topic } from "gary:effect";
+import { Effect, Option, Schedule, Schema, Stream, fetch, host, settings, topic } from "gary:effect";
 import type { Topic } from "./topic";
 
 const conditions: [number[], string][] = [
@@ -29,7 +29,21 @@ const latitude = Number(settings.latitude ?? 53.2);
 const longitude = Number(settings.longitude ?? 5.8);
 const place = String(settings.place ?? (settings.latitude === undefined ? "Leeuwarden" : `${latitude}, ${longitude}`));
 const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&forecast_hours=13&timezone=auto`;
-let weather: Topic | null = null;
+const period = 15 * 60_000;
+const Stored = Schema.Struct({
+  url: Schema.String,
+  checkedAt: Schema.Finite,
+  weather: Schema.Struct({
+    place: Schema.String,
+    temperature: Schema.Finite,
+    glyph: Schema.String,
+    condition: Schema.String,
+    hours: Schema.mutable(Schema.Array(Schema.Struct({ hour: Schema.String, temperature: Schema.Finite }))),
+  }),
+});
+const stored = Option.getOrNull(Option.filter(Schema.decodeUnknownOption(Stored)(Effect.runSync(host.storage.get("weather"))), (each) => each.url === url));
+let weather: Topic | null = stored?.weather ?? null;
+let checkedAt = stored?.checkedAt ?? 0;
 
 class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", { status: Schema.Number, message: Schema.String }) {}
 
@@ -42,6 +56,7 @@ const request = Effect.fn("Weather.request")(function* () {
 });
 
 const refresh = Effect.gen(function* () {
+  checkedAt = Date.now();
   const { current, hourly } = yield* request().pipe(
     Effect.tapError((error) => host.log(`weather request failed: ${error.message}`)),
     Effect.retry({
@@ -59,19 +74,27 @@ const refresh = Effect.gen(function* () {
     hours: hourly.time.map((time, index) => ({ hour: time.slice(11, 13), temperature: hourly.temperature_2m[index] })),
   };
   yield* host.publish(weather);
+  yield* host.storage.set("weather", { url, checkedAt, weather });
 }).pipe(Effect.ignore);
 
+const poll = Effect.suspend(() => {
+  const wait = checkedAt + period - Date.now();
+  return wait > 0 ? Effect.sleep(wait) : refresh;
+}).pipe(Effect.forever);
+
 export default {
-  effect: Effect.gen(function* () {
-    yield* Effect.forkScoped(Effect.repeat(refresh, Schedule.spaced("15 minutes")));
-    yield* topic("session").pipe(
+  effect: Effect.andThen(
+    weather ? Effect.ignore(host.publish(weather)) : Effect.void,
+    topic("session").pipe(
       Stream.map((session) => session.locked),
       Stream.changes,
-      Stream.drop(1),
-      Stream.filter((locked) => !locked),
-      Stream.runForEach(() => Effect.delay(refresh, "10 seconds")),
-    );
-  }),
+      Stream.zipWithIndex,
+      Stream.switchMap(([locked, index]) =>
+        locked ? Stream.empty : Stream.fromEffect(index === 0 ? poll : Effect.andThen(Effect.delay(refresh, "10 seconds"), poll)),
+      ),
+      Stream.runDrain,
+    ),
+  ),
 
   render() {
     return (

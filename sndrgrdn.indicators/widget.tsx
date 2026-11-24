@@ -33,8 +33,8 @@ function active(state: Gary.State): Indicator[] {
 }
 
 export default {
-  effect: topic("sndrgrdn.focus-timer").pipe(
-    Stream.switchMap(({ session }) => (session ? Stream.tick("1 second") : Stream.empty)),
+  effect: Stream.zipLatestAll(topic("sndrgrdn.focus-timer"), topic("session")).pipe(
+    Stream.switchMap(([{ session }, { locked }]) => (session && !locked ? Stream.tick("1 second") : Stream.empty)),
     Stream.runDrain,
   ),
 

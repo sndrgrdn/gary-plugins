@@ -14,7 +14,7 @@ export function format(milliseconds: number) {
   return hours ? `${hours}:${clock}` : clock;
 }
 
-export const ticking = topic("sndrgrdn.focus-timer").pipe(
-  Stream.switchMap(({ session }) => (session ? Stream.tick("1 second") : Stream.empty)),
+export const ticking = Stream.zipLatestAll(topic("sndrgrdn.focus-timer"), topic("session")).pipe(
+  Stream.switchMap(([{ session }, { locked }]) => (session && !locked ? Stream.tick("1 second") : Stream.empty)),
   Stream.runDrain,
 );

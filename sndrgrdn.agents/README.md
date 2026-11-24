@@ -8,7 +8,7 @@ Shows how much of your Claude, Codex and Grok subscription limits you have used,
 - Click it to open the panel. Each agent has its plan and one row per limit: a meter of how much you have used and the time until it resets. Rest the pointer on a row for the exact percentage.
 - Claude's model limits, such as Fable's weekly limit, have rows of their own.
 - A dim tick on each meter marks an even pace: how much of the limit you would have used by now if you spread it evenly until it resets. A fill past the tick means you are over pace. The row's tooltip gives the difference and, when you would run out before the reset, when that happens.
-- The panel refreshes every 5 minutes, when you open it, and when you click its refresh button.
+- The panel refreshes every 5 minutes while the screen is unlocked, when you open it, and when you click its refresh button. It keeps the last check in its storage, so a reload shows it at once and waits out the 5 minutes.
 - When an agent cannot be checked, the panel says why and keeps its last numbers. A red "Sign-in required" means you have to sign in again.
 
 When a Claude or Grok token has expired, the plugin refreshes it and saves the new one where that CLI keeps it, so the CLI goes on working with it. It never signs in, and it keeps tokens out of the log and its topic.

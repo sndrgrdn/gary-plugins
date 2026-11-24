@@ -6,6 +6,6 @@
   "version": "0.1.0",
   "kinds": ["bar-widget"],
   "entryPoints": { "bar-widget": "widget.tsx" },
-  "subscribes": ["sndrgrdn.focus-timer", "sndrgrdn.menu", "focus"],
+  "subscribes": ["sndrgrdn.focus-timer", "sndrgrdn.menu", "focus", "session"],
   "bar": "center"
 }

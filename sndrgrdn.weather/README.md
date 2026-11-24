@@ -7,7 +7,7 @@ Shows the current temperature and conditions in the bar, from [Open-Meteo](https
 - The icon is Omarchy's Nerd Font glyph for the weather: sun, partly cloudy, cloud, fog, rain, snow or thunder, with the moon at night. The bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`.
 - It shows `--°C` until the first request succeeds.
 - Clicking it opens a panel below it with the conditions, the place, and the temperature for the next 12 hours.
-- It refreshes every 15 minutes, and 10 seconds after you unlock the Mac.
+- It refreshes every 15 minutes while the screen is unlocked, and 10 seconds after you unlock the Mac. It keeps the last forecast in its storage, so a reload shows it at once and waits out the 15 minutes.
 - It uses Gary's `network` capability. It needs no API key and no permissions.
 
 ## Settings

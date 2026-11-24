@@ -836,6 +836,8 @@ function reload() {
   publish();
 }
 
+const reloadSoon = Effect.delay(Effect.sync(reload), "500 millis");
+
 const warmPreviews = Effect.fn("Theme.warmPreviews")(function* () {
   yield* mkdir(paths.previews);
   const cached = new Set((list(paths.previews) ?? []).map((entry) => entry.name));
@@ -957,8 +959,8 @@ export default {
   onHotkey(id) {
     if (!home) return;
     if (id === "picker") {
-      reload();
       host.toggle();
+      return reloadSoon;
     }
     if (id === "background") background(1);
   },
@@ -985,8 +987,8 @@ export default {
     }),
     update: () => whenStarted(update()),
     picker: () => whenReady(() => {
-      reload();
       host.show();
+      Effect.runFork(reloadSoon);
       return {};
     }),
   },

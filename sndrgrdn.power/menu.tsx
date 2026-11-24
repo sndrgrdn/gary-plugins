@@ -1,16 +1,24 @@
-import { Effect, Schedule, host as lifted } from "gary:effect";
+import { Effect, Option, Schedule, Schema, host as lifted } from "gary:effect";
 import { glyph } from "./glyph";
 
 type Spacing = Gary.Theme["spacing"];
 type Theme = Gary.Theme;
-type Details = { health: number | null; cycles: number | null; toFull: number | null; toEmpty: number | null; watts: number | null };
 
 const width = 320;
 const rowHeight = 32;
 const headerHeight = 24;
 const gigabyte = 1024 ** 3;
 
-let details: Details | null = null;
+const Details = Schema.Struct({
+  health: Schema.NullOr(Schema.Finite),
+  cycles: Schema.NullOr(Schema.Finite),
+  toFull: Schema.NullOr(Schema.Finite),
+  toEmpty: Schema.NullOr(Schema.Finite),
+  watts: Schema.NullOr(Schema.Finite),
+});
+type Details = typeof Details.Type;
+
+let details: Details | null = Option.getOrNull(Schema.decodeUnknownOption(Details)(host.storage.get("details")));
 
 function field(report: string, key: string) {
   return new RegExp(`"${key}"\\s*=\\s*(\\d+)`).exec(report)?.[1] ?? null;
@@ -38,7 +46,10 @@ function parse(report: string): Details {
 }
 
 const refresh = lifted.exec(["/usr/sbin/ioreg", "-rn", "AppleSmartBattery"]).pipe(
-  Effect.map((result) => void (details = parse(result.stdout))),
+  Effect.flatMap((result) => {
+    details = parse(result.stdout);
+    return lifted.storage.set("details", details);
+  }),
   Effect.catchTag("HostError", (error) => lifted.log(`ioreg failed: ${error.message}`)),
 );
 

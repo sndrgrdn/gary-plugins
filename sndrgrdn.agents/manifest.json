@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "kinds": ["service", "bar-widget", "menu"],
   "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "menu": "menu.tsx" },
-  "subscribes": { "bar-widget": ["sndrgrdn.agents"], "menu": ["sndrgrdn.agents"] },
+  "subscribes": { "service": ["session"], "bar-widget": ["sndrgrdn.agents"], "menu": ["sndrgrdn.agents"] },
   "uses": ["exec", "files", "network"],
   "bar": "right"
 }

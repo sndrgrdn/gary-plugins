@@ -1,4 +1,4 @@
-import { Effect, Stream, host as lifted, topic } from "gary:effect";
+import { Effect, Option, Schema, Stream, host as lifted, topic } from "gary:effect";
 import type { HostError } from "gary:effect";
 import { glyph } from "./glyph";
 
@@ -12,7 +12,10 @@ const visibleRows = 8;
 const checkWidth = 18;
 const buttonSize = 28;
 
-let address: { ip: string; gateway: string } | null = null;
+const Address = Schema.Struct({ device: Schema.String, ip: Schema.String, gateway: Schema.String });
+const stored = Option.getOrNull(Schema.decodeUnknownOption(Address)(host.storage.get("address")));
+
+let address: { ip: string; gateway: string } | null = stored;
 let busy: string | null = null;
 let secret: string | null = null;
 let forgetting: string | null = null;
@@ -33,6 +36,7 @@ const lookup = Effect.fn("Network.lookup")(function* (device: string) {
     lifted.exec(["/usr/sbin/ipconfig", "getoption", device, "router"]),
   ]);
   address = { ip: ip.stdout.trim() || "--", gateway: gateway.stdout.trim() || "--" };
+  yield* lifted.storage.set("address", { device, ...address });
 }, Effect.catchTag("HostError", () => Effect.sync(() => void (address = null))));
 
 function join(network: Gary.WiFiNetwork, password: string | null) {
@@ -208,7 +212,10 @@ export default {
     topic("wifi").pipe(
       Stream.map((wifi) => (wifi.connected && wifi.interface ? wifi.interface : null)),
       Stream.changes,
-      Stream.runForEach((device) => (device ? lookup(device) : Effect.sync(() => void (address = null)))),
+      Stream.runForEach((device) => {
+        if (device !== stored?.device) address = null;
+        return device ? lookup(device) : Effect.void;
+      }),
     ),
   ], { concurrency: "unbounded" }),
 

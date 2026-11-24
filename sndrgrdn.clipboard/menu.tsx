@@ -6,9 +6,17 @@ const width = 440;
 const rowHeight = 32;
 const visibleRows = 9;
 const opened = Date.now();
+const previewLength = 500;
 
 let entries: Entry[] = [];
+let previews: string[] = [];
 let selected = 0;
+
+function summary(entry: Entry) {
+  if ("image" in entry) return "";
+  const text = "text" in entry ? entry.text.trimStart().slice(0, 4 * previewLength) : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
+  return text.replace(/\s+/g, " ").trim().slice(0, previewLength);
+}
 
 function age(copied: number) {
   const minutes = Math.floor((opened - copied) / 60_000);
@@ -22,9 +30,8 @@ function rowRadius({ radius, spacing }: Theme) {
   return Math.max(0, radius.surface - spacing.item);
 }
 
-function Preview({ entry, chosen, theme }: { entry: Entry; chosen: boolean; theme: Theme }) {
+function Preview({ entry, text, chosen, theme }: { entry: Entry; text: string; chosen: boolean; theme: Theme }) {
   if ("image" in entry) return <image key="image" path={entry.image} width={48} height={24} fit="fill" radius={rowRadius(theme)} clip />;
-  const text = "text" in entry ? entry.text.replace(/\s+/g, " ").trim() : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
   return (
     <row key="text">
       {"files" in entry && <text key="icon" font="icon" fontSize={15} y={0.5} color={chosen ? "accent" : "dim"}>{"\u{F0224}"}</text>}
@@ -59,7 +66,7 @@ function row(entry: Entry, index: number, theme: Theme) {
       rightAction={`remove:${index}`}
       hoverAction={`hover:${index}`}
     >
-      <Preview entry={entry} chosen={chosen} theme={theme} />
+      <Preview entry={entry} text={previews[index]} chosen={chosen} theme={theme} />
       <spacer key="gap" />
       <text key="age" style="dim">{age(entry.copied)}</text>
     </row>
@@ -72,6 +79,7 @@ export default {
   onTopic({ topic, value }) {
     if (topic !== "sndrgrdn.clipboard") return;
     entries = value;
+    previews = entries.map(summary);
     selected = Math.max(0, Math.min(selected, entries.length - 1));
   },
 

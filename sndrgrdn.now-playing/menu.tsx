@@ -1,4 +1,4 @@
-import { Effect, Schedule, host, type HostError } from "gary:effect";
+import { Effect, Stream, host, topic, type HostError } from "gary:effect";
 
 const width = 300;
 const artworkSize = 56;
@@ -86,7 +86,12 @@ function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
 export default {
   surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
 
-  effect: Effect.repeat(Effect.sync(() => (now = Date.now())), Schedule.spaced("1 second")),
+  effect: topic("nowplaying").pipe(
+    Stream.map((nowplaying) => nowplaying.track?.playing === true),
+    Stream.changes,
+    Stream.switchMap((playing) => (playing ? Stream.tick("1 second") : Stream.make(undefined))),
+    Stream.runForEach(() => Effect.sync(() => (now = Date.now()))),
+  ),
 
   render(state) {
     const nowplaying = state.nowplaying;

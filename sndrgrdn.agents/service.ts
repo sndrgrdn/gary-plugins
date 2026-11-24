@@ -1,4 +1,4 @@
-import { Effect, Option, Schedule, Schema, Stream, fetch, host } from "gary:effect";
+import { Effect, Option, Schema, Stream, fetch, host, topic } from "gary:effect";
 import type { Problem, Provider, ProviderId, Window } from "./topic";
 import {
   ClaudeCredentials,
@@ -236,10 +236,37 @@ const collectors: Collector[] = [
   { id: "grok", name: "Grok", collect: grok },
 ];
 
-let providers: Provider[] = collectors.map(({ id, name }) => ({ id, name, plan: null, windows: [], fetchedAt: null, problem: null }));
+const period = 5 * 60_000;
+const Stored = Schema.Struct({
+  checkedAt: Schema.Finite,
+  providers: Schema.Array(
+    Schema.Struct({
+      id: Schema.Literals(["claude", "codex", "grok"]),
+      plan: Schema.NullOr(Schema.String),
+      windows: Schema.mutable(
+        Schema.Array(Schema.Struct({ label: Schema.String, percent: Schema.Finite, resetsAt: Schema.NullOr(Schema.Finite), period: Schema.NullOr(Schema.Finite) })),
+      ),
+      fetchedAt: Schema.NullOr(Schema.Finite),
+      problem: Schema.NullOr(Schema.Struct({ kind: Schema.Literals(["signed-out", "unavailable"]), message: Schema.String })),
+    }),
+  ),
+});
+
+const stored = Option.getOrNull(Schema.decodeUnknownOption(Stored)(Effect.runSync(host.storage.get("usage"))));
+let providers: Provider[] = collectors.map(({ id, name }) => ({
+  id,
+  name,
+  plan: null,
+  windows: [],
+  fetchedAt: null,
+  problem: null,
+  ...stored?.providers.find((provider) => provider.id === id),
+}));
+let checkedAt = stored?.checkedAt ?? 0;
 let refreshing = false;
 
 const publish = Effect.suspend(() => host.publish({ providers }));
+const save = Effect.suspend(() => host.storage.set("usage", { checkedAt, providers }));
 
 const collect = ({ id, name, collect }: Collector) =>
   collect.pipe(
@@ -258,13 +285,29 @@ const collect = ({ id, name, collect }: Collector) =>
 const refresh = Effect.suspend(() => {
   if (refreshing) return Effect.void;
   refreshing = true;
+  checkedAt = Date.now();
   return Effect.forEach(collectors, collect, { concurrency: "unbounded", discard: true }).pipe(
+    Effect.andThen(Effect.ignore(save)),
     Effect.ensuring(Effect.sync(() => void (refreshing = false))),
+    Effect.uninterruptible,
   );
 });
 
+const poll = Effect.suspend(() => {
+  const wait = checkedAt + period - Date.now();
+  return wait > 0 ? Effect.sleep(wait) : refresh;
+}).pipe(Effect.forever);
+
 export default {
-  effect: Effect.andThen(Effect.ignore(publish), Effect.repeat(refresh, Schedule.spaced("5 minutes"))),
+  effect: Effect.andThen(
+    Effect.ignore(publish),
+    topic("session").pipe(
+      Stream.map((session) => session.locked),
+      Stream.changes,
+      Stream.switchMap((locked) => (locked ? Stream.empty : Stream.fromEffect(poll))),
+      Stream.runDrain,
+    ),
+  ),
 
   methods: {
     refresh: () => Effect.map(refresh, () => ({ providers })),

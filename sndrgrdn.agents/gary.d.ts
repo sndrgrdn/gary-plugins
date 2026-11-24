@@ -177,6 +177,7 @@ declare namespace Gary {
     radius: { control: number; surface: number };
   }
   interface Topics {
+    "session": Session;
     "sndrgrdn.agents": import("./topic").Topic;
   }
   interface State extends Partial<Topics> {
@@ -288,6 +289,9 @@ declare namespace Gary {
   type FetchResponse = { status: number; text: string }
 }
 declare function fetch(url: string, options?: Gary.FetchOptions): Promise<Gary.FetchResponse>;
+declare namespace Gary {
+  type Session = { locked: boolean }
+}
 
 declare namespace Gary {
   interface Module {

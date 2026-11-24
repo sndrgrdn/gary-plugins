@@ -1,7 +1,7 @@
 declare namespace Gary {
   type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
   type Kind = "bar-widget" | "bar" | "panel" | "overlay" | "menu" | "service";
-  type Key = "backspace" | "delete" | "down" | "end" | "enter" | "escape" | "home" | "left" | "pagedown" | "pageup" | "right" | "tab" | "up" | (string & {});
+  type Key = "left" | "right" | "down" | "up" | "enter" | "escape" | "tab" | "backspace" | "delete" | "home" | "end" | "pageup" | "pagedown" | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8" | "f9" | "f10" | "f11" | "f12" | "f13" | "f14" | "f15" | "f16" | "f17" | "f18" | "f19" | "f20" | (string & {});
   type ScrollEvent = {
     x: number;
     y: number;
@@ -9,9 +9,9 @@ declare namespace Gary {
     phase: "began" | "changed" | "ended" | "momentum" | "none";
     action?: string;
   }
-  type StyleName = (string & {});
-  type FontName = (string & {});
-  type ColorName = (string & {});
+  type StyleName = "active" | "bad" | "bright" | "button" | "button-hover" | "default" | "dim" | "good" | "highlight" | "hover" | "mono" | "panel" | "picker" | "primary" | "primary-hover" | "secondary" | "selected" | "surface" | "title" | "toast" | "toast-body" | "toast-icon" | "toast-title" | "tooltip" | (string & {});
+  type FontName = "body" | "mono" | "strong" | "title" | (string & {});
+  type ColorName = "accent" | "background" | "bad" | "bar" | "border" | "bright" | "control" | "dim" | "foreground" | "good" | "hover" | "on-accent" | "panel" | "scrim" | "secondary" | "selected" | (string & {});
   type Color = ColorName;
   type Paint = Color | { gradient: "linear" | "radial" | "angular"; colors: [Color, Color, ...Color[]]; angle?: number };
 
@@ -55,6 +55,7 @@ declare namespace Gary {
     rightAction?: string;
     middleAction?: string;
     scrollAction?: string;
+    hoverAction?: string;
     tooltip?: string;
     hovered?: StyleProps;
     pressed?: StyleProps;
@@ -179,6 +180,7 @@ declare namespace Gary {
     "sndrgrdn.focus-timer": import("../sndrgrdn.focus-timer/topic").Topic;
     "sndrgrdn.menu": import("../sndrgrdn.menu/topic").Topic;
     "focus": Focus;
+    "session": Session;
   }
   interface State extends Partial<Topics> {
     settings: { [key: string]: Json };
@@ -203,7 +205,7 @@ declare namespace Gary {
     attach?: boolean;
   }
 
-  type ActionPayload = null | number | string;
+  type ActionPayload = null | boolean | number | string;
   interface Storage {
     get(key: string): Json | undefined;
     set(key: string, value: Json | undefined): void;
@@ -250,6 +252,16 @@ declare function setTimeout(callback: (...args: any[]) => void, ms?: number, ...
 declare function setInterval(callback: (...args: any[]) => void, ms?: number, ...args: any[]): number;
 declare function clearTimeout(id?: number): void;
 declare function clearInterval(id?: number): void;
+declare class TextEncoder {
+  readonly encoding: "utf-8";
+  encode(input?: string): Uint8Array;
+}
+declare class TextDecoder {
+  constructor(label?: "utf-8", options?: { fatal?: boolean });
+  readonly encoding: "utf-8";
+  readonly fatal: boolean;
+  decode(input?: ArrayBuffer | ArrayBufferView): string;
+}
 declare namespace Gary {
   type Focus = {
     available: boolean;
@@ -261,6 +273,9 @@ declare namespace Gary {
     source?: string | null;
   }
 }
+declare namespace Gary {
+  type Session = { locked: boolean }
+}
 
 declare namespace Gary {
   interface Module {
@@ -271,7 +286,7 @@ declare namespace Gary {
 }
 
 declare module "gary:effect" {
-  import type { Effect as E, Stream as S } from "effect";
+  import type { Effect as E, Scope as Sc, Stream as S } from "effect";
   export {
     Cache, Cause, Context, Data, Deferred, Duration, Effect, Exit, Fiber, Layer, Option, PubSub, Queue, Ref, Schedule, Schema, Scope,
     Semaphore, Stream, SubscriptionRef, pipe,
@@ -283,9 +298,14 @@ declare module "gary:effect" {
   type Lift<T> = T extends (...args: infer A) => infer R
     ? (...args: A) => E.Effect<Awaited<R>, HostError>
     : { readonly [K in keyof T]: Lift<T[K]> };
-  export const host: {
-    readonly [K in keyof Gary.Host]: K extends "spawn" ? (argv: string[]) => S.Stream<string, HostError> : Lift<Gary.Host[K]>;
-  };
+  interface Scoped {
+    spawn(argv: string[]): S.Stream<string, HostError>;
+    hotkeys(keys: string[]): S.Stream<string, HostError>;
+    hyperkey(options?: { key?: string; shift?: boolean; tap?: string }): E.Effect<void, HostError, Sc.Scope>;
+    watchFile(path: string): S.Stream<string | null, HostError>;
+    lockFile(path: string): E.Effect<void, HostError, Sc.Scope>;
+  }
+  export const host: { readonly [K in keyof Gary.Host]: K extends keyof Scoped ? Scoped[K] : Lift<Gary.Host[K]> };
   export const fetch: typeof globalThis extends { fetch: infer F } ? Lift<F> : never;
   export const settings: Gary.State["settings"];
   export function topic<K extends keyof Gary.Topics>(name: K): S.Stream<Gary.Topics[K]>;

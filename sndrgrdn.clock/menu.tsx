@@ -1,4 +1,4 @@
-import { Effect, Stream, host, topic } from "gary:effect";
+import { Effect, Option, Schema, Stream, host, topic } from "gary:effect";
 
 const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -6,9 +6,26 @@ const cell = 28;
 const cellGap = 4;
 const width = 7 * cell + 6 * cellGap;
 
+const Today = Schema.Struct({
+  day: Schema.Finite,
+  events: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      calendar: Schema.String,
+      title: Schema.String,
+      start: Schema.Finite,
+      end: Schema.Finite,
+      allDay: Schema.Boolean,
+      location: Schema.NullOr(Schema.String),
+      color: Schema.String,
+    }),
+  ),
+});
+const stored = Option.getOrNull(Schema.decodeUnknownOption(Today)(Effect.runSync(host.storage.get("today"))));
+
 let offset = 0;
 let travel = 0;
-let events: readonly Gary.CalendarEvent[] | null = null;
+let events: readonly Gary.CalendarEvent[] | null = stored?.day === new Date().setHours(0, 0, 0, 0) ? stored.events : null;
 let reason: string | null = null;
 
 const fetchToday = Effect.fn("Clock.fetchToday")(
@@ -20,6 +37,7 @@ const fetchToday = Effect.fn("Clock.fetchToday")(
     const end = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
     events = yield* host.calendar.events(day.getTime(), end.getTime());
     reason = null;
+    yield* host.storage.set("today", { day: day.getTime(), events: [...events] });
   },
   Effect.catchTag("HostError", (error) => Effect.sync(() => void (reason = error.message))),
 );
