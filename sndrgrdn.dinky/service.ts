@@ -1,4 +1,4 @@
-import { Effect, Queue, Schema, Stream, host } from "gary:effect";
+import { Effect, Queue, Schedule, Schema, Stream, host } from "gary:effect";
 import type { Display, Workspace } from "./topic";
 
 type Switch = { monitor: number; workspace: number };
@@ -35,8 +35,9 @@ const publish = Effect.suspend(() => {
 
 const readDisplays = Effect.fn("Dinky.readDisplays")(function* () {
   const state = yield* Schema.decodeUnknownEffect(DebugState)(yield* dinky("debug-state"));
+  if (state.displays.length === 0) return yield* new CommandFailed({ message: "dinky reported no displays" });
   uuids = state.displays.map((display) => display.uuid);
-}, Effect.catch((error) => host.log("debug-state failed: " + error.message)));
+}, Effect.retry({ schedule: Schedule.spaced("1 second"), times: 10 }), Effect.catch((error) => host.log("debug-state failed: " + error.message)));
 
 const refresh = Effect.fn("Dinky.refresh")(function* () {
   const [workspaces, empty, focused] = yield* Effect.all(
