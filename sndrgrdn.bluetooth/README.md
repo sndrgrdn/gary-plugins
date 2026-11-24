@@ -12,6 +12,14 @@ Shows Bluetooth in the bar with Omarchy's icon, and opens Omarchy's Bluetooth pa
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. Bluetooth needs the Bluetooth permission. Until you allow it, the switch asks for it.
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel's icons are its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

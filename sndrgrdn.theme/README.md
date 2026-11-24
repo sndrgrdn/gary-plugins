@@ -52,6 +52,12 @@ gary call sndrgrdn.theme picker                # open the picker
 
 Helium needs a privileged helper to set its colors. Install it with `theme-switcher helium setup`. Every other app needs no setup.
 
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The picker's search icon is one of its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

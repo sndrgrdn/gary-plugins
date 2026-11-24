@@ -19,6 +19,12 @@ Pasting needs Accessibility for Gary. Run `gary permissions request accessibilit
 
 ⌘⇧V replaces the shortcut that some apps use for Paste and Match Style. To use another key, change `keys` under `hotkeys` in `manifest.json`.
 
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The menu's file icon is one of its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

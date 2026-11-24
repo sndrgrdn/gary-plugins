@@ -49,6 +49,12 @@ To install the plugins as a package instead, which `gary plugin update` keeps up
 gary plugin install git:github.com/sndrgrdn/gary-plugins
 ```
 
+The panels and menus draw their icons in a Nerd Font that you name `icon` in `~/.config/gary/theme.json`:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## License
 
 The plugins are released under the [MIT License](LICENSE).

@@ -10,7 +10,7 @@ export default {
     return (
       <column padding={spacing.section} gap={spacing.section} width={width}>
         <row key="now" height={heroHeight}>
-          <icon key="icon" symbol={weather?.icon ?? "cloud"} fontSize={20} width={28} color="foreground" opacity={weather ? 1 : 0.5} />
+          <text key="icon" font="icon" fontSize={24} width={28} align="center" y={0.5} color="foreground" opacity={weather ? 1 : 0.5}>{weather?.glyph ?? "\u{E33D}"}</text>
           <column key="text" gap={0}>
             <text key="temperature" style="title" color={weather ? "foreground" : "dim"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
             <text key="condition" fontSize={11} color="dim">{(weather ? `${weather.condition} · ${weather.place}` : "Loading forecast").toUpperCase()}</text>

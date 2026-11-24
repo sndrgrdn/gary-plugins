@@ -20,6 +20,14 @@ It shows Leeuwarden by default. To show another place, set its coordinates and n
 
 Without `place`, the panel names the place by its coordinates.
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel shows the bar's weather glyph in it:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

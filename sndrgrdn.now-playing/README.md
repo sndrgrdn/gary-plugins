@@ -11,3 +11,11 @@ Set `showTitle` to `true` in `~/.config/gary/shell.json` to show the artist and 
 ```
 
 ![Now Playing menu with the artwork, title, artist, a seek bar and the previous, pause and next controls](screenshot.png)
+
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel's controls are its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```

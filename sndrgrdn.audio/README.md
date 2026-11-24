@@ -12,6 +12,14 @@ Shows the volume in the bar with Omarchy's speaker icon, and opens Omarchy's aud
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. For the pill that the volume keys show, turn on `sndrgrdn.osd`.
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel's icons are its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

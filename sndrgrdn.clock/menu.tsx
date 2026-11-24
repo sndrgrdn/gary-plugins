@@ -87,8 +87,8 @@ export default {
         <row key="header" width={width} gap={cellGap}>
           <text key="month" style="title" action="today">{months[first.getMonth()]} {first.getFullYear()}</text>
           <spacer />
-          <icon key="previous" symbol="chevron.left" style="dim" action="previous" width={cell} height={cell} radius={radius.control} hovered={{ color: "foreground", background: "hover" }} />
-          <icon key="next" symbol="chevron.right" style="dim" action="next" width={cell} height={cell} radius={radius.control} hovered={{ color: "foreground", background: "hover" }} />
+          <text key="previous" font="icon" fontSize={21} style="dim" action="previous" width={cell} height={cell} align="center" radius={radius.control} hovered={{ color: "foreground", background: "hover" }}>{"\u{F0141}"}</text>
+          <text key="next" font="icon" fontSize={21} style="dim" action="next" width={cell} height={cell} align="center" radius={radius.control} hovered={{ color: "foreground", background: "hover" }}>{"\u{F0142}"}</text>
         </row>
         <grid key="grid" columns={7} gap={cellGap} align="center">
           {weekdays.map((name, index) => <text key={`w${index}`} style="dim" width={cell} height={16} align="center">{name}</text>)}

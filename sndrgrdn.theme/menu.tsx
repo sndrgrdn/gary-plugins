@@ -135,7 +135,7 @@ function caption(spacing: Gary.Theme["spacing"]): Gary.Node {
     ? [
       <row key="divider" width={1} height={16} background="alpha(#ffffff, 0.2)" />,
       <row key="query">
-        <icon key="search" symbol="magnifyingglass" fontSize={14} color="alpha(#ffffff, 0.75)" />
+        <text key="search" font="icon" fontSize={18} color="alpha(#ffffff, 0.75)">{"\u{F0349}"}</text>
         <text key="text" font="picker-query" color="alpha(#ffffff, 0.75)">{query}</text>
       </row>,
     ]

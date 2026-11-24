@@ -22,16 +22,16 @@ function clock(seconds: number) {
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${rest}` : `${minutes}:${rest}`;
 }
 
-function Control({ action, symbol, fontSize }: { action: string; symbol: string; fontSize: number }) {
+function Control({ action, glyph, fontSize }: { action: string; glyph: string; fontSize: number }) {
   return (
     <button key={action} action={action} hover="hover" width={32} height={20} align="center">
-      <icon symbol={symbol} fontSize={fontSize} />
+      <text font="icon" fontSize={fontSize}>{glyph}</text>
     </button>
   );
 }
 
 function Artwork({ path, radius }: { path: string | null; radius: number }) {
-  if (!path) return <icon key="artwork" symbol="music.note" width={artworkSize} height={artworkSize} radius={radius} background="control" style="dim" />;
+  if (!path) return <text key="artwork" font="icon" fontSize={15} width={artworkSize} height={artworkSize} align="center" radius={radius} background="control" style="dim">{"\u{F0387}"}</text>;
   return <image key="artwork" path={path} width={artworkSize} height={artworkSize} radius={radius} clip fit="fill" />;
 }
 
@@ -73,9 +73,9 @@ function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
         <Seek track={track} width={width - 2 * spacing.section} />
         <row key="controls" gap={spacing.section}>
           <spacer key="start" />
-          <Control action="previous" symbol="backward.fill" fontSize={16} />
-          <Control action="toggle" symbol={track.playing ? "pause.fill" : "play.fill"} fontSize={20} />
-          <Control action="next" symbol="forward.fill" fontSize={16} />
+          <Control action="previous" glyph={"\u{F04AE}"} fontSize={22} />
+          <Control action="toggle" glyph={track.playing ? "\u{F03E4}" : "\u{F040A}"} fontSize={26} />
+          <Control action="next" glyph={"\u{F04AD}"} fontSize={22} />
           <spacer key="end" />
         </row>
       </column>

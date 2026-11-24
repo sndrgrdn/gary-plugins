@@ -54,6 +54,14 @@ gary call sndrgrdn.launcher open    # open the picker
 gary call sndrgrdn.launcher state   # the app and pane counts, the query, the answer, the rules that rewrote the query, and the first results
 ```
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The search and calculator icons are its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

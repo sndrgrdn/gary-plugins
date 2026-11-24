@@ -1,5 +1,6 @@
 import { Effect, Stream, host as lifted, topic } from "gary:effect";
 import type { HostError } from "gary:effect";
+import { glyph } from "./glyph";
 
 type Spacing = Gary.Theme["spacing"];
 type Theme = Gary.Theme;
@@ -141,17 +142,22 @@ function Network({ network, state }: { network: Gary.WiFiNetwork; state: Gary.St
       hovered={current ? undefined : { background: "hover" }}
       width={width - 2 * spacing.item}
     >
-      <icon
+      <text
         key="icon"
-        symbol={pending ? "arrow.triangle.2.circlepath" : "wifi"}
+        font="icon"
+        fontSize={15}
         width={checkWidth}
+        align="center"
+        y={0.5}
         color="foreground"
         loop={pending ? { rotation: [0, 360] } : undefined}
-      />
+      >
+        {pending ? "\u{F04E6}" : "\u{F05A9}"}
+      </text>
       <text key="name" color="foreground" font={current ? "strong" : undefined}>{ssid}</text>
       <spacer />
       {pending ? <text key="status" color="dim">{busy === forgetting ? "Forgetting…" : "Connecting…"}</text> : current ? <text key="status" color="dim">Connected</text> : null}
-      {network.secure ? <icon key="lock" symbol="lock.fill" fontSize={10} color="dim" /> : null}
+      {network.secure ? <text key="lock" font="icon" fontSize={10} width={10} align="center" color="dim">{"\u{F033E}"}</text> : null}
     </row>
   );
 }
@@ -161,7 +167,7 @@ function list(state: Gary.State) {
   if (state.wifi?.location !== "authorized") {
     return (
       <row key="location" height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action="location" hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
-        <icon key="icon" symbol="location" width={checkWidth} color="dim" />
+        <text key="icon" font="icon" fontSize={15} width={checkWidth} align="center" y={0.5} color="dim">{"\u{F034E}"}</text>
         <text key="text">Allow Location to see network names</text>
       </row>
     );
@@ -176,7 +182,7 @@ function list(state: Gary.State) {
       return [
         row,
         <row key="forget" height={rowHeight} padding={[0, spacing.item]} radius={rowRadius(state.theme)} action={`forget:${forgetting}`} hovered={{ background: "hover" }} width={width - 2 * spacing.item}>
-          <icon key="icon" symbol="minus.circle" width={checkWidth} color="dim" />
+          <text key="icon" font="icon" fontSize={15} width={checkWidth} align="center" y={0.5} color="dim">{"\u{F0377}"}</text>
           <text key="text">Forget This Network</text>
         </row>,
       ];
@@ -215,7 +221,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={on ? "wifi" : "wifi.slash"} fontSize={20} width={28} color="foreground" opacity={wifi?.connected ? 1 : 0.5} />
+          <text key="icon" font="icon" fontSize={22} width={28} align="center" y={0.5} color="foreground" opacity={wifi?.connected ? 1 : 0.5}>{glyph(wifi)}</text>
           <column key="labels" gap={0}>
             <text key="title" style="title">{wifi?.connected && wifi.ssid ? wifi.ssid : "Wi‑Fi"}</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}

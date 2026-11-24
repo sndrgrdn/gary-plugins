@@ -44,7 +44,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={displays.length > 1 ? "display.2" : "display"} fontSize={20} width={28} color="foreground" />
+          <text key="icon" font="icon" fontSize={22} width={28} align="center" y={0.5} color="foreground">{displays.length > 1 ? "\u{F037A}" : "\u{F0379}"}</text>
           <column key="labels" gap={0}>
             <text key="title" style="title">Display</text>
             {controlled.length ? null : <text key="status" fontSize={11} color="dim">FIXED BRIGHTNESS</text>}

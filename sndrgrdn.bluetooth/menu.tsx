@@ -1,5 +1,6 @@
 import { Effect, host as lifted } from "gary:effect";
 import type { HostError } from "gary:effect";
+import { glyph } from "./glyph";
 
 type Spacing = Gary.Theme["spacing"];
 type Theme = Gary.Theme;
@@ -77,13 +78,18 @@ function Device({ device, theme }: { device: Gary.BluetoothDevice | Gary.Bluetoo
       hovered={connected ? undefined : { background: "hover" }}
       tooltip={paired ? (connected ? "Disconnect" : "Connect") : "Pair"}
     >
-      <icon
+      <text
         key="icon"
-        symbol={pending ? "arrow.triangle.2.circlepath" : "dot.radiowaves.left.and.right"}
+        font="icon"
+        fontSize={15}
         width={18}
+        align="center"
+        y={0.5}
         color="foreground"
         loop={pending ? { rotation: [0, 360] } : undefined}
-      />
+      >
+        {pending ? "\u{F04E6}" : "\u{F00AF}"}
+      </text>
       <text key="name" color="foreground" font={connected ? "strong" : undefined}>{device.name ?? device.address}</text>
       <spacer />
       <text key="detail" color="dim">{detail}</text>
@@ -125,7 +131,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol="dot.radiowaves.left.and.right" fontSize={20} width={28} color="foreground" opacity={on ? 1 : 0.5} />
+          <text key="icon" font="icon" fontSize={22} width={28} align="center" y={0.5} color="foreground" opacity={on ? 1 : 0.5}>{glyph(bluetooth)}</text>
           <column key="labels" gap={0}>
             <text key="title" style="title">Bluetooth</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}

@@ -21,6 +21,14 @@ Set `showPercentage` to `true` in `~/.config/gary/shell.json` to show the batter
 { "settings": { "sndrgrdn.power": { "showPercentage": true } } }
 ```
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel's battery icon is one of its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

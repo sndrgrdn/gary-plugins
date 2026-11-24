@@ -31,7 +31,7 @@ export default {
   },
 
   render() {
-    if (tray && !tray.available) return <icon symbol="exclamationmark.triangle" color="bad" tooltip={tray.reason} />;
+    if (tray && !tray.available) return <text font="icon" color="bad" tooltip={tray.reason}>{"\u{F002A}"}</text>;
     const items = tray?.items ?? [];
     if (items.length === 0) return <row />;
     return (

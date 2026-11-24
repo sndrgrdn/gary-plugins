@@ -29,6 +29,14 @@ It uses Gary's `tray` capability, which needs Accessibility to list and press th
 
 `gary call sndrgrdn.tray state` prints the items it shows, with their ids.
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The warning icon is one of its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

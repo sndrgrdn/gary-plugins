@@ -10,6 +10,14 @@ Shows a display icon in the bar, as Omarchy does, and opens Omarchy's monitor pa
 
 The icon is a Nerd Font glyph, so the bar needs a Nerd Font, such as `JetBrainsMono Nerd Font`. For the pill that the brightness keys show, turn on `sndrgrdn.osd`.
 
+## Setup
+
+Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The panel's display icon is one of its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
+
 ## Install
 
 This plugin ships in the `sndrgrdn/gary-plugins` package. Installing the package adds every plugin in it:

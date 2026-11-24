@@ -13,20 +13,20 @@ const idle: Topic = { recording: false, awake: false };
 
 const screenshot: Branch = {
   label: "Screenshot",
-  icon: "camera.viewfinder",
+  icon: "\u{F0E51}",
   rows: () => [
-    { label: "Region or Window", icon: "rectangle.dashed", command: "screenshot-region" },
-    { label: "Display", icon: "display", command: "screenshot-display" },
+    { label: "Region or Window", icon: "\u{F0489}", command: "screenshot-region" },
+    { label: "Display", icon: "\u{F0379}", command: "screenshot-display" },
   ],
 };
 
 const record: Branch = {
   label: "Record",
-  icon: "record.circle",
+  icon: "\u{F0EC3}",
   rows: () => [
-    { label: "Region or Window", icon: "rectangle.dashed", command: "record-region" },
-    { label: "Display", icon: "display", command: "record-display" },
-    { label: "Display with Audio", icon: "speaker.wave.2", command: "record-display-audio" },
+    { label: "Region or Window", icon: "\u{F0489}", command: "record-region" },
+    { label: "Display", icon: "\u{F0379}", command: "record-display" },
+    { label: "Display with Audio", icon: "\u{F057E}", command: "record-display-audio" },
   ],
 };
 
@@ -36,42 +36,42 @@ const root: Branch = {
   rows: () => [
     {
       label: "Capture",
-      icon: "camera",
+      icon: "\u{F0100}",
       rows: (status) => [
         screenshot,
-        status.recording ? { label: "Stop Recording", icon: "stop.circle", command: "record-stop" } : record,
-        { label: "Text", icon: "text.viewfinder", command: "text" },
-        { label: "QR Code", icon: "qrcode.viewfinder", command: "qr" },
-        { label: "Color", icon: "eyedropper", command: "color" },
+        status.recording ? { label: "Stop Recording", icon: "\u{F0667}", command: "record-stop" } : record,
+        { label: "Text", icon: "\u{F113D}", command: "text" },
+        { label: "QR Code", icon: "\u{F0433}", command: "qr" },
+        { label: "Color", icon: "\u{F020A}", command: "color" },
       ],
     },
     {
       label: "Style",
-      icon: "paintpalette",
+      icon: "\u{F03D8}",
       rows: () => [
-        { label: "Theme", icon: "swatchpalette", command: "theme" },
-        { label: "Next Background", icon: "photo", command: "background-next", stay: true },
-        { label: "Previous Background", icon: "photo.stack", command: "background-previous", stay: true },
+        { label: "Theme", icon: "\u{F08B5}", command: "theme" },
+        { label: "Next Background", icon: "\u{F02E9}", command: "background-next", stay: true },
+        { label: "Previous Background", icon: "\u{F02F9}", command: "background-previous", stay: true },
       ],
     },
     {
       label: "Toggle",
-      icon: "switch.2",
+      icon: "\u{F0521}",
       rows: (status) => [
         status.awake
-          ? { label: "Allow Sleep", icon: "cup.and.saucer.fill", command: "awake" }
-          : { label: "Stay Awake", icon: "cup.and.saucer", command: "awake" },
+          ? { label: "Allow Sleep", icon: "\u{F0176}", command: "awake" }
+          : { label: "Stay Awake", icon: "\u{F06CA}", command: "awake" },
       ],
     },
     {
       label: "System",
-      icon: "power",
+      icon: "\u{F0425}",
       rows: () => [
-        { label: "Lock", icon: "lock", command: "lock" },
-        { label: "Sleep", icon: "moon", command: "sleep" },
-        { label: "Log Out", icon: "rectangle.portrait.and.arrow.right", command: "log-out", confirm: "Log out now?" },
-        { label: "Restart", icon: "arrow.clockwise", command: "restart", confirm: "Restart this Mac?" },
-        { label: "Shut Down", icon: "power", command: "shut-down", confirm: "Shut down this Mac?" },
+        { label: "Lock", icon: "\u{F033E}", command: "lock" },
+        { label: "Sleep", icon: "\u{F0904}", command: "sleep" },
+        { label: "Log Out", icon: "\u{F0343}", command: "log-out", confirm: "Log out now?" },
+        { label: "Restart", icon: "\u{F0709}", command: "restart", confirm: "Restart this Mac?" },
+        { label: "Shut Down", icon: "\u{F0425}", command: "shut-down", confirm: "Shut down this Mac?" },
       ],
     },
   ],
@@ -129,10 +129,10 @@ function Item({ row, index, chosen, theme }: { row: Row; index: number; chosen: 
       action={`row:${index}`}
       hoverAction={`hover:${index}`}
     >
-      <icon symbol={row.icon} width={18} color={chosen ? "accent" : "foreground"} />
+      <text font="icon" fontSize={15} width={18} align="center" y={0.5} color={chosen ? "accent" : "foreground"}>{row.icon}</text>
       <text color={chosen ? "accent" : "foreground"}>{row.label}</text>
       <spacer />
-      {"rows" in row && <icon symbol="chevron.right" fontSize={11} style="dim" />}
+      {"rows" in row && <text font="icon" fontSize={18} width={8} align="center" style="dim">{"\u{F0142}"}</text>}
     </row>
   );
 }
@@ -191,7 +191,7 @@ export default {
         <row key="scrim" width={screen.width} height={screen.height} background="scrim" action="close" />
         <column key="menu" x={(screen.width - width) / 2} y={Math.round(screen.height / 4)} width={width} padding={spacing.item} style="picker">
           <row key="header" height={rowHeight} padding={[0, spacing.item]}>
-            {(trail.length > 1 || confirming) && <icon key="back" symbol="chevron.left" style="dim" action="back" />}
+            {(trail.length > 1 || confirming) && <text key="back" font="icon" fontSize={21} width={10} align="center" y={0.5} style="dim" action="back">{"\u{F0141}"}</text>}
             <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
           </row>
           <row key="divider" height={0}>

@@ -1,4 +1,5 @@
 import { Effect, Schedule, host as lifted } from "gary:effect";
+import { glyph } from "./glyph";
 
 type Spacing = Gary.Theme["spacing"];
 type Theme = Gary.Theme;
@@ -57,12 +58,6 @@ function status(battery: Gary.Battery) {
   if (now === "full") return "Fully charged";
   if (now === "holding") return "On power, not charging";
   return now === "charging" ? "Charging" : "On battery";
-}
-
-function symbol(battery: Gary.Battery) {
-  const percent = battery.percent ?? 0;
-  const level = percent >= 88 ? 100 : percent >= 63 ? 75 : percent >= 38 ? 50 : percent >= 13 ? 25 : 0;
-  return battery.charging ? "battery.100percent.bolt" : `battery.${level}percent`;
 }
 
 function Divider({ name, theme }: { name: string; theme: Theme }) {
@@ -128,7 +123,7 @@ export default {
     return (
       <column width={width} padding={[spacing.item, spacing.item, spacing.section, spacing.item]} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={symbol(battery)} fontSize={20} width={28} color="foreground" />
+          <text key="icon" font="icon" fontSize={22} width={28} align="center" y={0.5} color="foreground">{glyph(battery, battery.percent)}</text>
           <column key="labels" gap={0}>
             <text key="title" style="title">Battery</text>
             <text key="status" fontSize={11} color="dim">{status(battery).toUpperCase()}</text>

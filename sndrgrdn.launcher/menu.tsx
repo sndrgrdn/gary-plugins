@@ -171,7 +171,7 @@ function Row({ row, chosen, theme }: { row: Row; chosen: boolean; theme: Theme }
     >
       {row.kind === "answer" ? (
         <>
-          <icon symbol="equal" color={chosen ? "accent" : "foreground"} fontSize={16} width={iconSize} />
+          <text font="icon" color={chosen ? "accent" : "foreground"} fontSize={18} width={iconSize} align="center">{"\u{F01FC}"}</text>
           <text color={chosen ? "accent" : "foreground"} font="title">{row.answer.result}</text>
           <spacer />
           <text color="dim">{row.answer.input}</text>
@@ -238,7 +238,7 @@ export default {
           style="picker"
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
-            <icon symbol="magnifyingglass" color="dim" fontSize={16} width={iconSize} />
+            <text font="icon" color="dim" fontSize={21} width={iconSize} align="center" y={0.5}>{"\u{F0349}"}</text>
             <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} />
           </row>
           {listed() && (

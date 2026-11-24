@@ -27,7 +27,7 @@ function Preview({ entry, chosen, theme }: { entry: Entry; chosen: boolean; them
   const text = "text" in entry ? entry.text.replace(/\s+/g, " ").trim() : entry.files.map((path) => path.slice(path.lastIndexOf("/") + 1)).join(", ");
   return (
     <row key="text">
-      {"files" in entry && <icon key="icon" symbol="doc" color={chosen ? "accent" : "dim"} />}
+      {"files" in entry && <text key="icon" font="icon" fontSize={15} y={0.5} color={chosen ? "accent" : "dim"}>{"\u{F0224}"}</text>}
       <text key="text" lines={1} color={chosen ? "accent" : "foreground"}>{text}</text>
     </row>
   );

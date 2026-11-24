@@ -1,5 +1,6 @@
 import { Effect, host as lifted } from "gary:effect";
 import type { HostError } from "gary:effect";
+import { glyph, headphones } from "./glyph";
 
 type Theme = Gary.Theme;
 type Scope = Gary.AudioScope;
@@ -9,7 +10,7 @@ const rowHeight = 32;
 const headerHeight = 24;
 const iconWidth = 18;
 const nameWidth = 94;
-const headphones = /headphone|headset|earbud|earphone|airpod/i;
+const airplayGlyph = "\u{F101E}";
 
 let problem: string | null = null;
 let airplay: Gary.AirPlayTarget[] | null = null;
@@ -28,19 +29,13 @@ function status(output: Gary.AudioDeviceState | null | undefined) {
   return output.muted ? "Muted" : null;
 }
 
-function outputSymbol(output: Gary.AudioDeviceState | null | undefined) {
-  if (output && headphones.test(output.name)) return "headphones";
-  const volume = level(output);
-  return volume === 0 ? "speaker.slash.fill" : volume < 0.34 ? "speaker.wave.1.fill" : volume < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill";
-}
-
-function deviceSymbol(device: Gary.AudioDeviceSummary, scope: Scope) {
-  if (headphones.test(device.name)) return "headphones";
-  if (device.transport === "bluetooth") return "dot.radiowaves.left.and.right";
-  if (device.transport === "airplay") return "airplayaudio";
-  if (device.transport === "hdmi" || device.transport === "displayport") return "display";
-  if (device.transport === "continuity" || /camera|webcam/i.test(device.name)) return "web.camera";
-  return scope === "output" ? "hifispeaker" : "mic";
+function deviceGlyph(device: Gary.AudioDeviceSummary, scope: Scope) {
+  if (headphones.test(device.name)) return "\u{F02CB}";
+  if (device.transport === "bluetooth") return "\u{F00AF}";
+  if (device.transport === "airplay") return airplayGlyph;
+  if (device.transport === "hdmi" || device.transport === "displayport") return "\u{F0379}";
+  if (device.transport === "continuity" || /camera|webcam/i.test(device.name)) return "\u{F05A0}";
+  return scope === "output" ? "\u{F04C3}" : "\u{F036C}";
 }
 
 function rowRadius({ radius, spacing }: Theme) {
@@ -74,7 +69,7 @@ function Switch({ on, action, tooltip }: { on: boolean; action: string; tooltip:
   );
 }
 
-function Choice({ id, symbol, name, action, current, theme }: { id: string; symbol: string; name: string; action: string; current: boolean; theme: Theme }) {
+function Choice({ id, glyph, name, action, current, theme }: { id: string; glyph: string; name: string; action: string; current: boolean; theme: Theme }) {
   const { spacing } = theme;
   return (
     <row
@@ -87,7 +82,7 @@ function Choice({ id, symbol, name, action, current, theme }: { id: string; symb
       background={current ? "selected" : undefined}
       hovered={current ? undefined : { background: "hover" }}
     >
-      <icon key="icon" symbol={symbol} width={18} color="foreground" />
+      <text key="icon" font="icon" fontSize={15} width={18} align="center" y={0.5} color="foreground">{glyph}</text>
       <text key="name" color="foreground" font={current ? "strong" : undefined}>{name}</text>
     </row>
   );
@@ -112,13 +107,13 @@ function Channel({ scope, state }: { scope: Scope; state: Gary.State }) {
         </row>
       ) : null}
       {devices.map((device) => (
-        <Choice id={device.id} symbol={deviceSymbol(device, scope)} name={device.name} action={`${scope}:device:${device.id}`} current={device.id === now?.id} theme={state.theme} />
+        <Choice id={device.id} glyph={deviceGlyph(device, scope)} name={device.name} action={`${scope}:device:${device.id}`} current={device.id === now?.id} theme={state.theme} />
       ))}
       {speakers.map((speaker) => (
-        <Choice id={`airplay-${speaker.name}`} symbol="airplayaudio" name={speaker.name} action={`airplay:${speaker.name}`} current={speaker.selected} theme={state.theme} />
+        <Choice id={`airplay-${speaker.name}`} glyph={airplayGlyph} name={speaker.name} action={`airplay:${speaker.name}`} current={speaker.selected} theme={state.theme} />
       ))}
       {scope === "output" && airplay === null ? (
-        <Choice id="airplay" symbol="airplayaudio" name="AirPlay Speakers…" action="airplay" current={false} theme={state.theme} />
+        <Choice id="airplay" glyph={airplayGlyph} name="AirPlay Speakers…" action="airplay" current={false} theme={state.theme} />
       ) : null}
     </column>
   );
@@ -128,7 +123,7 @@ function AppVolume({ app, theme }: { app: Gary.AudioApp; theme: Theme }) {
   const { spacing } = theme;
   return (
     <row key={`app-${app.pid}`} height={rowHeight} padding={[0, spacing.item]} width={width - 2 * spacing.item} gap={spacing.item}>
-      {app.path ? <image key="icon" path={app.path} width={iconWidth} height={iconWidth} /> : <icon key="icon" symbol="waveform" width={iconWidth} color="dim" />}
+      {app.path ? <image key="icon" path={app.path} width={iconWidth} height={iconWidth} /> : <text key="icon" font="icon" fontSize={15} width={iconWidth} align="center" y={0.5} color="dim">{"\u{F147D}"}</text>}
       <text key="name" width={nameWidth} lines={1} truncate="tail">{app.name}</text>
       <slider key="volume" value={app.volume} action={`app:${app.pid}`} width={width - 6 * spacing.item - iconWidth - nameWidth} color="foreground" />
     </row>
@@ -161,7 +156,7 @@ export default {
     return (
       <column width={width} padding={spacing.item} gap={spacing.item}>
         <row key="hero" height={rowHeight + 2 * spacing.item} padding={[0, spacing.item]}>
-          <icon key="icon" symbol={outputSymbol(output)} fontSize={20} width={28} color="foreground" opacity={audible ? 1 : 0.5} />
+          <text key="icon" font="icon" fontSize={22} width={28} align="center" y={0.5} color="foreground" opacity={audible ? 1 : 0.5}>{glyph(output)}</text>
           <column key="labels" gap={0}>
             <text key="title" style="title">Audio</text>
             {label ? <text key="status" fontSize={11} color="dim">{label.toUpperCase()}</text> : null}

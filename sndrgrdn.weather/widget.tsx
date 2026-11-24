@@ -1,15 +1,15 @@
 import { Effect, Schedule, Schema, Stream, fetch, host, settings, topic } from "gary:effect";
 import type { Topic } from "./topic";
 
-const conditions: [number[], string, string][] = [
-  [[95, 96, 99], "cloud.bolt.rain", "Thunderstorm"],
-  [[56, 57, 66, 67], "cloud.sleet", "Sleet"],
-  [[71, 73, 75, 77, 85, 86], "cloud.snow", "Snow"],
-  [[51, 53, 55, 61, 63, 65, 80, 81, 82], "cloud.rain", "Rain"],
-  [[45, 48], "cloud.fog", "Fog"],
-  [[1, 2], "cloud.sun", "Partly cloudy"],
-  [[3], "cloud", "Overcast"],
-  [[0], "sun.max", "Clear"],
+const conditions: [number[], string][] = [
+  [[95, 96, 99], "Thunderstorm"],
+  [[56, 57, 66, 67], "Sleet"],
+  [[71, 73, 75, 77, 85, 86], "Snow"],
+  [[51, 53, 55, 61, 63, 65, 80, 81, 82], "Rain"],
+  [[45, 48], "Fog"],
+  [[1, 2], "Partly cloudy"],
+  [[3], "Overcast"],
+  [[0], "Clear"],
 ];
 const glyphs: [number[], string, string][] = [
   [[0], "\u{E30D}", "\u{E32B}"],
@@ -30,7 +30,6 @@ const longitude = Number(settings.longitude ?? 5.8);
 const place = String(settings.place ?? (settings.latitude === undefined ? "Leeuwarden" : `${latitude}, ${longitude}`));
 const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&forecast_hours=13&timezone=auto`;
 let weather: Topic | null = null;
-let glyph = "\u{E33D}";
 
 class RequestFailed extends Schema.TaggedError<RequestFailed>()("RequestFailed", { status: Schema.Number, message: Schema.String }) {}
 
@@ -50,13 +49,12 @@ const refresh = Effect.gen(function* () {
       while: (error) => error._tag === "HostError" || (error._tag === "RequestFailed" && (error.status === 429 || error.status >= 500)),
     }),
   );
-  const [, icon, condition] = conditions.find(([codes]) => codes.includes(current.weather_code)) ?? [[], "cloud", "Unknown"];
+  const [, condition] = conditions.find(([codes]) => codes.includes(current.weather_code)) ?? [[], "Unknown"];
   const [, day, night] = glyphs.find(([codes]) => codes.includes(current.weather_code)) ?? [[], "\u{E33D}", "\u{E33D}"];
-  glyph = current.is_day ? day : night;
   weather = {
     place,
     temperature: Math.round(current.temperature_2m),
-    icon,
+    glyph: current.is_day ? day : night,
     condition,
     hours: hourly.time.map((time, index) => ({ hour: time.slice(11, 13), temperature: hourly.temperature_2m[index] })),
   };
@@ -78,7 +76,7 @@ export default {
   render() {
     return (
       <row gap={4} action="forecast">
-        <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{glyph}</text>
+        <text key="glyph" fontSize={13} width={20} align="center" color="foreground">{weather?.glyph ?? "\u{E33D}"}</text>
         <text key="temperature" minWidth={36} color={weather ? "foreground" : "dim"}>{weather ? `${weather.temperature}°C` : "--°C"}</text>
       </row>
     );

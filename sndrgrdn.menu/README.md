@@ -23,6 +23,11 @@ The plugin has three parts. The bar widget opens the menu a quarter of the way d
 - Use a Nerd Font for the bar, such as `JetBrainsMono Nerd Font`, as Omarchy does, so the snail shows.
 - Allow Screen Recording for Gary, for the captures, Text and QR Code, and Accessibility, for Lock. The first Log Out, Restart or Shut Down asks to let Gary control loginwindow.
 - Theme and the backgrounds need [Theme](../sndrgrdn.theme).
+- Name a Nerd Font `icon` in `~/.config/gary/theme.json`. The menu's icons are its glyphs:
+
+```json
+{ "fonts": { "icon": { "family": "JetBrainsMono Nerd Font", "size": 13, "weight": "regular" } } }
+```
 
 ## Develop
 
