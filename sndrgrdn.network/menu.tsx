@@ -192,7 +192,7 @@ function list(state: Gary.State) {
       ];
     }
     if (secret !== each.ssid) return [row];
-    return [row, <input key="password" placeholder={`Password for ${secret}`} submit="password" height={rowHeight} padding={[0, 2 * spacing.item + checkWidth]} />];
+    return [row, <input key="password" placeholder={`Password for ${secret}`} submit="password" width={width - 2 * spacing.item} height={rowHeight} padding={[0, 2 * spacing.item + checkWidth]} />];
   };
   return (
     <scroll key="networks" height={visibleRows * rowHeight} gap={0}>

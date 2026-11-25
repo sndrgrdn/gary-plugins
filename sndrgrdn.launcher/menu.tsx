@@ -239,7 +239,7 @@ export default {
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
             <text font="icon" color="dim" fontSize={21} width={iconSize} align="center" y={0.5}>{"\u{F0349}"}</text>
-            <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} />
+            <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} width={cardWidth - 5 * spacing.item - iconSize} />
           </row>
           {listed() && (
             <>
