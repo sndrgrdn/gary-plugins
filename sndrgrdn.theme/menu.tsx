@@ -101,7 +101,7 @@ function card(theme: Item, relative: number, previewX: number, radius: number): 
       clip
       action={`pick:${theme.id}`}
       pressed={{ scale: 0.97 }}
-      border={{ color: chosen ? theme.colors.accent ?? "accent" : "alpha(#ffffff, 0.12)", width: chosen ? 2.5 : 1 }}
+      border={{ color: chosen ? theme.colors.accent ?? "accent" : "alpha(foreground, 0.28)", width: chosen ? 2.5 : 1 }}
       shadow={{ color: `alpha(#000000, ${chosen ? 0.45 : 0})`, radius: chosen ? 30 : 0, y: chosen ? 18 : 0 }}
       opacity={Math.abs(relative) >= radius ? 0 : 1}
       zIndex={chosen ? 100 : 50 - Math.min(Math.abs(relative), 40)}

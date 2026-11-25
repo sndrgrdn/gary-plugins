@@ -139,7 +139,7 @@ function Item({ row, index, chosen, theme }: { row: Row; index: number; chosen: 
 
 function Choice({ label, action, chosen, destructive, width, radius }: { label: string; action: string; chosen: boolean; destructive: boolean; width: number; radius: number }) {
   const color = destructive ? "bad" : "accent";
-  const idle = destructive ? "alpha(bad, 0.56)" : "alpha(foreground, 0.38)";
+  const idle = destructive ? "alpha(bad, 0.56)" : "alpha(foreground, 0.4)";
   return (
     <row
       key={action}

@@ -11,6 +11,7 @@ const headerHeight = 24;
 const visibleRows = 8;
 const checkWidth = 18;
 const buttonSize = 28;
+const grey = "mix(foreground, #000000, 0.35)";
 
 const Address = Schema.Struct({ device: Schema.String, ip: Schema.String, gateway: Schema.String });
 const stored = Option.getOrNull(Schema.decodeUnknownOption(Address)(host.storage.get("address")));
@@ -236,9 +237,9 @@ export default {
           <spacer />
           <row key="actions" gap={spacing.item}>
             {wifi?.connected ? (
-              <row key="speedtest" action="speedtest" tooltip="Run a speed test" width={buttonSize} height={buttonSize} radius={theme.radius.control} hovered={{ background: "hover" }}>
-                <text key="glyph" width={buttonSize} align="center" fontSize={20} color="foreground">{"\u{F04C5}"}</text>
-              </row>
+              <text key="speedtest" action="speedtest" tooltip="Run a speed test" width={buttonSize} height={buttonSize} align="center" radius={theme.radius.control} fontSize={20} color={grey} background={`alpha(${grey}, 0.12)`} hovered={{ color: "accent", border: { color: "accent" } }}>
+                {"\u{F04C5}"}
+              </text>
             ) : null}
             {wifi?.available ? <Switch on={on} action="power" tooltip={on ? "Turn Wi‑Fi off" : "Turn Wi‑Fi on"} /> : null}
           </row>

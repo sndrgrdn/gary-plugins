@@ -16,6 +16,7 @@ const tickWidth = 2;
 const tickHeight = thickness * 2.5;
 const meterGap = 20;
 const valueWidth = 48;
+const grey = "mix(foreground, #000000, 0.35)";
 
 function percent(value: number) {
   return Math.round(Math.min(100, Math.max(0, value)));
@@ -129,18 +130,21 @@ export default {
             <text key="caption" fontSize={11} color="dim">{caption(providers)}</text>
           </column>
           <spacer />
-          <button
+          <text
             key="refresh"
             action="refresh"
             tooltip="Refresh"
             width={buttonSize}
             height={buttonSize}
+            align="center"
             radius={radius.control}
-            background="alpha(accent, 0.12)"
-            border={{ color: "accent", width: 1 }}
+            fontSize={16}
+            color={grey}
+            background={`alpha(${grey}, 0.12)`}
+            hovered={{ color: "accent", border: { color: "accent" } }}
           >
-            <text key="glyph" width={buttonSize} align="center" fontSize={16} color="accent">{"\u{F0450}"}</text>
-          </button>
+            {"\u{F0450}"}
+          </text>
         </row>
         {providers.flatMap((provider) => [
           <Divider name={`divider-${provider.id}`} theme={theme} />,
