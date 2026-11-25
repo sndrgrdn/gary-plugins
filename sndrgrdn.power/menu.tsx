@@ -84,14 +84,14 @@ function Detail({ label, value, width }: { label: string; value: string; width: 
     <row key={label} width={width} height={rowHeight}>
       <column key="text" gap={0}>
         <text key="label" fontSize={11} color="dim">{label}</text>
-        <text key="value" color="foreground">{value}</text>
+        <text key="value" color="foreground" height={18}>{value}</text>
       </column>
     </row>
   );
 }
 
 function Grid({ name, rows, spacing }: { name: string; rows: [string, string][]; spacing: Spacing }) {
-  const cell = (width - 4 * spacing.item - spacing.section) / 2;
+  const cell = (width - 5 * spacing.item) / 2;
   return (
     <grid key={name} columns={2} gap={spacing.item} padding={[0, spacing.item]}>
       {rows.map(([label, value]) => <Detail label={label} value={value} width={cell} />)}
@@ -142,8 +142,8 @@ export default {
           <spacer />
           <text key="percent" style="title" fontSize={20}>{battery.percent}%</text>
         </row>
-        <row key="level" height={spacing.item} padding={[0, spacing.item]}>
-          <progress value={battery.percent / 100} width={width - 4 * spacing.item} color="foreground" />
+        <row key="level" height={4} padding={[0, spacing.item]}>
+          <progress value={battery.percent / 100} width={width - 4 * spacing.item} height={4} color="foreground" />
         </row>
         <Grid name="battery" rows={batteryRows(battery)} spacing={spacing} />
         <Divider name="divider" theme={theme} />

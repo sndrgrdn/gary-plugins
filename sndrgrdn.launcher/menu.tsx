@@ -230,7 +230,7 @@ export default {
         <column
           key="card"
           x={(width - cardWidth) / 2}
-          y={Math.round(height / 4)}
+          y={4 * Math.round(height / 16)}
           width={cardWidth}
           height={listed() ? cardHeight(shownRows()) : 2 * spacing.item + headerHeight}
           gap={0}
@@ -239,7 +239,7 @@ export default {
         >
           <row key="search" height={headerHeight} padding={[0, spacing.item]}>
             <text font="icon" color="dim" fontSize={21} width={iconSize} align="center" y={0.5}>{"\u{F0349}"}</text>
-            <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} width={cardWidth - 5 * spacing.item - iconSize} />
+            <input key="query" value={query} placeholder="Search apps and settings" change="filter" submit="submit" fontSize={18} width={cardWidth - 5 * spacing.item - iconSize} height={24} />
           </row>
           {listed() && (
             <>

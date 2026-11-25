@@ -9,7 +9,7 @@ const width = 320;
 const rowHeight = 32;
 const headerHeight = 24;
 const visibleRows = 8;
-const checkWidth = 18;
+const checkWidth = 20;
 const buttonSize = 28;
 const grey = "mix(foreground, #000000, 0.35)";
 
@@ -106,14 +106,14 @@ function Detail({ label, value, width }: { label: string; value: string; width: 
     <row key={label} width={width} height={rowHeight}>
       <column key="text" gap={0}>
         <text key="label" fontSize={11} color="dim">{label}</text>
-        <text key="value" color="foreground">{value}</text>
+        <text key="value" color="foreground" height={18}>{value}</text>
       </column>
     </row>
   );
 }
 
 function details(wifi: Gary.WiFi, spacing: Spacing) {
-  const cell = (width - 4 * spacing.item - spacing.section) / 2;
+  const cell = (width - 5 * spacing.item) / 2;
   const rows: [string, string][] = [
     ["Signal", wifi.rssi == null ? "--" : `${wifi.rssi} dBm`],
     ["Rate", wifi.transmitRate == null ? "--" : `${Math.round(wifi.transmitRate)} Mbps`],

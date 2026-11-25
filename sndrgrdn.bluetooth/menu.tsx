@@ -82,7 +82,7 @@ function Device({ device, theme }: { device: Gary.BluetoothDevice | Gary.Bluetoo
         key="icon"
         font="icon"
         fontSize={15}
-        width={18}
+        width={20}
         align="center"
         y={0.5}
         color="foreground"

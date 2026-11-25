@@ -94,7 +94,7 @@ export default {
         <column
           key="card"
           x={(screen.width - width) / 2}
-          y={Math.round((screen.height - height) / 2)}
+          y={4 * Math.round((screen.height - height) / 8)}
           width={width}
           height={height}
           gap={0}

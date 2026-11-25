@@ -129,7 +129,7 @@ function Item({ row, index, chosen, theme }: { row: Row; index: number; chosen: 
       action={`row:${index}`}
       hoverAction={`hover:${index}`}
     >
-      <text font="icon" fontSize={15} width={18} align="center" y={0.5} color={chosen ? "accent" : "foreground"}>{row.icon}</text>
+      <text font="icon" fontSize={15} width={20} align="center" y={0.5} color={chosen ? "accent" : "foreground"}>{row.icon}</text>
       <text color={chosen ? "accent" : "foreground"}>{row.label}</text>
       <spacer />
       {"rows" in row && <text font="icon" fontSize={18} width={8} align="center" style="dim">{"\u{F0142}"}</text>}
@@ -189,9 +189,9 @@ export default {
     return (
       <stack key="backdrop" width={screen.width} height={screen.height}>
         <row key="scrim" width={screen.width} height={screen.height} background="scrim" action="close" />
-        <column key="menu" x={(screen.width - width) / 2} y={Math.round(screen.height / 4)} width={width} padding={spacing.item} style="picker">
+        <column key="menu" x={(screen.width - width) / 2} y={4 * Math.round(screen.height / 16)} width={width} padding={spacing.item} style="picker">
           <row key="header" height={rowHeight} padding={[0, spacing.item]}>
-            {(trail.length > 1 || confirming) && <text key="back" font="icon" fontSize={21} width={10} align="center" y={0.5} style="dim" action="back">{"\u{F0141}"}</text>}
+            {(trail.length > 1 || confirming) && <text key="back" font="icon" fontSize={21} width={12} align="center" y={0.5} style="dim" action="back">{"\u{F0141}"}</text>}
             <text key="title" style="dim" fontSize={15}>{`${title}…`}</text>
           </row>
           <row key="divider" height={0}>

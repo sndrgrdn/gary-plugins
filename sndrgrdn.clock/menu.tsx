@@ -71,13 +71,13 @@ function day(date: Date, month: number, today: Date, radius: number): Gary.Node 
 }
 
 function agenda(): Gary.Node | null {
-  if (reason) return <text key="reason" style="dim">{reason}</text>;
+  if (reason) return <text key="reason" style="dim" height={20}>{reason}</text>;
   if (!events) return null;
-  if (events.length === 0) return <text key="none" style="dim">No events today</text>;
+  if (events.length === 0) return <text key="none" style="dim" height={20}>No events today</text>;
   return (
     <column key="events" width={width}>
       {events.map((event) => (
-        <row key={`${event.id}@${event.start}`}>
+        <row key={`${event.id}@${event.start}`} height={20}>
           <text font="mono" color="dim" width={56}>{time(event)}</text>
           <text>{event.title}</text>
         </row>

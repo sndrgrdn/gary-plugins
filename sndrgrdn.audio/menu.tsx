@@ -8,8 +8,8 @@ type Scope = Gary.AudioScope;
 const width = 320;
 const rowHeight = 32;
 const headerHeight = 24;
-const iconWidth = 18;
-const nameWidth = 94;
+const iconWidth = 20;
+const nameWidth = 92;
 const airplayGlyph = "\u{F101E}";
 
 let problem: string | null = null;
@@ -82,7 +82,7 @@ function Choice({ id, glyph, name, action, current, theme }: { id: string; glyph
       background={current ? "selected" : undefined}
       hovered={current ? undefined : { background: "hover" }}
     >
-      <text key="icon" font="icon" fontSize={15} width={18} align="center" y={0.5} color="foreground">{glyph}</text>
+      <text key="icon" font="icon" fontSize={15} width={iconWidth} align="center" y={0.5} color="foreground">{glyph}</text>
       <text key="name" color="foreground" font={current ? "strong" : undefined}>{name}</text>
     </row>
   );
