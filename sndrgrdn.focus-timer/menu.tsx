@@ -13,7 +13,7 @@ function call(method: string, ...args: string[]) {
 }
 
 export default {
-  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 4, right: 4 }, anchors: { top: true, right: true } },
 
   effect: ticking,
 

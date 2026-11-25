@@ -145,7 +145,7 @@ function Apps({ state }: { state: Gary.State }) {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 4, right: 4 } },
 
   render(state) {
     const { theme } = state;

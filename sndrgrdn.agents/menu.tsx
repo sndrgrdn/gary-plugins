@@ -112,7 +112,7 @@ function Section({ provider, theme, now }: { provider: Provider; theme: Theme; n
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 4, right: 4 } },
 
   effect: Effect.all([Effect.ignore(host.call("refresh")), Stream.runDrain(Stream.tick("1 minute"))], { concurrency: "unbounded", discard: true }),
 

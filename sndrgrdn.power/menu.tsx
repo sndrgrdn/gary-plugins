@@ -120,7 +120,7 @@ function systemRows(system: Gary.System | undefined): [string, string][] {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 4, right: 4 } },
 
   effect: Effect.repeat(refresh, Schedule.spaced("5 seconds")),
 

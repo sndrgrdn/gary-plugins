@@ -2,7 +2,7 @@ const width = 300;
 const heroHeight = 32;
 
 export default {
-  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 4, right: 4 }, anchors: { top: true, right: true } },
 
   render(state) {
     const weather = state["sndrgrdn.weather"];

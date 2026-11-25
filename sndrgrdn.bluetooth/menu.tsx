@@ -118,7 +118,7 @@ function devices(bluetooth: Gary.Bluetooth, theme: Theme) {
 }
 
 export default {
-  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 8, right: 20 } },
+  surface: { attach: true, anchors: { top: true, right: true }, margins: { top: 4, right: 4 } },
 
   effect: lifted.bluetooth.discover(true),
 

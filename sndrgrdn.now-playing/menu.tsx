@@ -84,7 +84,7 @@ function Player({ track, theme }: { track: Gary.Track; theme: Gary.Theme }) {
 }
 
 export default {
-  surface: { attach: true, margins: { top: 8, right: 20 }, anchors: { top: true, right: true } },
+  surface: { attach: true, margins: { top: 4, right: 4 }, anchors: { top: true, right: true } },
 
   effect: topic("nowplaying").pipe(
     Stream.map((nowplaying) => nowplaying.track?.playing === true),
