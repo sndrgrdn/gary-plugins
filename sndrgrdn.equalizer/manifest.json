@@ -1,0 +1,12 @@
+{
+  "$schema": "./manifest.schema.json",
+  "schemaVersion": 1,
+  "id": "sndrgrdn.equalizer",
+  "name": "Equalizer",
+  "version": "0.1.0",
+  "kinds": ["service", "bar-widget", "menu"],
+  "entryPoints": { "service": "service.ts", "bar-widget": "widget.tsx", "menu": "menu.tsx" },
+  "bar": "right",
+  "subscribes": { "service": ["audio"], "bar-widget": ["sndrgrdn.equalizer"], "menu": ["audio", "sndrgrdn.equalizer"] },
+  "uses": ["audio"]
+}

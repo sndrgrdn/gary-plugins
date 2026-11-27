@@ -11,6 +11,7 @@ These are Sander's plugins for [Gary](https://github.com/sndrgrdn/gary), a macOS
 - [`sndrgrdn.clipboard`](sndrgrdn.clipboard) keeps a history of the text, images and files you copy, and pastes an earlier entry from a menu on ⌘⇧V.
 - [`sndrgrdn.clock`](sndrgrdn.clock) shows the date and time in the bar, in its own format or Omarchy's `dddd HH:mm`, and opens a month calendar with today's events from the Calendar app when you click it.
 - [`sndrgrdn.dinky`](sndrgrdn.dinky) shows the workspaces of the [dinky](https://github.com/mikker/Dinky) window manager in the bar.
+- [`sndrgrdn.equalizer`](sndrgrdn.equalizer) tunes all audio with Off, Harman and Harman+ presets for the Sennheiser HD 6XX, and an extra bass slider, remembered per output device.
 - [`sndrgrdn.focus-timer`](sndrgrdn.focus-timer) counts down focus and break sessions in the bar, with a panel to start them and a sound at the end.
 - [`sndrgrdn.front-app`](sndrgrdn.front-app) shows the name and icon of the app that dinky reports as focused. It needs `sndrgrdn.dinky` and an `app-icon` font in `~/.config/gary/theme.json`, such as `sketchybar-app-font`.
 - [`sndrgrdn.hyper-key`](sndrgrdn.hyper-key) makes a key a Hyper key, Caps Lock by default: hold it and every key gets Control, Option and Command. Tapping it alone does nothing, or sends a key you set.
